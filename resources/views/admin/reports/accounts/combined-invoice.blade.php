@@ -8,154 +8,95 @@
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             color: #333;
             line-height: 1.6;
+            font-weight: 500;
         }
         
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #00BDE0;
-            padding-bottom: 20px;
+        .purchase-history-list-area {
+            font-weight: 500;
         }
         
-        .company-name {
-            font-size: 28px;
-            font-weight: bold;
-            color: #00BDE0;
-            margin-bottom: 5px;
+        .container {
+            background: #fff;
+            padding: 1.8rem;
+            width: 96%;
+            padding-left: 2%;
+            padding-right: 2%;
+            margin: 0 auto;
         }
         
-        .invoice-title {
-            font-size: 24px;
-            color: #333;
-            margin: 20px 0;
-        }
-        
-        .invoice-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-        }
-        
-        .invoice-info div {
-            flex: 1;
-        }
-        
-        .summary-stats {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 30px;
-            background-color: #e3f2fd;
-            padding: 20px;
-            border-radius: 5px;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #00BDE0;
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-        }
-        
-        .user-section {
-            margin-bottom: 40px;
-            page-break-inside: avoid;
-        }
-        
-        .user-header {
-            background-color: #00BDE0;
-            color: white;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .user-name {
-            font-size: 18px;
+        .strong {
             font-weight: bold;
         }
         
-        .user-stats {
-            font-size: 14px;
+        .text-end {
+            text-align: right;
         }
         
-        .orders-table {
+        .gry-color {
+            color: #6c757d;
+        }
+        
+        .small {
+            font-size: 0.875rem;
+        }
+        
+        .w-50 {
+            width: 50%;
+        }
+        
+        .bg-secondary {
+            background-color: #6c757d;
+            height: 1px;
+            border: none;
+        }
+        
+        .border-bottom {
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .w-100 {
             width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
         }
         
-        .orders-table th,
-        .orders-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
+        .padding {
+            padding: 10px;
+        }
+        
+        .text-left {
             text-align: left;
         }
         
-        .orders-table th {
-            background-color: #f5f5f5;
-            font-weight: bold;
-            font-size: 12px;
-            text-transform: uppercase;
+        .mt-5 {
+            margin-top: 3rem;
         }
         
-        .orders-table td {
-            font-size: 14px;
+        .mb-4 {
+            margin-bottom: 1.5rem;
         }
         
-        .user-total {
-            text-align: right;
-            font-weight: bold;
-            background-color: #f8f9fa;
+        table {
+            border-collapse: collapse;
+        }
+        
+        table.padding th,
+        table.padding td {
             padding: 10px;
-            border-radius: 3px;
-            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
         }
         
-        .grand-total {
-            background-color: #00BDE0;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 5px;
-            margin-top: 30px;
+        thead tr {
+            background: #eceff4;
         }
         
-        .footer {
-            margin-top: 50px;
-            text-align: center;
-            font-size: 12px;
-            color: #666;
-            border-top: 1px solid #ddd;
-            padding-top: 20px;
+        tfoot tr {
+            border-top: 2px solid #6c757d;
         }
         
-        .no-orders {
-            text-align: center;
-            color: #666;
-            font-style: italic;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
+        tfoot tr:last-child {
+            border-bottom: 2px solid #6c757d;
         }
         
         @media print {
@@ -163,59 +104,13 @@
                 margin: 0;
                 padding: 10px;
             }
-            .user-section {
-                page-break-inside: avoid;
+            .page-break {
+                page-break-after: always;
             }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="company-name">Bookstore</div>
-        <div class="invoice-title">Combined Account Invoice</div>
-    </div>
-    
-    <div class="invoice-info">
-        <div>
-            <strong>Invoice Date:</strong><br>
-            {{ now()->format('F d, Y') }}
-        </div>
-        <div>
-            <strong>Period:</strong><br>
-            @if($dateFrom && $dateTo)
-                {{ \Carbon\Carbon::parse($dateFrom)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($dateTo)->format('M d, Y') }}
-            @elseif($dateFrom)
-                From {{ \Carbon\Carbon::parse($dateFrom)->format('M d, Y') }}
-            @elseif($dateTo)
-                Until {{ \Carbon\Carbon::parse($dateTo)->format('M d, Y') }}
-            @else
-                All Time
-            @endif
-        </div>
-        <div>
-            <strong>Generated:</strong><br>
-            {{ now()->format('M d, Y H:i:s') }}
-        </div>
-    </div>
-    
-    <div class="summary-stats">
-        <div class="stat-item">
-            <div class="stat-value">{{ $totalUsers }}</div>
-            <div class="stat-label">Total Users</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-value">{{ $totalOrders }}</div>
-            <div class="stat-label">Total Orders</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-value">₹{{ number_format($totalAmount, 2) }}</div>
-            <div class="stat-label">Total Amount</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-value">₹{{ $totalOrders > 0 ? number_format($totalAmount / $totalOrders, 2) : '0.00' }}</div>
-            <div class="stat-label">Avg Order Value</div>
-        </div>
-    </div>
     
     @foreach($users as $user)
         <div class="user-section">
