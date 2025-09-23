@@ -111,87 +111,182 @@
     </style>
 </head>
 <body>
+@php
+    $count = 0;
+    $total = $users->count();
+@endphp
+
+@foreach($users as $user)
+    @php
+        $count++;
+        $userOrders = $user->orders;
+        if($dateFrom) {
+            $userOrders = $userOrders->where('created_at', '>=', $dateFrom);
+        }
+        if($dateTo) {
+            $userOrders = $userOrders->where('created_at', '<=', $dateTo);
+        }
+        $userOrdersCount = $userOrders->count();
+    @endphp
     
-    @foreach($users as $user)
-        <div class="user-section">
-            @php
-                $userOrders = $user->orders;
-                $userOrdersCount = $userOrders->count();
-                $userTotal = $userOrders->sum('total_amount');
-            @endphp
-            
-            <div class="user-header">
-                <div>
-                    <div class="user-name">{{ $user->name }}</div>
-                    <div>{{ $user->email }}</div>
-                </div>
-                <div class="user-stats">
-                    <div>Orders: {{ $userOrdersCount }}</div>
-                    <div>Total: ₹{{ number_format($userTotal, 2) }}</div>
+    @foreach($userOrders as $order)
+        <div class="purchase-history-list-area" style="font-weight:500;">
+            <div class="container" style="background: #fff;padding: 1.8rem;width:96%;padding-left:2%;padding-right:2%;">
+                <div class="row">
+                    <div class="col">
+                        <div style="margin-left:auto;margin-right:auto;">
+                            <div style="margin-bottom: 60px;">
+                                <table style="width:100%;">
+                                    <tr>
+                                        <td>
+                                            <div style="height: 50px; line-height: 50px; font-size: 24px; font-weight: bold; color: #00BDE0;">
+                                                BOOKSTORE
+                                            </div>
+                                        </td>
+                                        <td style="font-size: 24px; font-weight: 600; text-align:right;" class="text-end strong">
+                                            TAX INVOICE
+                                        </td>
+                                    </tr>
+                                </table><br>
+                                <table style="width:100%;">
+                                    <tr>
+                                        <td style="font-size: 1.2rem;" class="strong">BOOKSTORE</td>
+                                        <td style="font-size: 1.0rem;" class="text-end strong">{{ ucfirst($user->name) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="gry-color small w-50">{{ config('app.company_address', '123 Business Street, City, State 12345') }}</td>
+                                        <td class="gry-color text-end small w-50">
+                                            {{ $user->address ?? 'Address not available' }}<br />
+                                            Phone: {{ $user->phone ?? 'N/A' }}<br />
+                                            Email: {{ $user->email }}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="strong small gry-color"><br /></td>
+                                    </tr>
+                                </table>
+                                <table style="width:100%;">
+                                    <tr>
+                                        <td class="strong small gry-color">GSTIN :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ config('app.gst_number', '27AAACT2727Q1ZZ') }}</td>
+                                        <td class="strong small text-end small w-50 gry-color"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="strong small gry-color">PAN No. :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {{ config('app.pan_number', 'AAACT2727Q') }}</td>
+                                        <td class="strong small text-end small w-50 gry-color"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="strong small gry-color">CIN : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {{ config('app.cin_number', 'U80904MH2021NPL364738') }}</td>
+                                        <td class="strong small text-end small w-50 gry-color"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="strong small gry-color">Order No : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ORD-{{ $order->id }}</td>
+                                        <td class="strong small text-end small w-50 gry-color">Invoice No : &nbsp;&nbsp;INV-{{ $order->id }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="strong small gry-color">Order Date : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $order->created_at->format('d-M-Y') }}</td>
+                                        <td class="strong small text-end small w-50 gry-color">Payment Date : &nbsp;&nbsp;{{ $order->created_at->format('d-M-Y') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="strong small gry-color">Place of : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $user->address ? explode(',', $user->address)[0] ?? 'N/A' : 'N/A' }}</td>
+                                        <td class="strong small text-end small w-50 gry-color"></td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <hr class="bg-secondary">
+                            <div style="">
+                                <table class="padding text-left small border-bottom w-100" style="border-collapse: collapse;">
+                                    <thead>
+                                        <tr class="gry-color" style="background: #eceff4;padding:10px;">
+                                            <th width="10%">#</th>
+                                            <th width="15%">HSN/SAC</th>
+                                            <th width="60%" style="padding-left : 10px;">Book Name</th>
+                                            <th width="15%" class="text-end">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @php
+                                            $i = 1;
+                                            $cgst = 0.00;
+                                            $sgst = 0.00;
+                                            $igst = 0.00;
+                                            $sub_total = 0.00;
+                                            $grand_total = 0.00;
+                                        @endphp
+                                        
+                                        @foreach($order->orderItems as $orderDetail)
+                                            @php
+                                                $item_total = $orderDetail->price * $orderDetail->quantity;
+                                                $item_cgst = $item_total * 0.09; // 9% CGST
+                                                $item_sgst = $item_total * 0.09; // 9% SGST
+                                                $item_igst = 0.00; // No IGST for local orders
+                                                
+                                                $cgst += $item_cgst;
+                                                $sgst += $item_sgst;
+                                                $igst += $item_igst;
+                                                $sub_total += $item_total;
+                                                $grand_total += $item_total + $item_cgst + $item_sgst + $item_igst;
+                                            @endphp
+                                            <tr>
+                                                <td>{{ $i }}</td>
+                                                <td>999293</td>
+                                                <td class="gry-color" style="padding: 30px;">{{ $orderDetail->book->title }}</td>
+                                                <td style="text-align:center" class="text-end">{{ number_format($item_total, 2) }}/-</td>
+                                            </tr>
+                                            @php $i++; @endphp
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style="border-top: 2px solid #6c757d;">
+                                            <td class="gry-color"></td>
+                                            <td class="gry-color"></td>
+                                            <td class="gry-color text-end"> <strong>Sub Total:</strong> </td>
+                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($sub_total, 2) }}/-</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="gry-color"></td>
+                                            <td class="gry-color"></td>
+                                            <td class="gry-color text-end"> <strong>ADD CGST :</strong> </td>
+                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($cgst, 2) }}/-</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="gry-color"></td>
+                                            <td class="gry-color"></td>
+                                            <td class="gry-color text-end"> <strong>ADD SGST :</strong> </td>
+                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($sgst, 2) }}/-</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="gry-color"></td>
+                                            <td class="gry-color"></td>
+                                            <td class="gry-color text-end"> <strong>ADD IGST :</strong> </td>
+                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($igst, 2) }}/-</strong></td>
+                                        </tr>
+                                        <tr style="border-top: 2px solid #6c757d; border-bottom: 2px solid #6c757d;">
+                                            <td></td>
+                                            <td></td>
+                                            <td class="gry-color text-end strong"><strong>Final Amount :</strong></td>
+                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($grand_total, 2) }}/-</strong></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            <div class="mt-5" style="font-size:0.875em;">
+                                <p class="mb-4">Whether tax is payable on reverse charge basis - NO</p>
+                                <span># This fee receipt is valid subject to cheque realisation or online payment confirmation.</span><br>
+                                <span># Subject to Local Jurisdiction where the receipt is generated.</span><br>
+                                <span># Fees once paid are neither refundable nor transferable.</span><br>
+                                <span># This is computer generated receipt and does not require any stamp or signature.</span>
+                            </div>
+                            <hr class="bg-secondary">
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            @if($userOrders->count() > 0)
-                <table class="orders-table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Date</th>
-                            <th>Items</th>
-                            <th>Books</th>
-                            <th>Status</th>
-                            <th>Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($userOrders as $order)
-                            <tr>
-                                <td>#{{ $order->id }}</td>
-                                <td>{{ $order->created_at->format('M d, Y') }}</td>
-                                <td>{{ $order->orderItems->count() }}</td>
-                                <td>
-                                    @foreach($order->orderItems as $item)
-                                        <div style="margin-bottom: 2px;">
-                                            {{ $item->book->title }} ({{ $item->quantity }}x)
-                                        </div>
-                                    @endforeach
-                                </td>
-                                <td>
-                                    <span style="padding: 2px 8px; border-radius: 3px; font-size: 11px; text-transform: uppercase; 
-                                        @if($order->status === 'completed') background-color: #d4edda; color: #155724;
-                                        @elseif($order->status === 'pending') background-color: #fff3cd; color: #856404;
-                                        @elseif($order->status === 'processing') background-color: #cce5ff; color: #004085;
-                                        @elseif($order->status === 'shipped') background-color: #e2e3e5; color: #383d41;
-                                        @else background-color: #f8d7da; color: #721c24;
-                                        @endif">
-                                        {{ ucfirst($order->status) }}
-                                    </span>
-                                </td>
-                                <td style="text-align: right; font-weight: bold;">₹{{ number_format($order->total_amount, 2) }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-                
-                <div class="user-total">
-                    User Total: ₹{{ number_format($userTotal, 2) }}
-                </div>
-            @else
-                <div class="no-orders">
-                    No orders found for this user in the selected period.
-                </div>
-            @endif
         </div>
+        @if($count != $total)
+            <div class="page-break"></div>
+        @endif
     @endforeach
-    
-    <div class="grand-total">
-        GRAND TOTAL: ₹{{ number_format($totalAmount, 2) }}
-    </div>
-    
-    <div class="footer">
-        <p>This is a computer-generated document. No signature required.</p>
-        <p>Generated on {{ now()->format('F d, Y \a\t H:i:s') }} | Bookstore Admin Panel</p>
-        <p>For any queries, please contact the administrator.</p>
-    </div>
+@endforeach
 </body>
 </html>

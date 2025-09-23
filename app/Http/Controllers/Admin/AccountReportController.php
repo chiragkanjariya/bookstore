@@ -152,7 +152,9 @@ class AccountReportController extends Controller
                         if ($dateTo) {
                             $query->whereDate('created_at', '<=', $dateTo);
                         }
-                        $query->with('orderItems.book');
+                        $query->with(['orderItems.book', 'orderItems' => function ($q) {
+                            $q->with('book');
+                        }]);
                     }]);
 
         $users = $query->get();
