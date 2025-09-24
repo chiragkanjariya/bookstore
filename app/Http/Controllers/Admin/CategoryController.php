@@ -48,7 +48,7 @@ class CategoryController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:categories,name'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:5000'],
             'is_active' => ['boolean'],
             'sort_order' => ['integer', 'min:0'],
         ]);
@@ -95,7 +95,7 @@ class CategoryController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('categories')->ignore($category->id)],
             'description' => ['nullable', 'string', 'max:1000'],
-            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:5000'],
             'is_active' => ['boolean'],
             'sort_order' => ['integer', 'min:0'],
         ]);

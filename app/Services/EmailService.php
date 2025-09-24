@@ -372,7 +372,7 @@ class EmailService
                 
                 <!-- Header -->
                 <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #00BDE0; padding-bottom: 20px;">
-                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">BOOKSTORE</h1>
+                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">' . (\App\Models\Setting::get('company_name') ?: 'IPDC STORE') . '</h1>
                     <p style="color: #666; font-size: 16px; margin: 5px 0 0 0;">Order Confirmation</p>
                 </div>
 
@@ -448,13 +448,9 @@ class EmailService
                             <td style="padding: 8px 0; color: #666;">Shipping:</td>
                             <td style="padding: 8px 0; text-align: right; color: #333;">₹' . number_format($order->shipping_cost, 2) . '</td>
                         </tr>
-                        <tr>
-                            <td style="padding: 8px 0; color: #666;">Tax (18% GST):</td>
-                            <td style="padding: 8px 0; text-align: right; color: #333;">₹' . number_format($order->tax_amount, 2) . '</td>
-                        </tr>
                         <tr style="border-top: 2px solid #00BDE0;">
                             <td style="padding: 12px 0; color: #333; font-weight: bold; font-size: 16px;">Total Amount:</td>
-                            <td style="padding: 12px 0; text-align: right; color: #00BDE0; font-weight: bold; font-size: 16px;">₹' . number_format($order->total_amount, 2) . '</td>
+                            <td style="padding: 12px 0; text-align: right; color: #00BDE0; font-weight: bold; font-size: 16px;">₹' . number_format($order->subtotal + $order->shipping_cost, 2) . '</td>
                         </tr>
                     </table>
                 </div>

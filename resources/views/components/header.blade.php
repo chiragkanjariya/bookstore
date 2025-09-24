@@ -10,7 +10,7 @@
             </div>
             
             <!-- Search Bar - Center -->
-            <div class="flex-1 max-w-2xl mx-8">
+            <div class="hidden sm:block flex-1 max-w-2xl mx-8">
                 <div class="relative">
                     <input type="text" 
                            placeholder="Search books, authors, genres..." 
@@ -36,7 +36,7 @@
                                 <path d="M14.868 31.187c-3.217-3.509-2.98-8.97.53-12.187M42 39v12M48 45H36" style="fill:none;stroke:currentColor;stroke-width:2px"/>
                             </svg>
                             @if(Auth::user()->wishlist_count > 0)
-                                <span class="wishlist-count absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center font-medium">
+                                <span class="wishlist-count absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center font-medium" style="    padding: 3px;border-radius: 100px;">
                                     {{ Auth::user()->wishlist_count }}
                                 </span>
                             @else
@@ -57,11 +57,11 @@
                                 </g>
                             </svg>
                             @if(Auth::user()->cart_count > 0)
-                                <span class="cart-count absolute -top-1 -right-1 bg-[#00BDE0] text-white text-xs rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center font-medium">
+                                <span class="cart-count absolute -top-1 -right-1 bg-[#00BDE0] text-white text-xs rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center font-medium" style="background: #fff;padding: 3px;color: #01bde0;">
                                     {{ Auth::user()->cart_count }}
                                 </span>
                             @else
-                                <span class="cart-count absolute -top-1 -right-1 bg-[#00BDE0] text-white text-xs rounded-full h-5 min-w-5 px-1.5 items-center justify-center font-medium hidden">
+                                <span class="cart-count absolute -top-1 -right-1 bg-[#00BDE0] text-white text-xs rounded-full h-5 min-w-5 px-1.5 items-center justify-center font-medium hidden" style="background: #fff;padding: 3px;color: #01bde0;">
                                     0
                                 </span>
                             @endif
@@ -74,7 +74,7 @@
                             <div class="w-8 h-8 bg-[#00BDE0] rounded-full flex items-center justify-center">
                                 <span class="text-white font-medium text-sm">{{ substr(Auth::user()->name, 0, 1) }}</span>
                             </div>
-                            <span class="text-gray-700 font-medium">{{ Auth::user()->name }}</span>
+                            <span class="hidden sm:block text-gray-700 font-medium">{{ Auth::user()->name }}</span>
                             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
@@ -141,13 +141,6 @@
                     </button>
                 @endauth
             </div>
-            
-            <!-- Mobile menu button -->
-            <button class="md:hidden p-2 text-white hover:text-gray-700 ml-2">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-            </button>
         </div>
         
         <!-- Mobile Search -->

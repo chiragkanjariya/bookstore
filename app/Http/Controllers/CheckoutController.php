@@ -19,10 +19,12 @@ class CheckoutController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->razorpayApi = new Api(
-            config('services.razorpay.key'),
-            config('services.razorpay.secret')
-        );
+        
+        // Get Razorpay credentials from database settings (with fallback to config)
+        $razorpayKeyId = \App\Models\Setting::get('razorpay_key_id') ?: config('services.razorpay.key');
+        $razorpaySecret = \App\Models\Setting::get('razorpay_key_secret') ?: config('services.razorpay.secret');
+        
+        $this->razorpayApi = new Api($razorpayKeyId, $razorpaySecret);
     }
 
     /**
@@ -42,8 +44,8 @@ class CheckoutController extends Controller
         $shipping = $cartItems->sum(function ($item) {
             return $item->book->shipping_price * $item->quantity;
         });
-        $tax = $subtotal * 0.18; // 18% GST
-        $total = $subtotal + $shipping + $tax;
+        $tax = 0; // GST removed as per requirements
+        $total = $subtotal + $shipping;
 
         return view('checkout.index', compact('cartItems', 'subtotal', 'shipping', 'tax', 'total'));
     }
@@ -72,8 +74,8 @@ class CheckoutController extends Controller
         // Calculate totals
         $subtotal = $book->price * $quantity;
         $shipping = $book->shipping_price * $quantity;
-        $tax = $subtotal * 0.18; // 18% GST
-        $total = $subtotal + $shipping + $tax;
+        $tax = 0; // GST removed as per requirements
+        $total = $subtotal + $shipping;
 
         $buyNowItem = (object) [
             'book' => $book,
@@ -136,8 +138,8 @@ class CheckoutController extends Controller
 
                 $subtotal = $book->price * $quantity;
                 $shipping = $book->shipping_price * $quantity;
-                $tax = $subtotal * 0.18;
-                $total = $subtotal + $shipping + $tax;
+                $tax = 0; // GST removed
+                $total = $subtotal + $shipping;
 
                 $orderItems = [(object) [
                     'book_id' => $book->id,
@@ -165,8 +167,8 @@ class CheckoutController extends Controller
                 $shipping = $cartItems->sum(function ($item) {
                     return $item->book->shipping_price * $item->quantity;
                 });
-                $tax = $subtotal * 0.18;
-                $total = $subtotal + $shipping + $tax;
+                $tax = 0; // GST removed
+                $total = $subtotal + $shipping;
 
                 $orderItems = $cartItems;
             }
@@ -235,7 +237,7 @@ class CheckoutController extends Controller
                 'razorpay_order_id' => $razorpayOrder['id'],
                 'amount' => $total * 100,
                 'currency' => 'INR',
-                'key' => config('services.razorpay.key'),
+                'key' => \App\Models\Setting::get('razorpay_key_id') ?: config('services.razorpay.key'),
                 'user' => [
                     'name' => $user->name,
                     'email' => $user->email,

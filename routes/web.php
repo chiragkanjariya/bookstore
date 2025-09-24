@@ -91,6 +91,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('accounts/combined-invoice', [\App\Http\Controllers\Admin\AccountReportController::class, 'generateCombinedInvoice'])->name('accounts.combined-invoice');
         Route::get('accounts/user-details', [\App\Http\Controllers\Admin\AccountReportController::class, 'getUserDetails'])->name('accounts.user-details');
     });
+    
+    // Settings Routes
+    Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+    Route::put('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
 });
 
 // Checkout Routes (Authenticated Users)
@@ -119,4 +123,11 @@ Route::prefix('api/locations')->group(function () {
     Route::get('/talukas-by-state', [LocationController::class, 'getTalukasByState'])->name('api.locations.talukas-by-state');
     Route::get('/search', [LocationController::class, 'searchLocations'])->name('api.locations.search');
 });
+
+// Static Pages Routes
+Route::get('/privacy-policy', [\App\Http\Controllers\PagesController::class, 'privacyPolicy'])->name('pages.privacy-policy');
+Route::get('/terms-of-use', [\App\Http\Controllers\PagesController::class, 'termsOfUse'])->name('pages.terms-of-use');
+Route::get('/payment-policies', [\App\Http\Controllers\PagesController::class, 'paymentPolicies'])->name('pages.payment-policies');
+Route::get('/about-us', [\App\Http\Controllers\PagesController::class, 'aboutUs'])->name('pages.about-us');
+Route::get('/contact-us', [\App\Http\Controllers\PagesController::class, 'contactUs'])->name('pages.contact-us');
 

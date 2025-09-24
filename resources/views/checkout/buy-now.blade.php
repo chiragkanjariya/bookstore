@@ -110,12 +110,7 @@
                         </div>
                     </div>
 
-                    <!-- Order Notes -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Order Notes (Optional)</h2>
-                        <textarea name="notes" rows="3" placeholder="Any special instructions for delivery..."
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
+                    
                 </form>
             </div>
 
@@ -147,10 +142,6 @@
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Shipping</span>
                             <span class="text-gray-900">₹{{ number_format($shipping, 2) }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Tax (18% GST)</span>
-                            <span class="text-gray-900">₹{{ number_format($tax, 2) }}</span>
                         </div>
                         <div class="border-t pt-2">
                             <div class="flex justify-between text-lg font-semibold">
