@@ -201,7 +201,7 @@
     <div class="footer">
         <p>Thank you for your business!</p>
         <p>This is a computer-generated invoice and does not require a signature.</p>
-        <p>For any queries, please contact us at support@bookstore.com</p>
+        <p>For any queries, please contact us at support@store.ipdc.org</p>
     </div>
 </body>
 </html>

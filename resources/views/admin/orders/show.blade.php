@@ -17,6 +17,10 @@
             </nav>
         </div>
         <div class="flex space-x-3">
+            <a onclick="sendOrderConfirmation()" 
+                    class="bg-[#00BDE0] text-white px-4 py-2 rounded-md hover:bg-[#1290a7] transition duration-200">
+                <i class="fas fa-envelope mr-2"></i>Send Confirmation Email
+            </button>
             <a href="{{ route('admin.orders.index') }}" 
                class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition duration-200">
                 <i class="fas fa-arrow-left mr-2"></i>Back to Orders
@@ -401,6 +405,39 @@ function createShiprocketOrder(orderId) {
         btn.innerHTML = originalText;
         btn.disabled = false;
         alert('Error creating Shiprocket order: ' + error.message);
+    });
+}
+
+function sendOrderConfirmation() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+    
+    fetch('{{ route("admin.orders.send-confirmation", $order) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        
+        if (data.success) {
+            alert('Order confirmation email sent successfully!');
+        } else {
+            alert('Failed to send email: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        alert('Error sending email: ' + error.message);
     });
 }
 </script>

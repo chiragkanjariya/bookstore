@@ -115,4 +115,20 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Email API Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for custom email API service
+    |
+    */
+
+    'api_base_url' => env('MAIL_API_BASE_URL', 'https://mail.ipdc.org/api/v1'),
+    'auth_token' => env('MAIL_API_AUTH_TOKEN'),
+    'api_email' => env('MAIL_API_EMAIL'),
+    'api_password' => env('MAIL_API_PASSWORD'),
+    'notification_email' => env('MAIL_NOTIFICATION_EMAIL', 'admin@bookstore.com'),
+    'notification_name' => env('MAIL_NOTIFICATION_NAME', 'Bookstore Admin'),
+
 ];

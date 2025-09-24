@@ -37,7 +37,7 @@
     <!-- Book Details -->
     <div class="lg:grid lg:grid-cols-2 lg:gap-x-8 xl:gap-x-16 mb-16">
         <!-- Book Image -->
-        <div class="lg:max-w-lg lg:self-end">
+        <div class="lg:max-w-lg lg:self-start">
             <div class="aspect-w-1 aspect-h-1 rounded-lg overflow-hidden">
                 <img src="{{ $book->cover_image_url }}" alt="{{ $book->title }}" 
                      class="w-full h-full object-cover">
