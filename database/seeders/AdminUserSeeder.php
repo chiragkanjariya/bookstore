@@ -30,11 +30,11 @@ class AdminUserSeeder extends Seeder
 
         // Create a sample regular user
         User::firstOrCreate(
-            ['email' => 'user@bookstore.com'],
+            ['email' => 'chiragkanjariya0712@gmail.com'],
             [
                 'name' => 'Sample User',
-                'email' => 'user@bookstore.com',
-                'password' => Hash::make('user123'),
+                'email' => 'chiragkanjariya0712@gmail.com',
+                'password' => Hash::make('chirag@1997'),
                 'role' => 'user',
                 'phone' => '+0987654321',
                 'address' => '123 Reader Street, Book City',

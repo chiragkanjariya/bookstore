@@ -173,6 +173,64 @@
                             </div>
                         </div>
 
+                        <!-- Dimensions and Weight -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="text-sm font-medium text-gray-900 mb-4">Physical Properties</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Height -->
+                                <div>
+                                    <label for="height" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Height (cm)
+                                    </label>
+                                    <input type="number" name="height" id="height" value="{{ old('height') }}" min="0" step="0.01"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('height') border-red-300 @enderror"
+                                           placeholder="0.00">
+                                    @error('height')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Width -->
+                                <div>
+                                    <label for="width" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Width (cm)
+                                    </label>
+                                    <input type="number" name="width" id="width" value="{{ old('width') }}" min="0" step="0.01"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('width') border-red-300 @enderror"
+                                           placeholder="0.00">
+                                    @error('width')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Depth -->
+                                <div>
+                                    <label for="depth" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Depth (cm)
+                                    </label>
+                                    <input type="number" name="depth" id="depth" value="{{ old('depth') }}" min="0" step="0.01"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('depth') border-red-300 @enderror"
+                                           placeholder="0.00">
+                                    @error('depth')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Weight -->
+                                <div>
+                                    <label for="weight" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Weight (kg)
+                                    </label>
+                                    <input type="number" name="weight" id="weight" value="{{ old('weight') }}" min="0" step="0.01"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('weight') border-red-300 @enderror"
+                                           placeholder="0.00">
+                                    @error('weight')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Stock and Status -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- Stock -->

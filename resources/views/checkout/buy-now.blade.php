@@ -57,15 +57,27 @@
                             </div>
                             
                             <div>
-                                <label for="city" class="block text-sm font-medium text-gray-700 mb-2">City</label>
-                                <input type="text" id="city" name="shipping_address[city]" required
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <label for="state" class="block text-sm font-medium text-gray-700 mb-2">State <span class="text-red-500">*</span></label>
+                                <select id="state" name="shipping_address[state_id]" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">Select State</option>
+                                </select>
                             </div>
                             
                             <div>
-                                <label for="state" class="block text-sm font-medium text-gray-700 mb-2">State</label>
-                                <input type="text" id="state" name="shipping_address[state]" required
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <label for="district" class="block text-sm font-medium text-gray-700 mb-2">District <span class="text-red-500">*</span></label>
+                                <select id="district" name="shipping_address[district_id]" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" disabled>
+                                    <option value="">Select District</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="taluka" class="block text-sm font-medium text-gray-700 mb-2">Taluka <span class="text-red-500">*</span></label>
+                                <select id="taluka" name="shipping_address[taluka_id]" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" disabled>
+                                    <option value="">Select Taluka</option>
+                                </select>
                             </div>
                             
                             <div>
@@ -264,6 +276,95 @@ document.addEventListener('DOMContentLoaded', function() {
             placeOrderBtn.disabled = false;
         });
     });
+});
+
+// Location Dropdown Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const stateSelect = document.getElementById('state');
+    const districtSelect = document.getElementById('district');
+    const talukaSelect = document.getElementById('taluka');
+
+    // Load states on page load
+    loadStates();
+
+    // State change handler
+    stateSelect.addEventListener('change', function() {
+        const stateId = this.value;
+        if (stateId) {
+            loadDistricts(stateId);
+            districtSelect.disabled = false;
+            talukaSelect.disabled = true;
+            talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+        } else {
+            districtSelect.disabled = true;
+            talukaSelect.disabled = true;
+            districtSelect.innerHTML = '<option value="">Select District</option>';
+            talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+        }
+    });
+
+    // District change handler
+    districtSelect.addEventListener('change', function() {
+        const districtId = this.value;
+        if (districtId) {
+            loadTalukas(districtId);
+            talukaSelect.disabled = false;
+        } else {
+            talukaSelect.disabled = true;
+            talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+        }
+    });
+
+    function loadStates() {
+        fetch('/api/locations/states')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    stateSelect.innerHTML = '<option value="">Select State</option>';
+                    data.data.forEach(state => {
+                        const option = document.createElement('option');
+                        option.value = state.id;
+                        option.textContent = state.name;
+                        stateSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading states:', error));
+    }
+
+    function loadDistricts(stateId) {
+        fetch(`/api/locations/districts?state_id=${stateId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    districtSelect.innerHTML = '<option value="">Select District</option>';
+                    data.data.forEach(district => {
+                        const option = document.createElement('option');
+                        option.value = district.id;
+                        option.textContent = district.name;
+                        districtSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading districts:', error));
+    }
+
+    function loadTalukas(districtId) {
+        fetch(`/api/locations/talukas?district_id=${districtId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+                    data.data.forEach(taluka => {
+                        const option = document.createElement('option');
+                        option.value = taluka.id;
+                        option.textContent = taluka.name;
+                        talukaSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading talukas:', error));
+    }
 });
 </script>
 @endsection

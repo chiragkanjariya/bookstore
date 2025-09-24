@@ -30,7 +30,7 @@
                     <!-- Cart and Wishlist Icons -->
                     <div class="flex items-center space-x-4 mr-4">
                         <!-- Wishlist -->
-                        <a href="{{ route('wishlist.index') }}" class="relative text-gray-700 hover:text-[#00BDE0] transition-colors p-2">
+                        <a href="{{ route('wishlist.index') }}" class="relative text-white hover:text-gray-700 transition-colors p-2">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                             </svg>
@@ -46,7 +46,7 @@
                         </a>
 
                         <!-- Cart -->
-                        <a href="{{ route('cart.index') }}" class="relative text-gray-700 hover:text-[#00BDE0] transition-colors p-2">
+                        <a href="{{ route('cart.index') }}" class="relative text-white hover:text-gray-700 transition-colors p-2">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 2.5M7 13l2.5 2.5m6.5 0a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0zm-6 0a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0z"/>
                             </svg>
@@ -75,7 +75,7 @@
                         </button>
                         
                         <!-- Dropdown Menu -->
-                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden" id="userMenu">
+                        <div class="absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 z-50 hidden" id="userMenu">
                             <div class="px-4 py-2 border-b border-gray-100">
                                 <p class="text-sm text-gray-500">Signed in as</p>
                                 <p class="text-sm font-medium text-gray-900">{{ Auth::user()->email }}</p>
@@ -109,14 +109,14 @@
                     <!-- Cart and Wishlist Icons for Guests -->
                     <div class="flex items-center space-x-4 mr-4">
                         <!-- Wishlist -->
-                        <button onclick="openAuthModal()" class="relative text-gray-700 hover:text-[#00BDE0] transition-colors p-2" title="Sign in to view wishlist">
+                        <button onclick="openAuthModal()" class="relative text-white hover:text-gray-700 transition-colors p-2" title="Sign in to view wishlist">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                             </svg>
                         </button>
 
                         <!-- Cart -->
-                        <button onclick="openAuthModal()" class="relative text-gray-700 hover:text-[#00BDE0] transition-colors p-2" title="Sign in to view cart">
+                        <button onclick="openAuthModal()" class="relative text-white hover:text-gray-700 transition-colors p-2" title="Sign in to view cart">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 2.5M7 13l2.5 2.5m6.5 0a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0zm-6 0a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0z"/>
                             </svg>
@@ -131,7 +131,7 @@
             </div>
             
             <!-- Mobile menu button -->
-            <button class="md:hidden p-2 text-gray-600 hover:text-[#00BDE0] ml-2">
+            <button class="md:hidden p-2 text-white hover:text-gray-700 ml-2">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
