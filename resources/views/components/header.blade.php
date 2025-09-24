@@ -1,16 +1,11 @@
 <!-- Header -->
-<header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
+<header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50 " style="background-color: #00BDE0; color:#fff">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
+        <div class="flex items-center justify-between h-16 ">
             <!-- Logo -->
             <div class="flex items-center">
                 <a href="/" class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-[#00BDE0] rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                        </svg>
-                    </div>
-                    <span class="text-xl font-bold text-gray-900">BookStore</span>
+                    <img src="https://ipdc.org/wp-content/uploads/2022/12/logo.png" alt="BookStore" class="h-10">
                 </a>
             </div>
             
@@ -19,9 +14,9 @@
                 <div class="relative">
                     <input type="text" 
                            placeholder="Search books, authors, genres..." 
-                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00BDE0] focus:border-transparent">
+                           class="w-full pl-10 pr-4 py-2 border border-white-300 rounded-lg focus:ring-2 focus:ring-[#ffffff] focus:border-transparent">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="h-5 w-5 text-white-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                     </div>

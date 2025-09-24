@@ -6,6 +6,7 @@ use App\Models\Book;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\ShiprocketService;
+use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -188,6 +189,21 @@ class CheckoutController extends Controller
                 ]);
             }
 
+            // Send order placed email (before payment)
+            try {
+                $emailService = new EmailService();
+                $emailSent = $emailService->sendOrderPlacedEmail($order);
+                
+                if ($emailSent) {
+                    \Log::info('Order placed email sent successfully for order: ' . $order->id);
+                } else {
+                    \Log::warning('Failed to send order placed email for order: ' . $order->id);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Order placed email error for order ' . $order->id . ': ' . $e->getMessage());
+                // Don't fail the main order process if email fails
+            }
+
             DB::commit();
 
             return response()->json([
@@ -271,6 +287,21 @@ class CheckoutController extends Controller
             } catch (\Exception $e) {
                 \Log::error('Shiprocket order creation failed for order: ' . $order->id . '. Error: ' . $e->getMessage());
                 // Don't fail the main order process if Shiprocket fails
+            }
+
+            // Send order confirmation email with invoice
+            try {
+                $emailService = new EmailService();
+                $emailSent = $emailService->sendOrderConfirmationEmail($order);
+                
+                if ($emailSent) {
+                    \Log::info('Order confirmation email sent successfully for order: ' . $order->id);
+                } else {
+                    \Log::warning('Failed to send order confirmation email for order: ' . $order->id);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Order confirmation email error for order ' . $order->id . ': ' . $e->getMessage());
+                // Don't fail the main order process if email fails
             }
 
             DB::commit();

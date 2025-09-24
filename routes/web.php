@@ -77,6 +77,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('orders/export', [\App\Http\Controllers\Admin\OrderController::class, 'export'])->name('orders.export');
     Route::post('orders/{order}/create-shiprocket', [\App\Http\Controllers\Admin\OrderController::class, 'createShiprocketOrder'])->name('orders.create-shiprocket');
     Route::get('orders/track-shipment/{shiprocketOrderId}', [\App\Http\Controllers\Admin\OrderController::class, 'trackShipment'])->name('orders.track-shipment');
+    Route::post('orders/{order}/send-confirmation', [\App\Http\Controllers\Admin\OrderController::class, 'sendOrderConfirmation'])->name('orders.send-confirmation');
+    
+    // Email Testing Routes (for debugging)
+    Route::get('test-email', [\App\Http\Controllers\Admin\TestEmailController::class, 'testEmail'])->name('test-email');
+    Route::get('test-order-email', [\App\Http\Controllers\Admin\TestEmailController::class, 'testOrderEmail'])->name('test-order-email');
     
     // Account Report Routes
     Route::prefix('reports')->name('reports.')->group(function () {

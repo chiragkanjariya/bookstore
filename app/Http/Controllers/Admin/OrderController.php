@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\ShiprocketService;
+use App\Services\EmailService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -273,6 +274,34 @@ class OrderController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error tracking shipment: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Send order confirmation email to customer.
+     */
+    public function sendOrderConfirmation(Request $request, Order $order)
+    {
+        try {
+            $emailService = new EmailService();
+            $emailSent = $emailService->sendOrderConfirmationEmail($order);
+            
+            if ($emailSent) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Order confirmation email sent successfully!'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to send order confirmation email.'
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error sending email: ' . $e->getMessage()
             ], 500);
         }
     }
