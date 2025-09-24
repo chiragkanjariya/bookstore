@@ -88,6 +88,9 @@ class DashboardController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],
+            'state_id' => ['nullable', 'integer', 'exists:states,id'],
+            'district_id' => ['nullable', 'integer', 'exists:districts,id'],
+            'taluka_id' => ['nullable', 'integer', 'exists:talukas,id'],
         ]);
 
         $user->update([
@@ -95,6 +98,9 @@ class DashboardController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'address' => $request->address,
+            'state_id' => $request->state_id,
+            'district_id' => $request->district_id,
+            'taluka_id' => $request->taluka_id,
         ]);
 
         if ($request->expectsJson()) {

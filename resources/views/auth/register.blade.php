@@ -69,12 +69,6 @@
                            placeholder="Confirm your password">
                 </div>
                 
-                <div>
-                    <label for="address" class="block text-sm font-medium text-gray-700">Address (Optional)</label>
-                    <textarea id="address" name="address" rows="2" 
-                              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] focus:z-10 sm:text-sm @error('address') border-red-300 @enderror"
-                              placeholder="Enter your address">{{ old('address') }}</textarea>
-                </div>
             </div>
 
             <div>

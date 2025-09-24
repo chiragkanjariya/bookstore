@@ -133,6 +133,35 @@
                         <span class="text-sm font-medium text-gray-500">Added:</span>
                         <span class="text-sm text-gray-900">{{ $book->created_at->format('F j, Y') }}</span>
                     </div>
+                    @if($book->height || $book->width || $book->depth || $book->weight)
+                    <div class="border-t pt-3 mt-3">
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Physical Properties</h4>
+                        @if($book->height)
+                        <div class="flex justify-between">
+                            <span class="text-sm font-medium text-gray-500">Height:</span>
+                            <span class="text-sm text-gray-900">{{ $book->height }} cm</span>
+                        </div>
+                        @endif
+                        @if($book->width)
+                        <div class="flex justify-between">
+                            <span class="text-sm font-medium text-gray-500">Width:</span>
+                            <span class="text-sm text-gray-900">{{ $book->width }} cm</span>
+                        </div>
+                        @endif
+                        @if($book->depth)
+                        <div class="flex justify-between">
+                            <span class="text-sm font-medium text-gray-500">Depth:</span>
+                            <span class="text-sm text-gray-900">{{ $book->depth }} cm</span>
+                        </div>
+                        @endif
+                        @if($book->weight)
+                        <div class="flex justify-between">
+                            <span class="text-sm font-medium text-gray-500">Weight:</span>
+                            <span class="text-sm text-gray-900">{{ $book->weight }} kg</span>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
                 </div>
             </div>
 

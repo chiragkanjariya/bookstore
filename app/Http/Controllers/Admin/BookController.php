@@ -59,6 +59,10 @@ class BookController extends Controller
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'shipping_price' => ['nullable', 'numeric', 'min:0'],
+            'height' => ['nullable', 'numeric', 'min:0'],
+            'width' => ['nullable', 'numeric', 'min:0'],
+            'depth' => ['nullable', 'numeric', 'min:0'],
+            'weight' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
             'language' => ['required', 'string', 'max:100'],
             'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
@@ -68,6 +72,7 @@ class BookController extends Controller
 
         $data = $request->only([
             'title', 'author', 'description', 'price', 'shipping_price',
+            'height', 'width', 'depth', 'weight',
             'stock', 'language', 'status', 'category_id'
         ]);
 
@@ -114,6 +119,10 @@ class BookController extends Controller
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'shipping_price' => ['nullable', 'numeric', 'min:0'],
+            'height' => ['nullable', 'numeric', 'min:0'],
+            'width' => ['nullable', 'numeric', 'min:0'],
+            'depth' => ['nullable', 'numeric', 'min:0'],
+            'weight' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
             'language' => ['required', 'string', 'max:100'],
             'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
@@ -123,6 +132,7 @@ class BookController extends Controller
 
         $data = $request->only([
             'title', 'author', 'description', 'price', 'shipping_price',
+            'height', 'width', 'depth', 'weight',
             'stock', 'language', 'status', 'category_id'
         ]);
 

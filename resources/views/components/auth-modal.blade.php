@@ -105,12 +105,6 @@
                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] sm:text-sm">
                         </div>
 
-                        <div>
-                            <label for="register_address" class="block text-sm font-medium text-gray-700">Address (Optional)</label>
-                            <textarea id="register_address" name="address" rows="2"
-                                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] sm:text-sm"></textarea>
-                            <span class="text-red-500 text-sm hidden" id="register_address_error"></span>
-                        </div>
 
                         <div>
                             <button type="submit" id="registerSubmitBtn"

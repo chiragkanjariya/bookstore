@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\Api\LocationController;
 
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -107,4 +108,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/orders/{order}', [\App\Http\Controllers\OrderController::class, 'show'])->name('orders.show');
     Route::patch('/orders/{order}/cancel', [\App\Http\Controllers\OrderController::class, 'cancel'])->name('orders.cancel');
     Route::get('/orders/{order}/invoice', [\App\Http\Controllers\OrderController::class, 'invoice'])->name('orders.invoice');
+});
+
+// API Routes for Location Data
+Route::prefix('api/locations')->group(function () {
+    Route::get('/states', [LocationController::class, 'getStates'])->name('api.locations.states');
+    Route::get('/districts', [LocationController::class, 'getDistricts'])->name('api.locations.districts');
+    Route::get('/talukas', [LocationController::class, 'getTalukas'])->name('api.locations.talukas');
+    Route::get('/talukas-by-state', [LocationController::class, 'getTalukasByState'])->name('api.locations.talukas-by-state');
+    Route::get('/search', [LocationController::class, 'searchLocations'])->name('api.locations.search');
 });

@@ -17,6 +17,10 @@ class Book extends Model
         'description',
         'price',
         'shipping_price',
+        'height',
+        'width',
+        'depth',
+        'weight',
         'stock',
         'language',
         'cover_image',
@@ -27,6 +31,10 @@ class Book extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'shipping_price' => 'decimal:2',
+        'height' => 'decimal:2',
+        'width' => 'decimal:2',
+        'depth' => 'decimal:2',
+        'weight' => 'decimal:2',
         'stock' => 'integer',
     ];
 
