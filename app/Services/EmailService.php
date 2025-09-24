@@ -54,42 +54,13 @@ class EmailService
 
     /**
      * Send order placed notification email (before payment)
+     * Note: This method has been disabled as per requirements - no payment pending emails
      */
     public function sendOrderPlacedEmail($order)
     {
-        try {
-            // Get access token if not already set
-            if (!$this->accessToken) {
-                $this->getAccessToken();
-            }
-
-            if (!$this->accessToken) {
-                throw new Exception('Unable to get email access token');
-            }
-
-            // Prepare email data
-            $customerEmail = $order->user->email;
-            $customerName = $order->user->name;
-            $orderNumber = 'ORD-' . $order->id;
-            
-            // Prepare email content
-            $subject = "Order Placed - {$orderNumber} (Payment Pending)";
-            $message = $this->getOrderPlacedEmailTemplate($order);
-            
-            // Prepare recipients
-            $to = [
-                $customerEmail => $customerName
-            ];
-
-            // Send email without attachment
-            return $this->sendEmailViaAPI($to, $subject, $message);
-
-        } catch (Exception $e) {
-            Log::error('Order placed email error: ' . $e->getMessage(), [
-                'order_id' => $order->id ?? null
-            ]);
-            return false;
-        }
+        // Payment pending emails are disabled as per requirements
+        Log::info('Order placed email skipped for order: ' . $order->id);
+        return true; // Return true to avoid breaking the checkout flow
     }
 
     /**
@@ -401,7 +372,7 @@ class EmailService
                 
                 <!-- Header -->
                 <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #00BDE0; padding-bottom: 20px;">
-                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">BOOKSTORE</h1>
+                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">' . (\App\Models\Setting::get('company_name') ?: 'IPDC STORE') . '</h1>
                     <p style="color: #666; font-size: 16px; margin: 5px 0 0 0;">Order Confirmation</p>
                 </div>
 
@@ -465,13 +436,37 @@ class EmailService
                     </table>
                 </div>
 
+                <!-- Order Summary -->
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #333; font-size: 18px; margin-top: 0; margin-bottom: 15px;">Order Summary</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;">Subtotal:</td>
+                            <td style="padding: 8px 0; text-align: right; color: #333;">₹' . number_format($order->subtotal, 2) . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;">Shipping:</td>
+                            <td style="padding: 8px 0; text-align: right; color: #333;">₹' . number_format($order->shipping_cost, 2) . '</td>
+                        </tr>
+                        <tr style="border-top: 2px solid #00BDE0;">
+                            <td style="padding: 12px 0; color: #333; font-weight: bold; font-size: 16px;">Total Amount:</td>
+                            <td style="padding: 12px 0; text-align: right; color: #00BDE0; font-weight: bold; font-size: 16px;">₹' . number_format($order->subtotal + $order->shipping_cost, 2) . '</td>
+                        </tr>
+                    </table>
+                </div>
+
                 <!-- Shipping Address -->
                 <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
                     <h3 style="color: #333; font-size: 18px; margin-top: 0; margin-bottom: 15px;">Shipping Address</h3>
                     <p style="color: #666; line-height: 1.6; margin: 0;">
-                        ' . $order->user->name . '<br>
-                        ' . ($order->user->address ?? 'Address not provided') . '<br>
-                        Phone: ' . ($order->user->phone ?? 'Not provided') . '<br>
+                        ' . ($order->shipping_address['name'] ?? $order->user->name) . '<br>
+                        ' . ($order->shipping_address['address_line_1'] ?? '') . '<br>
+                        ' . ($order->shipping_address['address_line_2'] ? $order->shipping_address['address_line_2'] . '<br>' : '') . '
+                        ' . ($order->shipping_address['city'] ?? '') . '<br>
+                        ' . ($order->shipping_address['taluka'] ?? '') . ', ' . ($order->shipping_address['district'] ?? '') . '<br>
+                        ' . ($order->shipping_address['state'] ?? '') . ' - ' . ($order->shipping_address['postal_code'] ?? '') . '<br>
+                        ' . ($order->shipping_address['country'] ?? 'India') . '<br><br>
+                        Phone: ' . ($order->shipping_address['phone'] ?? $order->user->phone ?? 'Not provided') . '<br>
                         Email: ' . $order->user->email . '
                     </p>
                 </div>

@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Sign In')
+
 @section('content')
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
@@ -13,7 +15,7 @@
                 Sign in to your account
             </h2>
             <p class="mt-2 text-center text-sm text-gray-600">
-                Welcome back to BookStore
+                Welcome back to IPDC STORE
             </p>
         </div>
         

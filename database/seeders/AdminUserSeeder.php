@@ -23,7 +23,7 @@ class AdminUserSeeder extends Seeder
                 'password' => Hash::make('admin123'),
                 'role' => 'admin',
                 'phone' => '+1234567890',
-                'address' => 'Admin Address, BookStore HQ',
+                'address' => 'Admin Address, IPDC STORE',
                 'email_verified_at' => now(),
             ]
         );

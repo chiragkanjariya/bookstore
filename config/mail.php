@@ -128,7 +128,7 @@ return [
     'auth_token' => env('MAIL_API_AUTH_TOKEN'),
     'api_email' => env('MAIL_API_EMAIL'),
     'api_password' => env('MAIL_API_PASSWORD'),
-    'notification_email' => env('MAIL_NOTIFICATION_EMAIL', 'admin@bookstore.com'),
-    'notification_name' => env('MAIL_NOTIFICATION_NAME', 'Bookstore Admin'),
+    'notification_email' => env('MAIL_NOTIFICATION_EMAIL', 'admin@ipdc.org'),
+    'notification_name' => env('MAIL_NOTIFICATION_NAME', 'IPDC STORE'),
 
 ];

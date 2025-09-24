@@ -140,7 +140,7 @@
                                     <tr>
                                         <td>
                                             <div style="height: 50px; line-height: 50px; font-size: 24px; font-weight: bold; color: #00BDE0;">
-                                                BOOKSTORE
+                                                IPDC STORE
                                             </div>
                                         </td>
                                         <td style="font-size: 24px; font-weight: 600; text-align:right;" class="text-end strong">
@@ -150,7 +150,7 @@
                                 </table><br>
                                 <table style="width:100%;">
                                     <tr>
-                                        <td style="font-size: 1.2rem;" class="strong">BOOKSTORE</td>
+                                        <td style="font-size: 1.2rem;" class="strong">IPDC STORE</td>
                                         <td style="font-size: 1.0rem;" class="text-end strong">{{ ucfirst($user->name) }}</td>
                                     </tr>
                                     <tr>

@@ -65,7 +65,7 @@ class BookController extends Controller
             'weight' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
             'language' => ['required', 'string', 'max:100'],
-            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:5000'],
             'status' => ['required', Rule::in(['active', 'inactive', 'out_of_stock'])],
             'category_id' => ['required', 'exists:categories,id'],
         ]);
@@ -125,7 +125,7 @@ class BookController extends Controller
             'weight' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
             'language' => ['required', 'string', 'max:100'],
-            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:5000'],
             'status' => ['required', Rule::in(['active', 'inactive', 'out_of_stock'])],
             'category_id' => ['required', 'exists:categories,id'],
         ]);

@@ -39,21 +39,35 @@
                             </div>
                             
                             <div>
-                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number <span class="text-red-500">*</span></label>
                                 <input type="tel" id="phone" name="shipping_address[phone]" required
+                                       pattern="[0-9]{10}" 
+                                       maxlength="10"
+                                       placeholder="Enter 10 digit phone number"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <div class="text-red-500 text-sm mt-1 hidden" id="phone-error">Phone number must be exactly 10 digits.</div>
                             </div>
                             
                             <div class="md:col-span-2">
-                                <label for="address_line_1" class="block text-sm font-medium text-gray-700 mb-2">Address Line 1</label>
+                                <label for="address_line_1" class="block text-sm font-medium text-gray-700 mb-2">Address Line 1 <span class="text-red-500">*</span></label>
                                 <input type="text" id="address_line_1" name="shipping_address[address_line_1]" required
+                                       minlength="10"
+                                       placeholder="Enter complete address (minimum 10 characters)"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <div class="text-red-500 text-sm mt-1 hidden" id="address-error">Address must be at least 10 characters long.</div>
                             </div>
                             
                             <div class="md:col-span-2">
                                 <label for="address_line_2" class="block text-sm font-medium text-gray-700 mb-2">Address Line 2 (Optional)</label>
                                 <input type="text" id="address_line_2" name="shipping_address[address_line_2]"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            
+                            <div>
+                                <label for="city" class="block text-sm font-medium text-gray-700 mb-2">City <span class="text-red-500">*</span></label>
+                                <input type="text" id="city" name="shipping_address[city]" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Enter city name">
                             </div>
                             
                             <div>
@@ -96,12 +110,7 @@
                         </div>
                     </div>
 
-                    <!-- Order Notes -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Order Notes (Optional)</h2>
-                        <textarea name="notes" rows="3" placeholder="Any special instructions for delivery..."
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
+                    
                 </form>
             </div>
 
@@ -133,10 +142,6 @@
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Shipping</span>
                             <span class="text-gray-900">₹{{ number_format($shipping, 2) }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Tax (18% GST)</span>
-                            <span class="text-gray-900">₹{{ number_format($tax, 2) }}</span>
                         </div>
                         <div class="border-t pt-2">
                             <div class="flex justify-between text-lg font-semibold">
@@ -180,9 +185,69 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnLoading = document.getElementById('btn-loading');
     const checkoutForm = document.getElementById('checkout-form');
 
+    // Custom validation functions
+    function validatePhone(phone) {
+        const phoneRegex = /^[0-9]{10}$/;
+        return phoneRegex.test(phone);
+    }
+
+    function validateAddress(address) {
+        return address && address.length >= 10;
+    }
+
+    // Real-time validation
+    const phoneInput = document.getElementById('phone');
+    const addressInput = document.getElementById('address_line_1');
+    const phoneError = document.getElementById('phone-error');
+    const addressError = document.getElementById('address-error');
+
+    phoneInput.addEventListener('input', function() {
+        const phone = this.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+        this.value = phone; // Set cleaned value
+        
+        if (phone.length > 0 && !validatePhone(phone)) {
+            phoneError.classList.remove('hidden');
+            this.classList.add('border-red-500');
+        } else {
+            phoneError.classList.add('hidden');
+            this.classList.remove('border-red-500');
+        }
+    });
+
+    addressInput.addEventListener('input', function() {
+        const address = this.value.trim();
+        
+        if (address.length > 0 && !validateAddress(address)) {
+            addressError.classList.remove('hidden');
+            this.classList.add('border-red-500');
+        } else {
+            addressError.classList.add('hidden');
+            this.classList.remove('border-red-500');
+        }
+    });
+
     placeOrderBtn.addEventListener('click', function() {
-        // Validate form
-        if (!checkoutForm.checkValidity()) {
+        // Custom validation before form submission
+        const phone = phoneInput.value.trim();
+        const address = addressInput.value.trim();
+        let isValid = true;
+
+        // Validate phone
+        if (!validatePhone(phone)) {
+            phoneError.classList.remove('hidden');
+            phoneInput.classList.add('border-red-500');
+            isValid = false;
+        }
+
+        // Validate address
+        if (!validateAddress(address)) {
+            addressError.classList.remove('hidden');
+            addressInput.classList.add('border-red-500');
+            isValid = false;
+        }
+
+        // Standard form validation
+        if (!checkoutForm.checkValidity() || !isValid) {
             checkoutForm.reportValidity();
             return;
         }
@@ -210,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     key: data.key,
                     amount: data.amount,
                     currency: data.currency,
-                    name: 'BookStore',
+                    name: 'IPDC STORE',
                     description: 'Book Purchase - {{ $buyNowItem->book->title }}',
                     order_id: data.razorpay_order_id,
                     prefill: {

@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Home - Discover Your Next Great Read')
+
 @section('content')
 <!-- Hero Banner Section -->
 <section class="relative bg-gradient-to-r from-[#00BDE0] to-[#0099CC] text-white py-20 overflow-hidden">
@@ -16,14 +18,6 @@
                     Explore thousands of books across all genres. From bestsellers to hidden gems, 
                     find the perfect book for every moment.
                 </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                    <a href="#books" class="bg-white text-[#00BDE0] px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors shadow-lg">
-                        Browse Collection
-                    </a>
-                    <a href="#featured" class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-[#00BDE0] transition-colors">
-                        View Featured
-                    </a>
-                </div>
             </div>
             
             <!-- Right Content - Featured Books Preview -->
@@ -44,45 +38,6 @@
     </div>
 </section>
 
-<!-- Stats Section -->
-<section class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- Books Available -->
-            <div class="text-center bg-gray-50 rounded-xl p-8 hover:shadow-lg transition-shadow">
-                <div class="w-16 h-16 bg-[#00BDE0] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                    </svg>
-                </div>
-                <h3 class="text-3xl font-bold text-gray-900 mb-2">{{ number_format($stats['books_count']) }}+</h3>
-                <p class="text-gray-600">Books Available</p>
-            </div>
-            
-            <!-- Categories -->
-            <div class="text-center bg-gray-50 rounded-xl p-8 hover:shadow-lg transition-shadow">
-                <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                    </svg>
-                </div>
-                <h3 class="text-3xl font-bold text-gray-900 mb-2">{{ $stats['categories_count'] }}+</h3>
-                <p class="text-gray-600">Categories</p>
-            </div>
-            
-            <!-- Average Rating -->
-            <div class="text-center bg-gray-50 rounded-xl p-8 hover:shadow-lg transition-shadow">
-                <div class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                    </svg>
-                </div>
-                <h3 class="text-3xl font-bold text-gray-900 mb-2">{{ $stats['average_rating'] }}</h3>
-                <p class="text-gray-600">Average Rating</p>
-            </div>
-        </div>
-    </div>
-</section>
 
 <!-- Search and Filter Section -->
 <section id="books" class="py-16 bg-gray-50">
@@ -90,9 +45,6 @@
         <!-- Search Header -->
         <div class="text-center mb-12">
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Browse Our Collection</h2>
-            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                Search through our vast collection of books using filters to find exactly what you're looking for.
-            </p>
         </div>
         
         <!-- Search and Filters -->
@@ -142,20 +94,6 @@
                         </select>
                     </div>
 
-                    <!-- Price Range -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Min Price</label>
-                        <input type="number" name="min_price" value="{{ $request->min_price }}" 
-                               min="0" step="0.01" placeholder="₹0"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0]">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Max Price</label>
-                        <input type="number" name="max_price" value="{{ $request->max_price }}" 
-                               min="0" step="0.01" placeholder="₹{{ $priceRange->max_price ?? 10000 }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0]">
-                    </div>
                 </div>
                 
                 <!-- Sort and Actions -->

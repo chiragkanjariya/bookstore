@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>{{ config('app.name', 'Bookstore') }} - Admin Panel</title>
+    <title>@yield('title', 'Admin Panel') - {{ config('app.name', 'IPDC STORE') }}</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -60,7 +60,7 @@
             <div class="flex items-center justify-between h-16 px-6 border-b border-gray-200 transition-colors bg-[#00BDE0] text-white">
                 <div class="flex items-center space-x-3">
                     <div>
-                        <img src="https://ipdc.org/wp-content/uploads/2022/12/logo.png" alt="BookStore" class="h-10">
+                        <img src="https://ipdc.org/wp-content/uploads/2022/12/logo.png" alt="IPDC STORE" class="h-10">
                     </div>
                 </div>
                 <!-- Mobile Close Button -->
@@ -160,8 +160,8 @@
                     <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">System</h3>
                     
                     <!-- Settings -->
-                    <a href="#" 
-                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-gray-400 cursor-not-allowed">
+                    <a href="{{ route('admin.settings.index') }}" 
+                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.settings.*') ? 'bg-[#00BDE0] text-white' : 'text-gray-700 hover:bg-gray-100' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
