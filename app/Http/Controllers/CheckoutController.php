@@ -91,16 +91,33 @@ class CheckoutController extends Controller
      */
     public function process(Request $request)
     {
+
         $request->validate([
-            'shipping_address.name' => 'required|string|max:255',
-            'shipping_address.phone' => 'required|string|max:20',
-            'shipping_address.address_line_1' => 'required|string|max:255',
-            'shipping_address.city' => 'required|string|max:100',
-            'shipping_address.state' => 'required|string|max:100',
-            'shipping_address.postal_code' => 'required|string|max:10',
+            'shipping_address.name' => 'required|string|min:2|max:255',
+            'shipping_address.phone' => 'required|string|regex:/^[0-9]{10}$/|size:10',
+            'shipping_address.address_line_1' => 'required|string|min:10|max:255',
+            'shipping_address.address_line_2' => 'nullable|string|max:255',
+            'shipping_address.city' => 'required|string|min:2|max:100',
+            'shipping_address.state_id' => 'required|integer|exists:states,id',
+            'shipping_address.district_id' => 'required|integer|exists:districts,id',
+            'shipping_address.taluka_id' => 'required|integer|exists:talukas,id',
+            'shipping_address.postal_code' => 'required|string|regex:/^[0-9]{6}$/|size:6',
             'shipping_address.country' => 'required|string|max:100',
             'buy_now_book_id' => 'nullable|exists:books,id',
             'buy_now_quantity' => 'nullable|integer|min:1|max:10',
+        ], [
+            'shipping_address.name.required' => 'Full name is required.',
+            'shipping_address.name.min' => 'Full name must be at least 2 characters.',
+            'shipping_address.phone.required' => 'Phone number is required.',
+            'shipping_address.phone.regex' => 'Phone number must be exactly 10 digits.',
+            'shipping_address.phone.size' => 'Phone number must be exactly 10 digits.',
+            'shipping_address.address_line_1.required' => 'Address line 1 is required.',
+            'shipping_address.address_line_1.min' => 'Address line 1 must be at least 10 characters.',
+            'shipping_address.city.required' => 'City is required.',
+            'shipping_address.city.min' => 'City must be at least 2 characters.',
+            'shipping_address.postal_code.required' => 'Postal code is required.',
+            'shipping_address.postal_code.regex' => 'Postal code must be exactly 6 digits.',
+            'shipping_address.postal_code.size' => 'Postal code must be exactly 6 digits.',
         ]);
 
         $user = Auth::user();
@@ -154,6 +171,19 @@ class CheckoutController extends Controller
                 $orderItems = $cartItems;
             }
 
+            // Convert location IDs to names for storage
+            $shippingAddress = $request->shipping_address;
+            $state = \App\Models\State::find($shippingAddress['state_id']);
+            $district = \App\Models\District::find($shippingAddress['district_id']);
+            $taluka = \App\Models\Taluka::find($shippingAddress['taluka_id']);
+            
+            $shippingAddress['state'] = $state->name;
+            $shippingAddress['district'] = $district->name;
+            $shippingAddress['taluka'] = $taluka->name;
+            
+            // Remove the ID fields as we only store names
+            unset($shippingAddress['state_id'], $shippingAddress['district_id'], $shippingAddress['taluka_id']);
+
             // Create Razorpay order
             $razorpayOrder = $this->razorpayApi->order->create([
                 'receipt' => 'order_' . time(),
@@ -172,8 +202,8 @@ class CheckoutController extends Controller
                 'shipping_cost' => $shipping,
                 'tax_amount' => $tax,
                 'total_amount' => $total,
-                'shipping_address' => $request->shipping_address,
-                'billing_address' => $request->billing_address ?? $request->shipping_address,
+                'shipping_address' => $shippingAddress,
+                'billing_address' => $request->billing_address ?? $shippingAddress,
                 'notes' => $request->notes,
             ]);
 
@@ -189,19 +219,12 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            // Send order placed email (before payment)
+            // Send order placed email (now disabled - just logs)
             try {
                 $emailService = new EmailService();
-                $emailSent = $emailService->sendOrderPlacedEmail($order);
-                
-                if ($emailSent) {
-                    \Log::info('Order placed email sent successfully for order: ' . $order->id);
-                } else {
-                    \Log::warning('Failed to send order placed email for order: ' . $order->id);
-                }
+                $emailService->sendOrderPlacedEmail($order); // This now just logs and returns true
             } catch (\Exception $e) {
-                \Log::error('Order placed email error for order ' . $order->id . ': ' . $e->getMessage());
-                // Don't fail the main order process if email fails
+                \Log::error('Order email service error for order ' . $order->id . ': ' . $e->getMessage());
             }
 
             DB::commit();

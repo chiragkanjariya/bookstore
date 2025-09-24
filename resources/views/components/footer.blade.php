@@ -10,7 +10,7 @@
                             <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <span class="text-xl font-bold">BookStore</span>
+                    <span class="text-xl font-bold">IPDC STORE</span>
                 </div>
                 <p class="text-gray-300 mb-6 max-w-md">
                     Discover your next great read with our extensive collection of books across all genres. 
@@ -68,7 +68,7 @@
         <div class="border-t border-gray-800 mt-12 pt-8">
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <p class="text-gray-400 text-sm">
-                    © 2024 BookStore. All rights reserved.
+                    © 2024 IPDC STORE. All rights reserved.
                 </p>
                 <div class="flex space-x-6 mt-4 md:mt-0">
                     <a href="#" class="text-gray-400 hover:text-[#00BDE0] text-sm transition-colors">Privacy Policy</a>

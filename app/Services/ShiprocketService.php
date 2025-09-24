@@ -204,7 +204,7 @@ class ShiprocketService
             'order_date' => $order->created_at->format('Y-m-d H:i'),
             'pickup_location' => 'warehouse', // Use the actual pickup location name
             'channel_id' => '',
-            'comment' => $order->notes ?? 'Order from BookStore',
+            'comment' => $order->notes ?? 'Order from IPDC STORE',
             'billing_customer_name' => $order->shipping_address['name'],
             'billing_last_name' => '',
             'billing_address' => $order->shipping_address['address_line_1'],

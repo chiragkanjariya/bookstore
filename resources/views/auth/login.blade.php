@@ -13,7 +13,7 @@
                 Sign in to your account
             </h2>
             <p class="mt-2 text-center text-sm text-gray-600">
-                Welcome back to BookStore
+                Welcome back to IPDC STORE
             </p>
         </div>
         

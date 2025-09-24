@@ -110,6 +110,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/orders/{order}/invoice', [\App\Http\Controllers\OrderController::class, 'invoice'])->name('orders.invoice');
 });
 
+
 // API Routes for Location Data
 Route::prefix('api/locations')->group(function () {
     Route::get('/states', [LocationController::class, 'getStates'])->name('api.locations.states');
@@ -118,3 +119,4 @@ Route::prefix('api/locations')->group(function () {
     Route::get('/talukas-by-state', [LocationController::class, 'getTalukasByState'])->name('api.locations.talukas-by-state');
     Route::get('/search', [LocationController::class, 'searchLocations'])->name('api.locations.search');
 });
+

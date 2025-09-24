@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>{{ config('app.name', 'Bookstore') }} - Admin Panel</title>
+    <title>{{ config('app.name', 'IPDC STORE') }} - Admin Panel</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -60,7 +60,7 @@
             <div class="flex items-center justify-between h-16 px-6 border-b border-gray-200 transition-colors bg-[#00BDE0] text-white">
                 <div class="flex items-center space-x-3">
                     <div>
-                        <img src="https://ipdc.org/wp-content/uploads/2022/12/logo.png" alt="BookStore" class="h-10">
+                        <img src="https://ipdc.org/wp-content/uploads/2022/12/logo.png" alt="IPDC STORE" class="h-10">
                     </div>
                 </div>
                 <!-- Mobile Close Button -->
