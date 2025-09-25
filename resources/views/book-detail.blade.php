@@ -129,10 +129,6 @@
                         <span class="text-sm text-gray-900">{{ $book->language }}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-sm font-medium text-gray-500">ISBN:</span>
-                        <span class="text-sm text-gray-900 font-mono">{{ $book->slug }}</span>
-                    </div>
-                    <div class="flex justify-between">
                         <span class="text-sm font-medium text-gray-500">Added:</span>
                         <span class="text-sm text-gray-900">{{ $book->created_at->format('F j, Y') }}</span>
                     </div>

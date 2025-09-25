@@ -20,17 +20,17 @@
                         <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-200 space-y-6">
                             <header class="text-center mb-8">
                                 <h1 class="text-4xl font-semibold text-blue-600">Privacy Notice</h1>
-                                <p class="mt-2 text-lg">SHAYONA CHARITABLE TRUST (IPDC Online Courses)</p>
+                                <p class="mt-2 text-lg">B. A. P. S. VISION</p>
                             </header>
                     
                             <section class="">
                                 <h2 class="text-LG font-semibold mb-4">Introduction</h2>
-                                <p>By visiting IPDC Online Courses, you are accepting and consenting to the practices described in this Privacy Notice.</p>
+                                <p>By visiting IPDC Store, you are accepting and consenting to the practices described in this Privacy Notice.</p>
                             </section>
                     
                             <section class="">
-                                <h2 class="text-LG font-semibold mb-4">What Personal Information about Customers does SHAYONA CHARITABLE TRUST (IPDC Online Courses) Gather?</h2>
-                                <p>The information we learn from Website visitors and customers helps us personalize and continually improve your shopping and surfing experience at IPDC Online Courses...</p>
+                                <h2 class="text-LG font-semibold mb-4">What Personal Information about Customers does B. A. P. S. VISION (IPDC Store) Gather?</h2>
+                                <p>The information we learn from Website visitors and customers helps us personalize and continually improve your shopping and surfing experience at IPDC Store...</p>
                             </section>
                     
                             <section class="">
@@ -39,7 +39,7 @@
                             </section>
                     
                             <section class="">
-                                <h2 class="text-LG font-semibold mb-4">Does SHAYONA CHARITABLE TRUST (IPDC Online Courses) share the Information it receives?</h2>
+                                <h2 class="text-LG font-semibold mb-4">Does B. A. P. S. VISION (IPDC Store) share the Information it receives?</h2>
                                 <p>Information about our customers is an important part of our business, and we are not in the business of selling it to others...</p>
                             </section>
                     
@@ -50,7 +50,7 @@
                     
                             <section class="">
                                 <h2 class="text-LG font-semibold mb-4">What Information can I Access?</h2>
-                                <p>IPDC Online Courses gives you access to a broad range of information about your account and your interactions...</p>
+                                <p>IPDC Store gives you access to a broad range of information about your account and your interactions...</p>
                             </section>
                     
                             <section class="">
@@ -59,21 +59,20 @@
                             </section>
                     
                             <section class="">
-                                <h2 class="text-LG font-semibold mb-4">Are Children Allowed to Use SHAYONA CHARITABLE TRUST (IPDC Online Courses)?</h2>
-                                <p>Use of SHAYONA CHARITABLE TRUST (IPDC Online Courses) is available only to persons who can form a legally binding contract...</p>
+                                <h2 class="text-LG font-semibold mb-4">Are Children Allowed to Use B. A. P. S. VISION (IPDC Store)?</h2>
+                                <p>Use of B. A. P. S. VISION (IPDC Store) is available only to persons who can form a legally binding contract...</p>
                             </section>
                     
                             <section class="">
                                 <h2 class="text-LG font-semibold mb-4">Notices and Revisions</h2>
-                                <p>If you have any concerns about privacy or grievances at SHAYONA CHARITABLE TRUST (IPDC Online Courses), please contact us...</p>
+                                <p>If you have any concerns about privacy or grievances at B. A. P. S. VISION (IPDC Store), please contact us...</p>
                             </section>
                     
                             <footer class="bg-gray-200 p-6 rounded-lg shadow-md text-center">
                                 <p class="text-lg">Contact Information:</p>
-                                <p class="mt-2 text-sm">SHAYONA CHARITABLE TRUST (IPDC Online Courses)<br>
-                                    3rd Floor, Dharm Sadan Building, Inside Shri Swaminarayan Mandir,<br>
-                                    Shahibaug, Ahmedabad, Gujarat – 380 004, India.<br>
-                                    Email: <a href="mailto:support@ipdc.org" class="text-blue-600">support@ipdc.org</a>
+                                <p class="mt-2 text-sm">B. A. P. S. VISION (IPDC Store)<br>
+                                    B.A.P.S. Vision, BAPS Pramukh Academy, Shastri Yagnapurush Marg, near BAPS Shastriji Maharaj Hospital, Atladara, Vadodara, Gujarat 390007<br>
+                                    Email: <a href="mailto:service.ipdc@in.baps.org" class="text-blue-600">service.ipdc@in.baps.org</a>
                                 </p>
                             </footer>
                         </div>

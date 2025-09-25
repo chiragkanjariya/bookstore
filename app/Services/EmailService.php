@@ -80,7 +80,7 @@ class EmailService
                 'subject' => $subject,
                 'message' => $message,
                 'to' => json_encode([$to]), // This should be an array of objects
-                'is_online_user' => '2',
+                'is_online_user' => 0,
                 'notification_name' => config('mail.notification_name', 'Bookstore Admin')
             ];
 
@@ -90,25 +90,67 @@ class EmailService
                 'form_data' => $formData
             ]);
 
-            // Prepare HTTP request
-            $request = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->accessToken
-            ])->asMultipart();
-
-            // Add form data
+            // Use cURL directly to match the working curl command exactly
+            $curl = curl_init();
+            
+            $postFields = [];
+            
+            // Add form fields
             foreach ($formData as $key => $value) {
-                $request = $request->attach($key, $value);
+                $postFields[$key] = $value;
             }
-
-            // Add attachments if provided
+            
+            // Add file attachments if provided
             foreach ($attachments as $attachment) {
                 if (file_exists($attachment['path'])) {
-                    $request = $request->attach('file', fopen($attachment['path'], 'r'), $attachment['name']);
+                    $postFields['file'] = new \CURLFile($attachment['path'], 'application/pdf', $attachment['name']);
                 }
             }
-
-            // Send email
-            $response = $request->post($this->baseUrl . '/user/send_smtp_mail');
+            
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $this->baseUrl . '/user/send_smtp_mail',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS => $postFields,
+                CURLOPT_HTTPHEADER => [
+                    'Authorization: Bearer ' . $this->accessToken
+                ],
+            ]);
+            
+            $response_body = curl_exec($curl);
+            $response_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            $curl_error = curl_error($curl);
+            curl_close($curl);
+            
+            // Create a response object similar to Laravel's HTTP response
+            $response = new class($response_body, $response_code, $curl_error) {
+                private $body;
+                private $status;
+                private $error;
+                
+                public function __construct($body, $status, $error) {
+                    $this->body = $body;
+                    $this->status = $status;
+                    $this->error = $error;
+                }
+                
+                public function body() {
+                    return $this->body;
+                }
+                
+                public function status() {
+                    return $this->status;
+                }
+                
+                public function successful() {
+                    return $this->status >= 200 && $this->status < 300 && empty($this->error);
+                }
+            };
 
             Log::info('Email API Response', [
                 'status' => $response->status(),
@@ -158,7 +200,7 @@ class EmailService
             }
 
             // Prepare email content
-            $subject = "Order Confirmation - #IPDC{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}";
+            $subject = "Order Confirmation - #IPDC".str_pad($order->id, 5, '0', STR_PAD_LEFT);
             $message = $this->getOrderConfirmationEmailTemplate($order);
             
             // Prepare recipients
@@ -340,12 +382,6 @@ class EmailService
                     </ol>
                 </div>
 
-                <!-- Contact Info -->
-                <div style="text-align: center; color: #666; font-size: 14px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <p>Need help? Contact us at <a href="mailto:support@store.ipdc.org" style="color: #00BDE0;">support@bookstore.com</a></p>
-                    <p style="margin-top: 15px;">Thank you for choosing Bookstore!</p>
-                </div>
-
             </div>
         </div>';
 
@@ -481,12 +517,6 @@ class EmailService
                     </ul>
                 </div>
 
-                <!-- Contact Info -->
-                <div style="text-align: center; color: #666; font-size: 14px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <p>Need help? Contact us at <a href="mailto:support@bookstore.com" style="color: #00BDE0;">support@bookstore.com</a></p>
-                    <p style="margin-top: 15px;">Thank you for choosing Bookstore!</p>
-                </div>
-
             </div>
         </div>';
 
@@ -516,7 +546,7 @@ class EmailService
                 'subject' => $subject,
                 'message' => $message,
                 'to' => json_encode([$to]),
-                'is_online_user' => '2',
+                'is_online_user' => '0',
                 'notification_name' => config('mail.notification_name', 'Bookstore Admin')
             ];
 

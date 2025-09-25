@@ -10,7 +10,7 @@
                 <div class="space-y-8">
                     <div class="text-center bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 border border-blue-100">
                         <h2 class="text-2xl font-bold text-gray-900 mb-6">Contact Us</h2>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-6">B. A. P. S. VISION (IPDC Online Courses)</h3>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-6">B. A. P. S. VISION (IPDC Store)</h3>
                         
                         <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200 mb-6">
                             <div class="flex items-start justify-center mb-4">
