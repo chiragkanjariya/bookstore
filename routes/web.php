@@ -132,3 +132,6 @@ Route::get('/payment-policies', [\App\Http\Controllers\PagesController::class, '
 Route::get('/about-us', [\App\Http\Controllers\PagesController::class, 'aboutUs'])->name('pages.about-us');
 Route::get('/contact-us', [\App\Http\Controllers\PagesController::class, 'contactUs'])->name('pages.contact-us');
 
+// Webhook Routes (No CSRF protection needed)
+Route::post('/webhook/razorpay', [\App\Http\Controllers\WebhookController::class, 'razorpayWebhook'])->name('webhook.razorpay');
+
