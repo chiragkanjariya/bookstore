@@ -17,7 +17,7 @@ class DefaultSettingsSeeder extends Seeder
             // Company Settings
             [
                 'key' => 'company_name',
-                'value' => 'IPDC STORE',
+                'value' => 'IPDC',
                 'type' => 'string',
                 'category' => 'company',
                 'description' => 'Company Name'

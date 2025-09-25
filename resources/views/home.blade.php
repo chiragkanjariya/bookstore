@@ -71,20 +71,20 @@
                     <!-- Category Filter -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                        <select name="category" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0]">
+                        <select name="category" onchange="this.form.submit()" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0]">
                             <option value="">All Categories</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}" {{ $request->category == $category->id ? 'selected' : '' }}>
                                     {{ $category->name }} ({{ $category->books_count }})
                                 </option>
                             @endforeach
-                    </select>
-        </div>
+                        </select>
+                    </div>
         
                     <!-- Language Filter -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Language</label>
-                        <select name="language" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0]">
+                        <select name="language" onchange="this.form.submit()" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0]">
                             <option value="">All Languages</option>
                             @foreach($languages as $language)
                                 <option value="{{ $language }}" {{ $request->language == $language ? 'selected' : '' }}>
@@ -94,13 +94,35 @@
                         </select>
                     </div>
 
+                    <!-- Min Price Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Min Price (₹)</label>
+                        <input type="number" name="min_price" value="{{ $request->min_price }}" 
+                               min="{{ $priceRange->min_price ?? 0 }}" 
+                               max="{{ $priceRange->max_price ?? 10000 }}"
+                               onchange="this.form.submit()"
+                               placeholder="Min" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0]">
+                    </div>
+
+                    <!-- Max Price Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Max Price (₹)</label>
+                        <input type="number" name="max_price" value="{{ $request->max_price }}" 
+                               min="{{ $priceRange->min_price ?? 0 }}" 
+                               max="{{ $priceRange->max_price ?? 10000 }}"
+                               onchange="this.form.submit()"
+                               placeholder="Max" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0]">
+                    </div>
+
                 </div>
                 
                 <!-- Sort and Actions -->
                 <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div class="flex items-center space-x-4">
                         <label class="text-sm font-medium text-gray-700">Sort by:</label>
-                        <select name="sort_by" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0]">
+                        <select name="sort_by" onchange="this.form.submit()" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0]">
                             <option value="created_at" {{ $request->sort_by == 'created_at' ? 'selected' : '' }}>Latest</option>
                             <option value="price_low" {{ $request->sort_by == 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
                             <option value="price_high" {{ $request->sort_by == 'price_high' ? 'selected' : '' }}>Price: High to Low</option>

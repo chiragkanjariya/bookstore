@@ -56,6 +56,7 @@ class BookController extends Controller
         $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
+            'isbn' => ['nullable', 'string', 'max:20', 'unique:books,isbn'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'shipping_price' => ['nullable', 'numeric', 'min:0'],
@@ -71,7 +72,7 @@ class BookController extends Controller
         ]);
 
         $data = $request->only([
-            'title', 'author', 'description', 'price', 'shipping_price',
+            'title', 'author', 'isbn', 'description', 'price', 'shipping_price',
             'height', 'width', 'depth', 'weight',
             'stock', 'language', 'status', 'category_id'
         ]);
@@ -116,6 +117,7 @@ class BookController extends Controller
         $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
+            'isbn' => ['nullable', 'string', 'max:20', 'unique:books,isbn,' . $book->id],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'shipping_price' => ['nullable', 'numeric', 'min:0'],
@@ -131,7 +133,7 @@ class BookController extends Controller
         ]);
 
         $data = $request->only([
-            'title', 'author', 'description', 'price', 'shipping_price',
+            'title', 'author', 'isbn', 'description', 'price', 'shipping_price',
             'height', 'width', 'depth', 'weight',
             'stock', 'language', 'status', 'category_id'
         ]);

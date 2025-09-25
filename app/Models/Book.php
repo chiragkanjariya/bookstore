@@ -14,6 +14,7 @@ class Book extends Model
         'title',
         'slug',
         'author',
+        'isbn',
         'description',
         'price',
         'shipping_price',
@@ -96,13 +97,14 @@ class Book extends Model
     }
 
     /**
-     * Scope a query to search books by title or author.
+     * Scope a query to search books by title, author, or ISBN.
      */
     public function scopeSearch($query, $search)
     {
         return $query->where(function ($query) use ($search) {
             $query->where('title', 'like', "%{$search}%")
-                  ->orWhere('author', 'like', "%{$search}%");
+                  ->orWhere('author', 'like', "%{$search}%")
+                  ->orWhere('isbn', 'like', "%{$search}%");
         });
     }
 

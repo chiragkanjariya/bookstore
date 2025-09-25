@@ -69,7 +69,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Download invoice for the order.
+     * Download invoice for the order (same as email format).
      */
     public function invoice(Order $order)
     {
@@ -83,8 +83,25 @@ class OrderController extends Controller
             return redirect()->back()->with('error', 'Invoice is only available for paid orders.');
         }
 
-        $order->load(['orderItems.book.category']);
+        $order->load(['orderItems.book.category', 'user']);
+        
+        // Structure the data the same way as the email service does
+        $user = $order->user;
+        $user->orders = collect([$order]);
+        $users = collect([$user]);
+        
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('admin.reports.accounts.combined-invoice', [
+            'users' => $users,
+            'totalUsers' => 1,
+            'totalOrders' => 1,
+            'totalAmount' => $order->total_amount,
+            'dateFrom' => null,
+            'dateTo' => null
+        ]);
 
-        return view('orders.invoice', compact('order'));
+        $filename = 'invoice_' . $order->order_number . '.pdf';
+        
+        return $pdf->download($filename);
     }
 }

@@ -106,7 +106,7 @@
 
     <!-- Header -->
     <div class="header">
-        <div class="company-name">IPDC STORE</div>
+        <div class="company-name">IPDC</div>
         <div class="invoice-title">INVOICE</div>
         <div>Invoice #{{ $order->order_number }}</div>
     </div>

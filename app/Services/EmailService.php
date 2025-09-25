@@ -158,7 +158,7 @@ class EmailService
             }
 
             // Prepare email content
-            $subject = "Order Confirmation - {$orderNumber}";
+            $subject = "Order Confirmation - #IPDC{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}";
             $message = $this->getOrderConfirmationEmailTemplate($order);
             
             // Prepare recipients
@@ -372,7 +372,7 @@ class EmailService
                 
                 <!-- Header -->
                 <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #00BDE0; padding-bottom: 20px;">
-                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">' . (\App\Models\Setting::get('company_name') ?: 'IPDC STORE') . '</h1>
+                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '</h1>
                     <p style="color: #666; font-size: 16px; margin: 5px 0 0 0;">Order Confirmation</p>
                 </div>
 

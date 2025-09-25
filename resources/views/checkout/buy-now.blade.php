@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     key: data.key,
                     amount: data.amount,
                     currency: data.currency,
-                    name: 'IPDC STORE',
+                    name: 'IPDC',
                     description: 'Book Purchase - {{ $buyNowItem->book->title }}',
                     order_id: data.razorpay_order_id,
                     prefill: {

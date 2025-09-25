@@ -53,6 +53,9 @@
             <div class="mt-3">
                 <h2 class="sr-only">Book information</h2>
                 <p class="text-xl text-gray-600">by {{ $book->author }}</p>
+                @if($book->isbn)
+                    <p class="text-sm text-gray-500 mt-1">ISBN: <span class="font-mono">{{ $book->isbn }}</span></p>
+                @endif
             </div>
 
             <!-- Category and Language -->
@@ -65,9 +68,7 @@
                         {{ $book->language }}
                     </span>
                 @endif
-                <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium {{ $book->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                    {{ ucfirst($book->status) }}
-                </span>
+                
             </div>
 
             <!-- Price -->
@@ -240,30 +241,6 @@
                 @endauth
             </div>
 
-            <!-- Share -->
-            <div class="mt-8 border-t border-gray-200 pt-8">
-                <h3 class="text-sm font-medium text-gray-900">Share this book</h3>
-                <div class="mt-4 flex space-x-4">
-                    <a href="#" class="text-gray-400 hover:text-gray-500">
-                        <span class="sr-only">Share on Facebook</span>
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M20 10C20 4.477 15.523 0 10 0S0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.988C16.343 19.128 20 14.991 20 10z" clip-rule="evenodd"/>
-                        </svg>
-                    </a>
-                    <a href="#" class="text-gray-400 hover:text-gray-500">
-                        <span class="sr-only">Share on Twitter</span>
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84"/>
-                        </svg>
-                    </a>
-                    <a href="#" class="text-gray-400 hover:text-gray-500">
-                        <span class="sr-only">Share via email</span>
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                    </a>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -385,9 +362,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Replace the form with a "In Wishlist" link
-                    const parentDiv = this.parentElement;
-                    parentDiv.innerHTML = `
+                    // Replace only the form with a "In Wishlist" link
+                    this.outerHTML = `
                         <a href="/wishlist" 
                            class="flex-shrink-0 bg-red-500 border-2 border-red-500 text-white py-3 px-6 rounded-lg hover:bg-red-600 transition-colors font-medium">
                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
