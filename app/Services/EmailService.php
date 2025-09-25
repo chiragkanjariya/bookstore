@@ -344,31 +344,30 @@ class EmailService
 
                 <!-- Order Items -->
                 <div style="margin-bottom: 25px;">
-                    <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">Order Items</h3>
-                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
-                        <thead>
-                            <tr style="background-color: #f8f9fa;">
-                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd; color: #666;">Book</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; color: #666;">Qty</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd; color: #666;">Price</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd; color: #666;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>';
+                    <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">Order Items</h3>';
 
         foreach ($orderItems as $item) {
             $template .= '
-                            <tr>
-                                <td style="padding: 12px; border-bottom: 1px solid #eee; color: #333;">' . $item['name'] . '</td>
-                                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #eee; color: #333;">' . $item['quantity'] . '</td>
-                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #eee; color: #333;">' . $item['price'] . '</td>
-                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #eee; color: #333; font-weight: bold;">' . $item['total'] . '</td>
-                            </tr>';
+                    <div style="background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
+                        <div style="margin-bottom: 8px;">
+                            <strong style="color: #333; font-size: 16px;">' . $item['name'] . '</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="color: #666; font-size: 14px;">Quantity:</span>
+                            <span style="color: #333; font-weight: bold;">' . $item['quantity'] . '</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="color: #666; font-size: 14px;">Unit Price:</span>
+                            <span style="color: #333;">' . $item['price'] . '</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
+                            <span style="color: #333; font-weight: bold; font-size: 15px;">Total:</span>
+                            <span style="color: #00BDE0; font-weight: bold; font-size: 15px;">' . $item['total'] . '</span>
+                        </div>
+                    </div>';
         }
 
         $template .= '
-                        </tbody>
-                    </table>
                 </div>
 
                 <!-- Next Steps -->
@@ -445,31 +444,30 @@ class EmailService
 
                 <!-- Order Items -->
                 <div style="margin-bottom: 25px;">
-                    <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">Order Items</h3>
-                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
-                        <thead>
-                            <tr style="background-color: #f8f9fa;">
-                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd; color: #666;">Book</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; color: #666;">Qty</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd; color: #666;">Price</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd; color: #666;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>';
+                    <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">Order Items</h3>';
 
         foreach ($orderItems as $item) {
             $template .= '
-                            <tr>
-                                <td style="padding: 12px; border-bottom: 1px solid #eee; color: #333;">' . $item['name'] . '</td>
-                                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #eee; color: #333;">' . $item['quantity'] . '</td>
-                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #eee; color: #333;">' . $item['price'] . '</td>
-                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #eee; color: #333; font-weight: bold;">' . $item['total'] . '</td>
-                            </tr>';
+                    <div style="background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
+                        <div style="margin-bottom: 8px;">
+                            <strong style="color: #333; font-size: 16px;">' . $item['name'] . '</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="color: #666; font-size: 14px;">Quantity:</span>
+                            <span style="color: #333; font-weight: bold;">' . $item['quantity'] . '</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="color: #666; font-size: 14px;">Unit Price:</span>
+                            <span style="color: #333;">' . $item['price'] . '</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
+                            <span style="color: #333; font-weight: bold; font-size: 15px;">Total:</span>
+                            <span style="color: #00BDE0; font-weight: bold; font-size: 15px;">' . $item['total'] . '</span>
+                        </div>
+                    </div>';
         }
 
         $template .= '
-                        </tbody>
-                    </table>
                 </div>
 
                 <!-- Order Summary -->
