@@ -66,6 +66,21 @@
                             @enderror
                         </div>
 
+                        <!-- ISBN -->
+                        <div>
+                            <label for="isbn" class="block text-sm font-medium text-gray-700 mb-1">
+                                ISBN
+                            </label>
+                            <input type="text" name="isbn" id="isbn" value="{{ old('isbn') }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('isbn') border-red-300 @enderror"
+                                   placeholder="Enter ISBN (e.g., 978-0123456789)"
+                                   maxlength="20">
+                            @error('isbn')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-sm text-gray-500">International Standard Book Number (optional)</p>
+                        </div>
+
                         <!-- Category -->
                         <div>
                             <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">

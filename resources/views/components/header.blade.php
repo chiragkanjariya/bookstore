@@ -5,7 +5,7 @@
             <!-- Logo -->
             <div class="flex items-center">
                 <a href="/" class="flex items-center space-x-3">
-                    <img src="https://ipdc.org/wp-content/uploads/2022/12/logo.png" alt="IPDC STORE" class="h-10">
+                    <img src="https://ipdc.org/wp-content/uploads/2022/12/logo.png" alt="IPDC" class="h-10">
                 </a>
             </div>
             

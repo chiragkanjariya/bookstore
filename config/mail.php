@@ -129,6 +129,6 @@ return [
     'api_email' => env('MAIL_API_EMAIL'),
     'api_password' => env('MAIL_API_PASSWORD'),
     'notification_email' => env('MAIL_NOTIFICATION_EMAIL', 'admin@ipdc.org'),
-    'notification_name' => env('MAIL_NOTIFICATION_NAME', 'IPDC STORE'),
+    'notification_name' => env('MAIL_NOTIFICATION_NAME', 'IPDC'),
 
 ];

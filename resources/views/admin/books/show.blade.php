@@ -96,6 +96,13 @@
                                 <p class="mt-1 text-gray-900">{{ $book->author }}</p>
                             </div>
 
+                            @if($book->isbn)
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">ISBN</label>
+                                <p class="mt-1 text-gray-900 font-mono">{{ $book->isbn }}</p>
+                            </div>
+                            @endif
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Category</label>
                                 <p class="mt-1">

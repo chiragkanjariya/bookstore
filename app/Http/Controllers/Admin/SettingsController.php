@@ -24,7 +24,7 @@ class SettingsController extends Controller
                 'razorpay_key_secret' => Setting::get('razorpay_key_secret', ''),
             ],
             'company' => [
-                'company_name' => Setting::get('company_name', 'IPDC STORE'),
+                'company_name' => Setting::get('company_name', 'IPDC'),
                 'company_address' => Setting::get('company_address', ''),
                 'company_place' => Setting::get('company_place', ''),
                 'company_email' => Setting::get('company_email', ''),

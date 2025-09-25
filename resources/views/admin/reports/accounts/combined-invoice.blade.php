@@ -140,7 +140,7 @@
                                     <tr>
                                         <td>
                                             <div style="height: 50px; line-height: 50px; font-size: 24px; font-weight: bold; color: #00BDE0;">
-                                                IPDC STORE
+                                                IPDC
                                             </div>
                                         </td>
                                         <td style="font-size: 24px; font-weight: 600; text-align:right;" class="text-end strong">
@@ -150,11 +150,11 @@
                                 </table><br>
                                 <table style="width:100%;">
                                     <tr>
-                                        <td style="font-size: 1.2rem;" class="strong">IPDC STORE</td>
+                                        <td style="font-size: 1.2rem;" class="strong"></td>
                                         <td style="font-size: 1.0rem;" class="text-end strong">{{ ucfirst($user->name) }}</td>
                                     </tr>
                                     <tr>
-                                        <td class="gry-color small w-50">{{ config('app.company_address', '123 Business Street, City, State 12345') }}</td>
+                                        <td class="gry-color small w-50">{{ \App\Models\Setting::get('company_address', '123 Business Street, City, State 12345') }}</td>
                                         <td class="gry-color text-end small w-50">
                                             {{ $user->address ?? 'Address not available' }}<br />
                                             Phone: {{ $user->phone ?? 'N/A' }}<br />
@@ -175,19 +175,15 @@
                                         <td class="strong small text-end small w-50 gry-color"></td>
                                     </tr>
                                     <tr>
-                                        <td class="strong small gry-color">CIN : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {{ config('app.cin_number', 'U80904MH2021NPL364738') }}</td>
-                                        <td class="strong small text-end small w-50 gry-color"></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="strong small gry-color">Order No : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ORD-{{ $order->id }}</td>
-                                        <td class="strong small text-end small w-50 gry-color">Invoice No : &nbsp;&nbsp;INV-{{ $order->id }}</td>
+                                        <td class="strong small gry-color">Order No : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IPDC{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
+                                        <td class="strong small text-end small w-50 gry-color">Invoice No : &nbsp;&nbsp;IPDC{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
                                     </tr>
                                     <tr>
                                         <td class="strong small gry-color">Order Date : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $order->created_at->format('d-M-Y') }}</td>
                                         <td class="strong small text-end small w-50 gry-color">Payment Date : &nbsp;&nbsp;{{ $order->created_at->format('d-M-Y') }}</td>
                                     </tr>
                                     <tr>
-                                        <td class="strong small gry-color">Place of : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $user->address ? explode(',', $user->address)[0] ?? 'N/A' : 'N/A' }}</td>
+                                        <td class="strong small gry-color">Place of : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ \App\Models\Setting::get('company_place', '123 Business Street, City, State 12345') }}</td>
                                         <td class="strong small text-end small w-50 gry-color"></td>
                                     </tr>
                                 </table>
@@ -199,7 +195,6 @@
                                     <thead>
                                         <tr class="gry-color" style="background: #eceff4;padding:10px;">
                                             <th width="10%">#</th>
-                                            <th width="15%">HSN/SAC</th>
                                             <th width="60%" style="padding-left : 10px;">Book Name</th>
                                             <th width="15%" class="text-end">Amount</th>
                                         </tr>
@@ -229,40 +224,14 @@
                                             @endphp
                                             <tr>
                                                 <td>{{ $i }}</td>
-                                                <td>999293</td>
-                                                <td class="gry-color" style="padding: 30px;">{{ $orderDetail->book->title }}</td>
+                                                <td class="gry-color" style="padding: 15px;">{{ $orderDetail->book->title }}</td>
                                                 <td style="text-align:center" class="text-end">{{ number_format($item_total, 2) }}/-</td>
                                             </tr>
                                             @php $i++; @endphp
                                         @endforeach
                                     </tbody>
                                     <tfoot>
-                                        <tr style="border-top: 2px solid #6c757d;">
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color text-end"> <strong>Sub Total:</strong> </td>
-                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($sub_total, 2) }}/-</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color text-end"> <strong>ADD CGST :</strong> </td>
-                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($cgst, 2) }}/-</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color text-end"> <strong>ADD SGST :</strong> </td>
-                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($sgst, 2) }}/-</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color text-end"> <strong>ADD IGST :</strong> </td>
-                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($igst, 2) }}/-</strong></td>
-                                        </tr>
                                         <tr style="border-top: 2px solid #6c757d; border-bottom: 2px solid #6c757d;">
-                                            <td></td>
                                             <td></td>
                                             <td class="gry-color text-end strong"><strong>Final Amount :</strong></td>
                                             <td style="text-align:center" class="text-end"><strong>{{ number_format($grand_total, 2) }}/-</strong></td>
