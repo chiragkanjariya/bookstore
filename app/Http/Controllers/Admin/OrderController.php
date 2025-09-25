@@ -284,10 +284,19 @@ class OrderController extends Controller
     public function sendOrderConfirmation(Request $request, Order $order)
     {
         try {
+            // Generate invoice PDF
+            $pdfPath = $this->generateInvoicePdf($order);
+            
             $emailService = new EmailService();
-            $emailSent = $emailService->sendOrderConfirmationEmail($order);
+            $emailSent = $emailService->sendOrderConfirmationEmail($order, $pdfPath);
+            
+            // Clean up temporary PDF file
+            if ($pdfPath && file_exists($pdfPath)) {
+                unlink($pdfPath);
+            }
             
             if ($emailSent) {
+                $order->update(['confirmation_email_sent' => true]);
                 return response()->json([
                     'success' => true,
                     'message' => 'Order confirmation email sent successfully!'
@@ -336,5 +345,57 @@ class OrderController extends Controller
         $filename = 'invoice_' . $order->order_number . '.pdf';
         
         return $pdf->download($filename);
+    }
+
+    /**
+     * Generate invoice PDF for the order
+     */
+    private function generateInvoicePdf($order)
+    {
+        try {
+            // Load order relationships
+            $order->load(['orderItems.book.category', 'user']);
+            
+            // Structure the data the same way as the invoice method does
+            $user = $order->user;
+            $user->orders = collect([$order]);
+            $users = collect([$user]);
+            
+            $pdf = app('dompdf.wrapper');
+            $pdf->loadView('admin.reports.accounts.combined-invoice', [
+                'users' => $users,
+                'totalUsers' => 1,
+                'totalOrders' => 1,
+                'totalAmount' => $order->total_amount,
+                'dateFrom' => null,
+                'dateTo' => null
+            ]);
+
+            // Generate filename and path
+            $filename = 'invoice_' . $order->order_number . '.pdf';
+            $tempPath = storage_path('app/temp/' . $filename);
+            
+            // Ensure temp directory exists
+            if (!file_exists(storage_path('app/temp'))) {
+                mkdir(storage_path('app/temp'), 0755, true);
+            }
+
+            // Save PDF to temporary file
+            file_put_contents($tempPath, $pdf->output());
+
+            \Log::info('Invoice PDF generated for admin order confirmation email', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'pdf_path' => $tempPath
+            ]);
+
+            return $tempPath;
+        } catch (\Exception $e) {
+            \Log::error('Failed to generate invoice PDF for admin order confirmation email', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
     }
 }

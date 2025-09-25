@@ -158,8 +158,8 @@
                                         <td class="gry-color text-end small w-50">
                                             @php
                                                 $shipping_address_str = '';
-                                                $shipping_address = $order->shipping_address;
-                                                $shipping_address_str .= $shipping_address['address_line_1'] . ', ' . $shipping_address['address_line_2'] . ', ' . $shipping_address['city'] . ',  ' . $shipping_address['state'] . ', ' . $shipping_address['postal_code'] . ', ' . $shipping_address['country'];
+                                                $shipping_address = json_decode($order->shipping_address, true);
+                                                $shipping_address_str .= $shipping_address['address_line_1'] . ', <br/>' . $shipping_address['address_line_2'] . ', <br/> ' . $shipping_address['city'] . ',  <br/>' . $shipping_address['state'] . ', ' . $shipping_address['postal_code'] . ', ' . $shipping_address['country'];
                                             @endphp
                                             {{ $shipping_address_str ?? 'Address not available' }}<br />
                                             Phone: {{ $user->phone ?? 'N/A' }}<br />

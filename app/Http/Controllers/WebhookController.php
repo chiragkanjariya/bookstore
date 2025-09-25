@@ -286,22 +286,82 @@ class WebhookController extends Controller
                 return;
             }
 
-            // Send order confirmation email
+            // Generate invoice PDF
+            $pdfPath = $this->generateInvoicePdf($order);
+
+            // Send order confirmation email with invoice attachment
             $emailService = app(\App\Services\EmailService::class);
-            $emailSent = $emailService->sendOrderConfirmationEmail($order);
+            $emailSent = $emailService->sendOrderConfirmationEmail($order, $pdfPath);
 
             if ($emailSent) {
                 $order->update(['confirmation_email_sent' => true]);
                 Log::info('Order confirmation email sent via webhook', [
                     'order_id' => $order->id,
-                    'order_number' => $order->order_number
+                    'order_number' => $order->order_number,
+                    'invoice_attached' => $pdfPath ? true : false
                 ]);
+            }
+
+            // Clean up temporary PDF file
+            if ($pdfPath && file_exists($pdfPath)) {
+                unlink($pdfPath);
             }
         } catch (\Exception $e) {
             Log::error('Failed to send order confirmation email via webhook', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage()
             ]);
+        }
+    }
+
+    /**
+     * Generate invoice PDF for the order
+     */
+    private function generateInvoicePdf($order)
+    {
+        try {
+            // Load order relationships
+            $order->load(['orderItems.book.category', 'user']);
+            
+            // Structure the data the same way as the OrderController does
+            $user = $order->user;
+            $user->orders = collect([$order]);
+            $users = collect([$user]);
+            
+            $pdf = app('dompdf.wrapper');
+            $pdf->loadView('admin.reports.accounts.combined-invoice', [
+                'users' => $users,
+                'startDate' => $order->created_at->format('Y-m-d'),
+                'endDate' => $order->created_at->format('Y-m-d'),
+                'totalOrders' => 1,
+                'totalAmount' => $order->total_amount
+            ]);
+
+            // Generate filename and path
+            $filename = 'invoice_' . $order->order_number . '.pdf';
+            $tempPath = storage_path('app/temp/' . $filename);
+            
+            // Ensure temp directory exists
+            if (!file_exists(storage_path('app/temp'))) {
+                mkdir(storage_path('app/temp'), 0755, true);
+            }
+
+            // Save PDF to temporary file
+            file_put_contents($tempPath, $pdf->output());
+
+            Log::info('Invoice PDF generated for webhook email', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'pdf_path' => $tempPath
+            ]);
+
+            return $tempPath;
+        } catch (\Exception $e) {
+            Log::error('Failed to generate invoice PDF for webhook email', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+            return null;
         }
     }
 }
