@@ -156,7 +156,12 @@
                                     <tr>
                                         <td class="gry-color small w-50">{{ \App\Models\Setting::get('company_address', '123 Business Street, City, State 12345') }}</td>
                                         <td class="gry-color text-end small w-50">
-                                            {{ $user->address ?? 'Address not available' }}<br />
+                                            @php
+                                                $shipping_address_str = '';
+                                                $shipping_address = $order->shipping_address;
+                                                $shipping_address_str .= $shipping_address['address_line_1'] . ', ' . $shipping_address['address_line_2'] . ', ' . $shipping_address['city'] . ',  ' . $shipping_address['state'] . ', ' . $shipping_address['postal_code'] . ', ' . $shipping_address['country'];
+                                            @endphp
+                                            {{ $shipping_address_str ?? 'Address not available' }}<br />
                                             Phone: {{ $user->phone ?? 'N/A' }}<br />
                                             Email: {{ $user->email }}
                                         </td>
@@ -212,15 +217,8 @@
                                         @foreach($order->orderItems as $orderDetail)
                                             @php
                                                 $item_total = $orderDetail->price * $orderDetail->quantity;
-                                                $item_cgst = $item_total * 0.09; // 9% CGST
-                                                $item_sgst = $item_total * 0.09; // 9% SGST
-                                                $item_igst = 0.00; // No IGST for local orders
-                                                
-                                                $cgst += $item_cgst;
-                                                $sgst += $item_sgst;
-                                                $igst += $item_igst;
                                                 $sub_total += $item_total;
-                                                $grand_total += $item_total + $item_cgst + $item_sgst + $item_igst;
+                                                $grand_total += $item_total;
                                             @endphp
                                             <tr>
                                                 <td>{{ $i }}</td>
@@ -229,8 +227,21 @@
                                             </tr>
                                             @php $i++; @endphp
                                         @endforeach
+                                        @php
+                                            $grand_total += $order->shipping_cost;
+                                        @endphp
                                     </tbody>
                                     <tfoot>
+                                        <tr style="border-top: 2px solid #6c757d; border-bottom: 2px solid #6c757d;">
+                                            <td></td>
+                                            <td class="gry-color text-end strong"><strong>Subtotal :</strong></td>
+                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($sub_total, 2) }}/-</strong></td>
+                                        </tr>
+                                        <tr style="border-top: 2px solid #6c757d; border-bottom: 2px solid #6c757d;">
+                                            <td></td>
+                                            <td class="gry-color text-end strong"><strong>Shipping Amount :</strong></td>
+                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($order->shipping_cost, 2) }}/-</strong></td>
+                                        </tr>
                                         <tr style="border-top: 2px solid #6c757d; border-bottom: 2px solid #6c757d;">
                                             <td></td>
                                             <td class="gry-color text-end strong"><strong>Final Amount :</strong></td>

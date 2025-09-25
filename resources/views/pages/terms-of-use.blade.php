@@ -26,7 +26,7 @@
                             <div>
                                 <h3 class="text-xl font-semibold text-gray-800 mb-4">Terms and Conditions</h3>
                                 <p class="text-gray-700 leading-relaxed">
-                                    These terms and conditions govern your use of B. A. P. S. VISION (IPDC Online Courses) website and services. By accessing or using our services, you agree to be bound by these terms.
+                                    These terms and conditions govern your use of B. A. P. S. VISION (IPDC Store) website and services. By accessing or using our services, you agree to be bound by these terms.
                                 </p>
                             </div>
                             
@@ -47,7 +47,7 @@
                             <div class="border-t border-gray-200 pt-6">
                                 <h4 class="text-lg font-semibold text-gray-800 mb-3">Contact Information</h4>
                                 <div class="bg-gray-50 rounded-lg p-6">
-                                    <p class="text-gray-700 mb-2"><strong>B. A. P. S. VISION (IPDC Online Courses)</strong></p>
+                                    <p class="text-gray-700 mb-2"><strong>B. A. P. S. VISION (IPDC Store)</strong></p>
                                     <p class="text-gray-700 mb-2">
                                         IPDC - Integrated Personality development Course<br>
                                         BAPS Pramukh Academy, Shastri Yagnapurush Marg,<br>
