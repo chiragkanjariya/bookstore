@@ -121,6 +121,8 @@ class TestEmailController extends Controller
                 'totalUsers' => 1,
                 'totalOrders' => 1,
                 'totalAmount' => $order->total_amount,
+                'startDate' => $order->created_at->format('Y-m-d'),
+                'endDate' => $order->created_at->format('Y-m-d'),
                 'dateFrom' => null,
                 'dateTo' => null
             ]);

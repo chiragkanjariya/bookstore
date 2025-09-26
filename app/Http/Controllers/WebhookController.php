@@ -334,7 +334,9 @@ class WebhookController extends Controller
                 'startDate' => $order->created_at->format('Y-m-d'),
                 'endDate' => $order->created_at->format('Y-m-d'),
                 'totalOrders' => 1,
-                'totalAmount' => $order->total_amount
+                'totalAmount' => $order->total_amount,
+                'dateFrom' => null,
+                'dateTo' => null
             ]);
 
             // Generate filename and path
