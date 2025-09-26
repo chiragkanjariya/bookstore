@@ -90,7 +90,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('accounts', [\App\Http\Controllers\Admin\AccountReportController::class, 'index'])->name('accounts.index');
         Route::get('accounts/export-csv', [\App\Http\Controllers\Admin\AccountReportController::class, 'exportCsv'])->name('accounts.export-csv');
         Route::post('accounts/combined-invoice', [\App\Http\Controllers\Admin\AccountReportController::class, 'generateCombinedInvoice'])->name('accounts.combined-invoice');
-        Route::get('accounts/user-details', [\App\Http\Controllers\Admin\AccountReportController::class, 'getUserDetails'])->name('accounts.user-details');
+        Route::get('accounts/order-details', [\App\Http\Controllers\Admin\AccountReportController::class, 'getOrderDetails'])->name('accounts.order-details');
     });
     
     // Settings Routes

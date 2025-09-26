@@ -113,23 +113,14 @@
 <body>
 @php
     $count = 0;
-    $total = $users->count();
+    $total = $orders->count();
 @endphp
 
-@foreach($users as $user)
+@foreach($orders as $order)
     @php
         $count++;
-        $userOrders = $user->orders;
-        if($dateFrom) {
-            $userOrders = $userOrders->where('created_at', '>=', $dateFrom);
-        }
-        if($dateTo) {
-            $userOrders = $userOrders->where('created_at', '<=', $dateTo);
-        }
-        $userOrdersCount = $userOrders->count();
+        $user = $order->user;
     @endphp
-    
-    @foreach($userOrders as $order)
         <div class="purchase-history-list-area" style="font-weight:500;">
             <div class="container" style="background: #fff;padding: 1.8rem;width:96%;padding-left:2%;padding-right:2%;">
                 <div class="row">
@@ -150,7 +141,7 @@
                                 </table><br>
                                 <table style="width:100%;">
                                     <tr>
-                                        <td style="font-size: 1.2rem;" class="strong"></td>
+                                        <td style="font-size: 1.2rem;" class="strong">B. A. P. S. VISION</td>
                                         <td style="font-size: 1.0rem;" class="text-end strong">{{ ucfirst($user->name) }}</td>
                                     </tr>
                                     <tr>
@@ -185,8 +176,8 @@
                                         <td class="strong small text-end small w-50 gry-color"></td>
                                     </tr>
                                     <tr>
-                                        <td class="strong small gry-color">Order No : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IPDC{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
-                                        <td class="strong small text-end small w-50 gry-color">Invoice No : &nbsp;&nbsp;IPDC{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
+                                        <td class="strong small gry-color">Order No : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $order->order_number }}</td>
+                                        <td class="strong small text-end small w-50 gry-color">Invoice No : &nbsp;&nbsp;IPDC-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
                                     </tr>
                                     <tr>
                                         <td class="strong small gry-color">Order Date : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $order->created_at->format('d-M-Y') }}</td>
@@ -268,10 +259,9 @@
                 </div>
             </div>
         </div>
-        @if($count != $total)
-            <div class="page-break"></div>
-        @endif
-    @endforeach
+    @if($count != $total)
+        <div class="page-break"></div>
+    @endif
 @endforeach
 </body>
 </html>
