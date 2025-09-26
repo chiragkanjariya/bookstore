@@ -377,26 +377,21 @@ class CheckoutController extends Controller
     {
         try {
             // Load order relationships
-            $order->load(['orderItems.book.category', 'user']);
+            $order->load(['orderItems.book.category', 'user.state', 'user.district', 'user.taluka']);
             
-            // Structure the data the same way as the OrderController does
-            $user = $order->user;
-            $user->orders = collect([$order]);
-            $users = collect([$user]);
+            // Use the new structure with orders collection
+            $orders = collect([$order]);
             
             $pdf = app('dompdf.wrapper');
             $pdf->loadView('admin.reports.accounts.combined-invoice', [
-                'users' => $users,
-                'startDate' => $order->created_at->format('Y-m-d'),
-                'endDate' => $order->created_at->format('Y-m-d'),
+                'orders' => $orders,
                 'totalOrders' => 1,
                 'totalAmount' => $order->total_amount,
-                'dateFrom' => null,
-                'dateTo' => null
+                'totalShipping' => $order->shipping_cost
             ]);
 
             // Generate filename and path
-            $filename = 'invoice_' . $order->order_number . '.pdf';
+            $filename = 'invoice_IPDC-' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '.pdf';
             $tempPath = storage_path('app/temp/' . $filename);
             
             // Ensure temp directory exists

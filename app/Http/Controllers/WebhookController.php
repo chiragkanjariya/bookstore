@@ -323,20 +323,15 @@ class WebhookController extends Controller
             // Load order relationships
             $order->load(['orderItems.book.category', 'user']);
             
-            // Structure the data the same way as the OrderController does
-            $user = $order->user;
-            $user->orders = collect([$order]);
-            $users = collect([$user]);
+            // Use the new structure with orders collection
+            $orders = collect([$order]);
             
             $pdf = app('dompdf.wrapper');
             $pdf->loadView('admin.reports.accounts.combined-invoice', [
-                'users' => $users,
-                'startDate' => $order->created_at->format('Y-m-d'),
-                'endDate' => $order->created_at->format('Y-m-d'),
+                'orders' => $orders,
                 'totalOrders' => 1,
                 'totalAmount' => $order->total_amount,
-                'dateFrom' => null,
-                'dateTo' => null
+                'totalShipping' => $order->shipping_cost
             ]);
 
             // Generate filename and path
