@@ -71,7 +71,7 @@
 
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}" 
@@ -99,6 +99,15 @@
                     <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
                     <option value="failed" {{ request('payment_status') == 'failed' ? 'selected' : '' }}>Failed</option>
                     <option value="refunded" {{ request('payment_status') == 'refunded' ? 'selected' : '' }}>Refunded</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Bulk Purchase</label>
+                <select name="is_bulk_purchased" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Orders</option>
+                    <option value="1" {{ request('is_bulk_purchased') == '1' ? 'selected' : '' }}>Bulk Purchase</option>
+                    <option value="0" {{ request('is_bulk_purchased') == '0' ? 'selected' : '' }}>Regular Purchase</option>
                 </select>
             </div>
 
@@ -174,6 +183,13 @@
                                 <div>
                                     <div class="text-sm font-medium text-gray-900">#{{ $order->order_number }}</div>
                                     <div class="text-sm text-gray-500">{{ $order->orderItems->count() }} item(s)</div>
+                                    @if($order->is_bulk_purchased)
+                                    <div class="text-xs">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            Bulk Purchase
+                                        </span>
+                                    </div>
+                                    @endif
                                     @if($order->shiprocket_order_id)
                                     <div class="text-xs text-blue-600">Shiprocket: {{ $order->shiprocket_order_id }}</div>
                                     @endif

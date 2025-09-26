@@ -25,6 +25,7 @@ class Order extends Model
         'shipping_cost',
         'tax_amount',
         'total_amount',
+        'is_bulk_purchased',
         'shipping_address',
         'billing_address',
         'notes',
@@ -40,6 +41,7 @@ class Order extends Model
         'shipping_cost' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'is_bulk_purchased' => 'boolean',
         'confirmation_email_sent' => 'boolean',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
@@ -116,5 +118,30 @@ class Order extends Model
     public function getFormattedTotalAttribute(): string
     {
         return '₹' . number_format($this->total_amount, 2);
+    }
+
+    /**
+     * Get total quantity of items in the order.
+     */
+    public function getTotalQuantityAttribute(): int
+    {
+        return $this->orderItems()->sum('quantity');
+    }
+
+    /**
+     * Check if order qualifies for bulk purchase.
+     */
+    public function qualifiesForBulkPurchase(): bool
+    {
+        $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
+        return $this->getTotalQuantityAttribute() >= $minBulkPurchase;
+    }
+
+    /**
+     * Get bulk purchase badge color.
+     */
+    public function getBulkPurchaseBadgeColorAttribute(): string
+    {
+        return $this->is_bulk_purchased ? 'success' : 'secondary';
     }
 }

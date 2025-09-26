@@ -53,6 +53,11 @@ class OrderController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
+        // Filter by bulk purchase
+        if ($request->filled('is_bulk_purchased')) {
+            $query->where('is_bulk_purchased', $request->is_bulk_purchased === '1');
+        }
+
         $orders = $query->paginate(20)->withQueryString();
 
         // Get statistics
@@ -222,6 +227,14 @@ class OrderController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Shiprocket order already exists for this order.'
+                ], 400);
+            }
+
+            // Skip Shiprocket for bulk orders with free shipping
+            if ($order->is_bulk_purchased) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No Shiprocket order created for bulk purchase order (free shipping).'
                 ], 400);
             }
 

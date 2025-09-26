@@ -134,6 +134,28 @@
             </div>
         </section>
 
+        <hr class="border-gray-300" />
+
+        <!-- Bulk Purchase Settings -->
+        <section>
+            <h4 class="text-xl font-semibold text-[#00BDE0] mb-4">Bulk Purchase Settings</h4>
+
+            <div class="flex flex-wrap gap-6">
+                <div class="flex-1 min-w-[250px]">
+                    <label for="min_bulk_purchase" class="block text-sm font-medium text-gray-700 mb-1">
+                        Minimum Bulk Purchase Quantity <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" id="min_bulk_purchase" name="min_bulk_purchase" min="1" required
+                        value="{{ old('min_bulk_purchase', $settings['bulk']['min_bulk_purchase']) }}"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('min_bulk_purchase') border-red-500 @enderror">
+                    <p class="text-sm text-gray-600 mt-1">Orders with quantity equal to or above this value will get free shipping</p>
+                    @error('min_bulk_purchase')
+                        <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </section>
+
         <!-- Submit Button -->
         <div>
             <button type="submit" class="bg-[#00BDE0] text-white px-6 py-2 rounded-md hover:bg-[#00A5C7] transition-colors flex items-center gap-2">

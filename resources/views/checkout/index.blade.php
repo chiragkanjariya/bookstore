@@ -141,8 +141,27 @@
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Shipping</span>
-                            <span class="text-gray-900">₹{{ number_format($shipping, 2) }}</span>
+                            <span class="text-gray-900">
+                                @if($shipping == 0)
+                                    <span class="text-green-600 font-medium">FREE</span>
+                                @else
+                                    ₹{{ number_format($shipping, 2) }}
+                                @endif
+                            </span>
                         </div>
+                        @php
+                            $totalQuantity = $cartItems->sum('quantity');
+                            $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
+                            $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
+                        @endphp
+                        @if($isBulkPurchase)
+                        <div class="bg-green-50 border border-green-200 rounded-md p-2">
+                            <p class="text-xs text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                <strong>Bulk Purchase!</strong> You qualify for free shipping ({{ $totalQuantity }} items ≥ {{ $minBulkPurchase }} items)
+                            </p>
+                        </div>
+                        @endif
                         <div class="border-t pt-2">
                             <div class="flex justify-between text-lg font-semibold">
                                 <span class="text-gray-900">Total</span>

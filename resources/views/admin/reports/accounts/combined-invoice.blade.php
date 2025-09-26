@@ -185,7 +185,11 @@
                                     </tr>
                                     <tr>
                                         <td class="strong small gry-color">Place of : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ \App\Models\Setting::get('company_place', '123 Business Street, City, State 12345') }}</td>
-                                        <td class="strong small text-end small w-50 gry-color"></td>
+                                        <td class="strong small text-end small w-50 gry-color">
+                                            @if($order->is_bulk_purchased)
+                                                <span style="background-color: #d4edda; color: #155724; padding: 2px 6px; border-radius: 3px; font-size: 10px;">BULK PURCHASE - FREE SHIPPING</span>
+                                            @endif
+                                        </td>
                                     </tr>
                                 </table>
                             </div>

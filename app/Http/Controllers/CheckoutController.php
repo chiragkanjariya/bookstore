@@ -42,9 +42,16 @@ class CheckoutController extends Controller
 
         // Calculate totals
         $subtotal = $cartItems->sum('total_price');
-        $shipping = $cartItems->sum(function ($item) {
+        
+        // Check if order qualifies for bulk purchase (free shipping)
+        $totalQuantity = $cartItems->sum('quantity');
+        $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
+        $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
+        
+        $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) {
             return $item->book->shipping_price * $item->quantity;
         });
+        
         $tax = 0; // GST removed as per requirements
         $total = $subtotal + $shipping;
 
@@ -74,7 +81,12 @@ class CheckoutController extends Controller
 
         // Calculate totals
         $subtotal = $book->price * $quantity;
-        $shipping = $book->shipping_price * $quantity;
+        
+        // Check if order qualifies for bulk purchase (free shipping)
+        $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
+        $isBulkPurchase = $quantity >= $minBulkPurchase;
+        
+        $shipping = $isBulkPurchase ? 0 : ($book->shipping_price * $quantity);
         $tax = 0; // GST removed as per requirements
         $total = $subtotal + $shipping;
 
@@ -127,6 +139,8 @@ class CheckoutController extends Controller
 
         DB::beginTransaction();
         try {
+            $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
+            
             if ($request->has('buy_now_book_id')) {
                 // Handle buy now checkout
                 $book = Book::findOrFail($request->buy_now_book_id);
@@ -138,7 +152,11 @@ class CheckoutController extends Controller
                 }
 
                 $subtotal = $book->price * $quantity;
-                $shipping = $book->shipping_price * $quantity;
+                
+                // Check if order qualifies for bulk purchase (free shipping)
+                $isBulkPurchase = $quantity >= $minBulkPurchase;
+                
+                $shipping = $isBulkPurchase ? 0 : ($book->shipping_price * $quantity);
                 $tax = 0; // GST removed
                 $total = $subtotal + $shipping;
 
@@ -165,7 +183,12 @@ class CheckoutController extends Controller
                 }
 
                 $subtotal = $cartItems->sum('total_price');
-                $shipping = $cartItems->sum(function ($item) {
+                
+                // Check if order qualifies for bulk purchase (free shipping)
+                $totalQuantity = $cartItems->sum('quantity');
+                $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
+                
+                $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) {
                     return $item->book->shipping_price * $item->quantity;
                 });
                 $tax = 0; // GST removed
@@ -205,6 +228,7 @@ class CheckoutController extends Controller
                 'shipping_cost' => $shipping,
                 'tax_amount' => $tax,
                 'total_amount' => $total,
+                'is_bulk_purchased' => $isBulkPurchase,
                 'shipping_address' => $shippingAddress,
                 'billing_address' => $request->billing_address ?? $shippingAddress,
                 'notes' => $request->notes,
@@ -300,19 +324,23 @@ class CheckoutController extends Controller
                 Auth::user()->cartItems()->delete();
             }
 
-            // Create Shiprocket order for delivery
-            try {
-                $shiprocketService = new ShiprocketService();
-                $shiprocketResponse = $shiprocketService->createOrder($order);
-                
-                if ($shiprocketResponse) {
-                    Log::info('Shiprocket order created successfully for order: ' . $order->id);
-                } else {
-                    Log::warning('Failed to create Shiprocket order for order: ' . $order->id);
+            // Create Shiprocket order for delivery (skip for bulk orders with free shipping)
+            if (!$order->is_bulk_purchased) {
+                try {
+                    $shiprocketService = new ShiprocketService();
+                    $shiprocketResponse = $shiprocketService->createOrder($order);
+                    
+                    if ($shiprocketResponse) {
+                        Log::info('Shiprocket order created successfully for order: ' . $order->id);
+                    } else {
+                        Log::warning('Failed to create Shiprocket order for order: ' . $order->id);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Shiprocket order creation failed for order: ' . $order->id . '. Error: ' . $e->getMessage());
+                    // Don't fail the main order process if Shiprocket fails
                 }
-            } catch (\Exception $e) {
-                Log::error('Shiprocket order creation failed for order: ' . $order->id . '. Error: ' . $e->getMessage());
-                // Don't fail the main order process if Shiprocket fails
+            } else {
+                Log::info('Skipping Shiprocket order creation for bulk purchase order: ' . $order->id);
             }
 
             // Send order confirmation email with invoice
