@@ -251,52 +251,6 @@
     </div>
 </div>
 
-<!-- Combined Invoice Modal -->
-<div id="invoice-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-gray-900">Generate Combined Invoice</h3>
-                <button onclick="closeInvoiceModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-            <form id="invoice-form" method="POST" action="{{ route('admin.reports.accounts.combined-invoice') }}">
-                @csrf
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Selected Orders</label>
-                        <div id="selected-orders-list" class="text-sm text-gray-600">
-                            <!-- Selected orders will be listed here -->
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="invoice_date_from" class="block text-sm font-medium text-gray-700 mb-2">Date From (Optional)</label>
-                            <input type="date" id="invoice_date_from" name="date_from" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0] focus:border-[#00BDE0]">
-                        </div>
-                        <div>
-                            <label for="invoice_date_to" class="block text-sm font-medium text-gray-700 mb-2">Date To (Optional)</label>
-                            <input type="date" id="invoice_date_to" name="date_to" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0] focus:border-[#00BDE0]">
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-end space-x-3 pt-4">
-                        <button type="button" onclick="closeInvoiceModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors">
-                            Cancel
-                        </button>
-                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                            Generate Invoice
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <script>
 // Select all functionality
@@ -366,40 +320,34 @@ document.getElementById('generate-invoice-btn').addEventListener('click', functi
     const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
     if (selectedCheckboxes.length === 0) return;
     
-    // Update selected orders list
-    const selectedOrdersList = document.getElementById('selected-orders-list');
-    selectedOrdersList.innerHTML = '';
+    // Create a form and submit it directly
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ route("admin.reports.accounts.combined-invoice") }}';
+    form.style.display = 'none';
     
+    // Add CSRF token
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = '_token';
+    csrfToken.value = '{{ csrf_token() }}';
+    form.appendChild(csrfToken);
+    
+    // Add selected order IDs
     selectedCheckboxes.forEach(checkbox => {
-        const row = checkbox.closest('tr');
-        const name = row.querySelector('.text-sm.font-medium').textContent;
-        
-        // Find the order number from the order details column
-        const orderDetailsCell = row.cells[4]; // Order Details column
-        let orderNumber = 'N/A';
-        if (orderDetailsCell) {
-            const orderText = orderDetailsCell.textContent;
-            const match = orderText.match(/Order #:\s*([^\n]+)/);
-            if (match) {
-                orderNumber = match[1].trim();
-            }
-        }
-        
-        const orderDiv = document.createElement('div');
-        orderDiv.className = 'flex justify-between items-center py-1';
-        orderDiv.innerHTML = `
-            <span>${name} - Order: ${orderNumber}</span>
-            <input type="hidden" name="order_ids[]" value="${checkbox.value}">
-        `;
-        selectedOrdersList.appendChild(orderDiv);
+        const orderIdInput = document.createElement('input');
+        orderIdInput.type = 'hidden';
+        orderIdInput.name = 'order_ids[]';
+        orderIdInput.value = checkbox.value;
+        form.appendChild(orderIdInput);
     });
     
-    document.getElementById('invoice-modal').classList.remove('hidden');
+    // Add form to document and submit
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
 });
 
-function closeInvoiceModal() {
-    document.getElementById('invoice-modal').classList.add('hidden');
-}
 
 function viewOrderDetails(orderId) {
     fetch(`{{ route('admin.reports.accounts.order-details') }}?order_id=${orderId}`)

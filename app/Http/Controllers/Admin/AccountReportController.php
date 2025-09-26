@@ -148,27 +148,15 @@ class AccountReportController extends Controller
         $request->validate([
             'order_ids' => 'required|array|min:1',
             'order_ids.*' => 'exists:orders,id',
-            'date_from' => 'nullable|date',
-            'date_to' => 'nullable|date|after_or_equal:date_from',
         ]);
 
         $orderIds = $request->get('order_ids');
-        $dateFrom = $request->get('date_from');
-        $dateTo = $request->get('date_to');
 
         // Get orders with their details
-        $query = Order::whereIn('id', $orderIds)
+        $orders = Order::whereIn('id', $orderIds)
                     ->where('payment_status', 'paid')
-                    ->with(['user.state', 'user.district', 'user.taluka', 'orderItems.book']);
-
-        if ($dateFrom) {
-            $query->whereDate('created_at', '>=', $dateFrom);
-        }
-        if ($dateTo) {
-            $query->whereDate('created_at', '<=', $dateTo);
-        }
-
-        $orders = $query->get();
+                    ->with(['user.state', 'user.district', 'user.taluka', 'orderItems.book'])
+                    ->get();
 
         // Calculate totals
         $totalOrders = $orders->count();
@@ -178,7 +166,7 @@ class AccountReportController extends Controller
         // Generate PDF
         $pdf = app('dompdf.wrapper');
         $pdf->loadView('admin.reports.accounts.combined-invoice', compact(
-            'orders', 'totalOrders', 'totalAmount', 'totalShipping', 'dateFrom', 'dateTo'
+            'orders', 'totalOrders', 'totalAmount', 'totalShipping'
         ));
 
         $filename = 'combined_invoice_' . now()->format('Y-m-d_H-i-s') . '.pdf';
