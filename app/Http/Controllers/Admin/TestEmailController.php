@@ -112,19 +112,15 @@ class TestEmailController extends Controller
             
             // Structure the data the same way as the OrderController does
             $user = $order->user;
-            $user->orders = collect([$order]);
-            $users = collect([$user]);
+            // Use the new structure with orders collection
+            $orders = collect([$order]);
             
             $pdf = app('dompdf.wrapper');
             $pdf->loadView('admin.reports.accounts.combined-invoice', [
-                'users' => $users,
-                'totalUsers' => 1,
+                'orders' => $orders,
                 'totalOrders' => 1,
                 'totalAmount' => $order->total_amount,
-                'startDate' => $order->created_at->format('Y-m-d'),
-                'endDate' => $order->created_at->format('Y-m-d'),
-                'dateFrom' => null,
-                'dateTo' => null
+                'totalShipping' => $order->shipping_cost
             ]);
 
             // Generate filename and path

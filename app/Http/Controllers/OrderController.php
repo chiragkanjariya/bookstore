@@ -83,24 +83,20 @@ class OrderController extends Controller
             return redirect()->back()->with('error', 'Invoice is only available for paid orders.');
         }
 
-        $order->load(['orderItems.book.category', 'user']);
+        $order->load(['orderItems.book.category', 'user.state', 'user.district', 'user.taluka']);
         
-        // Structure the data the same way as the email service does
-        $user = $order->user;
-        $user->orders = collect([$order]);
-        $users = collect([$user]);
+        // Use the new structure with orders collection
+        $orders = collect([$order]);
         
         $pdf = app('dompdf.wrapper');
         $pdf->loadView('admin.reports.accounts.combined-invoice', [
-            'users' => $users,
-            'totalUsers' => 1,
+            'orders' => $orders,
             'totalOrders' => 1,
             'totalAmount' => $order->total_amount,
-            'dateFrom' => null,
-            'dateTo' => null
+            'totalShipping' => $order->shipping_cost
         ]);
 
-        $filename = 'invoice_' . $order->order_number . '.pdf';
+        $filename = 'invoice_IPDC-' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '.pdf';
         
         return $pdf->download($filename);
     }

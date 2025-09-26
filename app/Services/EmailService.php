@@ -248,18 +248,18 @@ class EmailService
     private function generateInvoicePDF($order)
     {
         try {
-            $users = collect([$order->user]);
+            // Load order relationships
+            $order->load(['orderItems.book.category', 'user.state', 'user.district', 'user.taluka']);
+            
+            // Use the new structure with orders collection
+            $orders = collect([$order]);
             
             $pdf = app('dompdf.wrapper');
             $pdf->loadView('admin.reports.accounts.combined-invoice', [
-                'users' => $users,
-                'totalUsers' => 1,
+                'orders' => $orders,
                 'totalOrders' => 1,
                 'totalAmount' => $order->total_amount,
-                'startDate' => $order->created_at->format('Y-m-d'),
-                'endDate' => $order->created_at->format('Y-m-d'),
-                'dateFrom' => null,
-                'dateTo' => null
+                'totalShipping' => $order->shipping_cost
             ]);
 
             // Create temporary file
