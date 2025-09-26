@@ -33,6 +33,9 @@ class SettingsController extends Controller
             'shipping' => [
                 'shiprocket_email' => Setting::get('shiprocket_email', ''),
                 'shiprocket_password' => Setting::get('shiprocket_password', ''),
+            ],
+            'bulk' => [
+                'min_bulk_purchase' => Setting::get('min_bulk_purchase', 10),
             ]
         ];
 
@@ -54,6 +57,7 @@ class SettingsController extends Controller
             'company_phone' => 'nullable|string|max:20',
             'shiprocket_email' => 'nullable|email|max:255',
             'shiprocket_password' => 'nullable|string|max:255',
+            'min_bulk_purchase' => 'required|integer|min:1',
         ]);
 
         // Update payment settings
@@ -70,6 +74,9 @@ class SettingsController extends Controller
         // Update shipping settings
         Setting::set('shiprocket_email', $request->shiprocket_email, 'string', 'shipping', 'Shiprocket Email');
         Setting::set('shiprocket_password', $request->shiprocket_password, 'string', 'shipping', 'Shiprocket Password');
+
+        // Update bulk purchase settings
+        Setting::set('min_bulk_purchase', $request->min_bulk_purchase, 'integer', 'bulk', 'Minimum Bulk Purchase Quantity');
 
         return redirect()->route('admin.settings.index')->with('success', 'Settings updated successfully!');
     }

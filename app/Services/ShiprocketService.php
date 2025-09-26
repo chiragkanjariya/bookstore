@@ -54,9 +54,15 @@ class ShiprocketService
     /**
      * Create order in Shiprocket
      */
-    public function createOrder(Order $order)
+public function createOrder(Order $order)
     {
         try {
+            // Skip Shiprocket for bulk orders with free shipping
+            if ($order->is_bulk_purchased) {
+                Log::info('Skipping Shiprocket order creation for bulk purchase order: ' . $order->id);
+                return false;
+            }
+
             // Authenticate first
             if (!$this->authenticate()) {
                 throw new \Exception('Failed to authenticate with Shiprocket');

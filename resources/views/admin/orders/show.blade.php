@@ -172,6 +172,17 @@
                 @else
                 <div class="mt-6 pt-6 border-t">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Shiprocket Shipping</h3>
+                    @if($order->is_bulk_purchased)
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-600 mr-3"></i>
+                            <div>
+                                <p class="text-green-800 font-medium">Bulk Purchase Order - Free Shipping</p>
+                                <p class="text-green-700 text-sm">This order qualifies for bulk purchase with free shipping. Shiprocket is not needed.</p>
+                            </div>
+                        </div>
+                    </div>
+                    @else
                     <div class="bg-yellow-50 rounded-lg p-4">
                         <div class="flex items-center">
                             <i class="fas fa-exclamation-triangle text-yellow-600 mr-3"></i>
@@ -187,6 +198,7 @@
                             </button>
                         </div>
                     </div>
+                    @endif
                 </div>
                 @endif
             </div>
