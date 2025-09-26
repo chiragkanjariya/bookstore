@@ -10,6 +10,7 @@ use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Razorpay\Api\Api;
 
 class CheckoutController extends Controller
@@ -305,27 +306,36 @@ class CheckoutController extends Controller
                 $shiprocketResponse = $shiprocketService->createOrder($order);
                 
                 if ($shiprocketResponse) {
-                    \Log::info('Shiprocket order created successfully for order: ' . $order->id);
+                    Log::info('Shiprocket order created successfully for order: ' . $order->id);
                 } else {
-                    \Log::warning('Failed to create Shiprocket order for order: ' . $order->id);
+                    Log::warning('Failed to create Shiprocket order for order: ' . $order->id);
                 }
             } catch (\Exception $e) {
-                \Log::error('Shiprocket order creation failed for order: ' . $order->id . '. Error: ' . $e->getMessage());
+                Log::error('Shiprocket order creation failed for order: ' . $order->id . '. Error: ' . $e->getMessage());
                 // Don't fail the main order process if Shiprocket fails
             }
 
             // Send order confirmation email with invoice
             try {
+                // Generate invoice PDF
+                $pdfPath = $this->generateInvoicePdf($order);
+                
                 $emailService = new EmailService();
-                $emailSent = $emailService->sendOrderConfirmationEmail($order);
+                $emailSent = $emailService->sendOrderConfirmationEmail($order, $pdfPath);
                 
                 if ($emailSent) {
-                    \Log::info('Order confirmation email sent successfully for order: ' . $order->id);
+                    $order->update(['confirmation_email_sent' => true]);
+                    Log::info('Order confirmation email sent successfully for order: ' . $order->id);
                 } else {
-                    \Log::warning('Failed to send order confirmation email for order: ' . $order->id);
+                    Log::warning('Failed to send order confirmation email for order: ' . $order->id);
+                }
+                
+                // Clean up temporary PDF file
+                if ($pdfPath && file_exists($pdfPath)) {
+                    unlink($pdfPath);
                 }
             } catch (\Exception $e) {
-                \Log::error('Order confirmation email error for order ' . $order->id . ': ' . $e->getMessage());
+                Log::error('Order confirmation email error for order ' . $order->id . ': ' . $e->getMessage());
                 // Don't fail the main order process if email fails
             }
 
@@ -358,5 +368,58 @@ class CheckoutController extends Controller
         }
 
         return redirect()->route('checkout.index')->with('error', 'Payment failed. Please try again.');
+    }
+
+    /**
+     * Generate invoice PDF for the order
+     */
+    private function generateInvoicePdf($order)
+    {
+        try {
+            // Load order relationships
+            $order->load(['orderItems.book.category', 'user']);
+            
+            // Structure the data the same way as the OrderController does
+            $user = $order->user;
+            $user->orders = collect([$order]);
+            $users = collect([$user]);
+            
+            $pdf = app('dompdf.wrapper');
+            $pdf->loadView('admin.reports.accounts.combined-invoice', [
+                'users' => $users,
+                'startDate' => $order->created_at->format('Y-m-d'),
+                'endDate' => $order->created_at->format('Y-m-d'),
+                'totalOrders' => 1,
+                'totalAmount' => $order->total_amount,
+                'dateFrom' => null,
+                'dateTo' => null
+            ]);
+
+            // Generate filename and path
+            $filename = 'invoice_' . $order->order_number . '.pdf';
+            $tempPath = storage_path('app/temp/' . $filename);
+            
+            // Ensure temp directory exists
+            if (!file_exists(storage_path('app/temp'))) {
+                mkdir(storage_path('app/temp'), 0755, true);
+            }
+
+            // Save PDF to temporary file
+            file_put_contents($tempPath, $pdf->output());
+
+            Log::info('Invoice PDF generated for order confirmation email', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'pdf_path' => $tempPath
+            ]);
+
+            return $tempPath;
+        } catch (\Exception $e) {
+            Log::error('Failed to generate invoice PDF for order confirmation email', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
     }
 }

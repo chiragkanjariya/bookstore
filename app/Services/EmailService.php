@@ -192,7 +192,7 @@ class EmailService
             // Prepare email data
             $customerEmail = $order->user->email;
             $customerName = $order->user->name;
-            $orderNumber = 'ORD-' . $order->id;
+            $orderNumber = '#IPDC'.str_pad($order->id, 5, '0', STR_PAD_LEFT);
             
             // Generate invoice PDF if not provided
             if (!$pdfPath) {
@@ -256,6 +256,8 @@ class EmailService
                 'totalUsers' => 1,
                 'totalOrders' => 1,
                 'totalAmount' => $order->total_amount,
+                'startDate' => $order->created_at->format('Y-m-d'),
+                'endDate' => $order->created_at->format('Y-m-d'),
                 'dateFrom' => null,
                 'dateTo' => null
             ]);
@@ -325,7 +327,7 @@ class EmailService
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Number:</td>
-                            <td style="padding: 8px 0; color: #333;">ORD-' . $order->id . '</td>
+                            <td style="padding: 8px 0; color: #333;">#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
@@ -425,7 +427,7 @@ class EmailService
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Number:</td>
-                            <td style="padding: 8px 0; color: #333;">ORD-' . $order->id . '</td>
+                            <td style="padding: 8px 0; color: #333;">#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>

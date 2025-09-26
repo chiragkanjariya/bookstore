@@ -28,6 +28,7 @@ class Order extends Model
         'shipping_address',
         'billing_address',
         'notes',
+        'confirmation_email_sent',
         'shipped_at',
         'delivered_at',
     ];
@@ -39,6 +40,7 @@ class Order extends Model
         'shipping_cost' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'confirmation_email_sent' => 'boolean',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
     ];

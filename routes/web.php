@@ -90,7 +90,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('accounts', [\App\Http\Controllers\Admin\AccountReportController::class, 'index'])->name('accounts.index');
         Route::get('accounts/export-csv', [\App\Http\Controllers\Admin\AccountReportController::class, 'exportCsv'])->name('accounts.export-csv');
         Route::post('accounts/combined-invoice', [\App\Http\Controllers\Admin\AccountReportController::class, 'generateCombinedInvoice'])->name('accounts.combined-invoice');
-        Route::get('accounts/user-details', [\App\Http\Controllers\Admin\AccountReportController::class, 'getUserDetails'])->name('accounts.user-details');
+        Route::get('accounts/order-details', [\App\Http\Controllers\Admin\AccountReportController::class, 'getOrderDetails'])->name('accounts.order-details');
     });
     
     // Settings Routes
@@ -131,4 +131,7 @@ Route::get('/terms-of-use', [\App\Http\Controllers\PagesController::class, 'term
 Route::get('/payment-policies', [\App\Http\Controllers\PagesController::class, 'paymentPolicies'])->name('pages.payment-policies');
 Route::get('/about-us', [\App\Http\Controllers\PagesController::class, 'aboutUs'])->name('pages.about-us');
 Route::get('/contact-us', [\App\Http\Controllers\PagesController::class, 'contactUs'])->name('pages.contact-us');
+
+// Webhook Routes (No CSRF protection needed)
+Route::post('/webhook/razorpay', [\App\Http\Controllers\WebhookController::class, 'razorpayWebhook'])->name('webhook.razorpay');
 
