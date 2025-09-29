@@ -86,9 +86,13 @@
                         </div>
 
                         <div>
-                            <label for="register_phone" class="block text-sm font-medium text-gray-700">Phone (Optional)</label>
-                            <input type="tel" id="register_phone" name="phone"
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] sm:text-sm">
+                            <label for="register_phone" class="block text-sm font-medium text-gray-700">Phone Number <span class="text-red-500">*</span></label>
+                            <input type="tel" id="register_phone" name="phone" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] sm:text-sm"
+                                   placeholder="Enter 10-digit phone number"
+                                   pattern="[0-9]{10}"
+                                   maxlength="10"
+                                   title="Please enter exactly 10 digits">
                             <span class="text-red-500 text-sm hidden" id="register_phone_error"></span>
                         </div>
 
@@ -105,12 +109,6 @@
                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] sm:text-sm">
                         </div>
 
-                        <div>
-                            <label for="register_address" class="block text-sm font-medium text-gray-700">Address (Optional)</label>
-                            <textarea id="register_address" name="address" rows="2"
-                                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] sm:text-sm"></textarea>
-                            <span class="text-red-500 text-sm hidden" id="register_address_error"></span>
-                        </div>
 
                         <div>
                             <button type="submit" id="registerSubmitBtn"

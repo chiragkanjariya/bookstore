@@ -1,5 +1,6 @@
 @extends('layouts.admin')
 
+@section('title', 'User Management')
 @section('breadcrumb', 'User Management')
 
 @section('content')

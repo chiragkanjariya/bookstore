@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'My Profile')
+
 @section('content')
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -93,6 +95,48 @@
                             @enderror
                         </div>
 
+                        <!-- Location Details -->
+                        <div class="border-t border-gray-200 pt-6">
+                            <h4 class="text-md font-medium text-gray-900 mb-4">Location Details</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- State -->
+                                <div>
+                                    <label for="state" class="block text-sm font-medium text-gray-700">State</label>
+                                    <select name="state_id" id="state"
+                                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] sm:text-sm @error('state_id') border-red-300 @enderror">
+                                        <option value="">Select State</option>
+                                    </select>
+                                    @error('state_id')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- District -->
+                                <div>
+                                    <label for="district" class="block text-sm font-medium text-gray-700">District</label>
+                                    <select name="district_id" id="district"
+                                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] sm:text-sm @error('district_id') border-red-300 @enderror" disabled>
+                                        <option value="">Select District</option>
+                                    </select>
+                                    @error('district_id')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Taluka -->
+                                <div>
+                                    <label for="taluka" class="block text-sm font-medium text-gray-700">Taluka</label>
+                                    <select name="taluka_id" id="taluka"
+                                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] sm:text-sm @error('taluka_id') border-red-300 @enderror" disabled>
+                                        <option value="">Select Taluka</option>
+                                    </select>
+                                    @error('taluka_id')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Account Information -->
                         <div class="border-t border-gray-200 pt-6">
                             <h4 class="text-md font-medium text-gray-900 mb-4">Account Information</h4>
@@ -165,5 +209,94 @@
 function resetForm() {
     document.getElementById('profileForm').reset();
 }
+
+// Location Dropdown Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const stateSelect = document.getElementById('state');
+    const districtSelect = document.getElementById('district');
+    const talukaSelect = document.getElementById('taluka');
+
+    // Load states on page load
+    loadStates();
+
+    // State change handler
+    stateSelect.addEventListener('change', function() {
+        const stateId = this.value;
+        if (stateId) {
+            loadDistricts(stateId);
+            districtSelect.disabled = false;
+            talukaSelect.disabled = true;
+            talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+        } else {
+            districtSelect.disabled = true;
+            talukaSelect.disabled = true;
+            districtSelect.innerHTML = '<option value="">Select District</option>';
+            talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+        }
+    });
+
+    // District change handler
+    districtSelect.addEventListener('change', function() {
+        const districtId = this.value;
+        if (districtId) {
+            loadTalukas(districtId);
+            talukaSelect.disabled = false;
+        } else {
+            talukaSelect.disabled = true;
+            talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+        }
+    });
+
+    function loadStates() {
+        fetch('/api/locations/states')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    stateSelect.innerHTML = '<option value="">Select State</option>';
+                    data.data.forEach(state => {
+                        const option = document.createElement('option');
+                        option.value = state.id;
+                        option.textContent = state.name;
+                        stateSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading states:', error));
+    }
+
+    function loadDistricts(stateId) {
+        fetch(`/api/locations/districts?state_id=${stateId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    districtSelect.innerHTML = '<option value="">Select District</option>';
+                    data.data.forEach(district => {
+                        const option = document.createElement('option');
+                        option.value = district.id;
+                        option.textContent = district.name;
+                        districtSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading districts:', error));
+    }
+
+    function loadTalukas(districtId) {
+        fetch(`/api/locations/talukas?district_id=${districtId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+                    data.data.forEach(taluka => {
+                        const option = document.createElement('option');
+                        option.value = taluka.id;
+                        option.textContent = taluka.name;
+                        talukaSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading talukas:', error));
+    }
+});
 </script>
 @endsection

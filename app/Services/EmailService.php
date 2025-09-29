@@ -54,42 +54,13 @@ class EmailService
 
     /**
      * Send order placed notification email (before payment)
+     * Note: This method has been disabled as per requirements - no payment pending emails
      */
     public function sendOrderPlacedEmail($order)
     {
-        try {
-            // Get access token if not already set
-            if (!$this->accessToken) {
-                $this->getAccessToken();
-            }
-
-            if (!$this->accessToken) {
-                throw new Exception('Unable to get email access token');
-            }
-
-            // Prepare email data
-            $customerEmail = $order->user->email;
-            $customerName = $order->user->name;
-            $orderNumber = 'ORD-' . $order->id;
-            
-            // Prepare email content
-            $subject = "Order Placed - {$orderNumber} (Payment Pending)";
-            $message = $this->getOrderPlacedEmailTemplate($order);
-            
-            // Prepare recipients
-            $to = [
-                $customerEmail => $customerName
-            ];
-
-            // Send email without attachment
-            return $this->sendEmailViaAPI($to, $subject, $message);
-
-        } catch (Exception $e) {
-            Log::error('Order placed email error: ' . $e->getMessage(), [
-                'order_id' => $order->id ?? null
-            ]);
-            return false;
-        }
+        // Payment pending emails are disabled as per requirements
+        Log::info('Order placed email skipped for order: ' . $order->id);
+        return true; // Return true to avoid breaking the checkout flow
     }
 
     /**
@@ -109,7 +80,7 @@ class EmailService
                 'subject' => $subject,
                 'message' => $message,
                 'to' => json_encode([$to]), // This should be an array of objects
-                'is_online_user' => '2',
+                'is_online_user' => 0,
                 'notification_name' => config('mail.notification_name', 'Bookstore Admin')
             ];
 
@@ -119,25 +90,67 @@ class EmailService
                 'form_data' => $formData
             ]);
 
-            // Prepare HTTP request
-            $request = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->accessToken
-            ])->asMultipart();
-
-            // Add form data
+            // Use cURL directly to match the working curl command exactly
+            $curl = curl_init();
+            
+            $postFields = [];
+            
+            // Add form fields
             foreach ($formData as $key => $value) {
-                $request = $request->attach($key, $value);
+                $postFields[$key] = $value;
             }
-
-            // Add attachments if provided
+            
+            // Add file attachments if provided
             foreach ($attachments as $attachment) {
                 if (file_exists($attachment['path'])) {
-                    $request = $request->attach('file', fopen($attachment['path'], 'r'), $attachment['name']);
+                    $postFields['file'] = new \CURLFile($attachment['path'], 'application/pdf', $attachment['name']);
                 }
             }
-
-            // Send email
-            $response = $request->post($this->baseUrl . '/user/send_smtp_mail');
+            
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $this->baseUrl . '/user/send_smtp_mail',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS => $postFields,
+                CURLOPT_HTTPHEADER => [
+                    'Authorization: Bearer ' . $this->accessToken
+                ],
+            ]);
+            
+            $response_body = curl_exec($curl);
+            $response_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            $curl_error = curl_error($curl);
+            curl_close($curl);
+            
+            // Create a response object similar to Laravel's HTTP response
+            $response = new class($response_body, $response_code, $curl_error) {
+                private $body;
+                private $status;
+                private $error;
+                
+                public function __construct($body, $status, $error) {
+                    $this->body = $body;
+                    $this->status = $status;
+                    $this->error = $error;
+                }
+                
+                public function body() {
+                    return $this->body;
+                }
+                
+                public function status() {
+                    return $this->status;
+                }
+                
+                public function successful() {
+                    return $this->status >= 200 && $this->status < 300 && empty($this->error);
+                }
+            };
 
             Log::info('Email API Response', [
                 'status' => $response->status(),
@@ -179,7 +192,7 @@ class EmailService
             // Prepare email data
             $customerEmail = $order->user->email;
             $customerName = $order->user->name;
-            $orderNumber = 'ORD-' . $order->id;
+            $orderNumber = '#IPDC'.str_pad($order->id, 5, '0', STR_PAD_LEFT);
             
             // Generate invoice PDF if not provided
             if (!$pdfPath) {
@@ -187,7 +200,7 @@ class EmailService
             }
 
             // Prepare email content
-            $subject = "Order Confirmation - {$orderNumber}";
+            $subject = "Order Confirmation - #IPDC".str_pad($order->id, 5, '0', STR_PAD_LEFT);
             $message = $this->getOrderConfirmationEmailTemplate($order);
             
             // Prepare recipients
@@ -235,16 +248,18 @@ class EmailService
     private function generateInvoicePDF($order)
     {
         try {
-            $users = collect([$order->user]);
+            // Load order relationships
+            $order->load(['orderItems.book.category', 'user.state', 'user.district', 'user.taluka']);
+            
+            // Use the new structure with orders collection
+            $orders = collect([$order]);
             
             $pdf = app('dompdf.wrapper');
             $pdf->loadView('admin.reports.accounts.combined-invoice', [
-                'users' => $users,
-                'totalUsers' => 1,
+                'orders' => $orders,
                 'totalOrders' => 1,
                 'totalAmount' => $order->total_amount,
-                'dateFrom' => null,
-                'dateTo' => null
+                'totalShipping' => $order->shipping_cost
             ]);
 
             // Create temporary file
@@ -312,7 +327,7 @@ class EmailService
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Number:</td>
-                            <td style="padding: 8px 0; color: #333;">ORD-' . $order->id . '</td>
+                            <td style="padding: 8px 0; color: #333;">#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
@@ -331,31 +346,30 @@ class EmailService
 
                 <!-- Order Items -->
                 <div style="margin-bottom: 25px;">
-                    <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">Order Items</h3>
-                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
-                        <thead>
-                            <tr style="background-color: #f8f9fa;">
-                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd; color: #666;">Book</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; color: #666;">Qty</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd; color: #666;">Price</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd; color: #666;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>';
+                    <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">Order Items</h3>';
 
         foreach ($orderItems as $item) {
             $template .= '
-                            <tr>
-                                <td style="padding: 12px; border-bottom: 1px solid #eee; color: #333;">' . $item['name'] . '</td>
-                                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #eee; color: #333;">' . $item['quantity'] . '</td>
-                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #eee; color: #333;">' . $item['price'] . '</td>
-                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #eee; color: #333; font-weight: bold;">' . $item['total'] . '</td>
-                            </tr>';
+                    <div style="background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
+                        <div style="margin-bottom: 8px;">
+                            <strong style="color: #333; font-size: 16px;">' . $item['name'] . '</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="color: #666; font-size: 14px;">Quantity:</span>
+                            <span style="color: #333; font-weight: bold;">' . $item['quantity'] . '</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="color: #666; font-size: 14px;">Unit Price:</span>
+                            <span style="color: #333;">' . $item['price'] . '</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
+                            <span style="color: #333; font-weight: bold; font-size: 15px;">Total:</span>
+                            <span style="color: #00BDE0; font-weight: bold; font-size: 15px;">' . $item['total'] . '</span>
+                        </div>
+                    </div>';
         }
 
         $template .= '
-                        </tbody>
-                    </table>
                 </div>
 
                 <!-- Next Steps -->
@@ -367,12 +381,6 @@ class EmailService
                         <li>You\'ll receive a detailed confirmation email with invoice</li>
                         <li>Your order will be shipped within 1-2 business days</li>
                     </ol>
-                </div>
-
-                <!-- Contact Info -->
-                <div style="text-align: center; color: #666; font-size: 14px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <p>Need help? Contact us at <a href="mailto:support@store.ipdc.org" style="color: #00BDE0;">support@bookstore.com</a></p>
-                    <p style="margin-top: 15px;">Thank you for choosing Bookstore!</p>
                 </div>
 
             </div>
@@ -401,7 +409,7 @@ class EmailService
                 
                 <!-- Header -->
                 <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #00BDE0; padding-bottom: 20px;">
-                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">BOOKSTORE</h1>
+                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '</h1>
                     <p style="color: #666; font-size: 16px; margin: 5px 0 0 0;">Order Confirmation</p>
                 </div>
 
@@ -419,7 +427,7 @@ class EmailService
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Number:</td>
-                            <td style="padding: 8px 0; color: #333;">ORD-' . $order->id . '</td>
+                            <td style="padding: 8px 0; color: #333;">#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
@@ -438,30 +446,48 @@ class EmailService
 
                 <!-- Order Items -->
                 <div style="margin-bottom: 25px;">
-                    <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">Order Items</h3>
-                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
-                        <thead>
-                            <tr style="background-color: #f8f9fa;">
-                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd; color: #666;">Book</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; color: #666;">Qty</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd; color: #666;">Price</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd; color: #666;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>';
+                    <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">Order Items</h3>';
 
         foreach ($orderItems as $item) {
             $template .= '
-                            <tr>
-                                <td style="padding: 12px; border-bottom: 1px solid #eee; color: #333;">' . $item['name'] . '</td>
-                                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #eee; color: #333;">' . $item['quantity'] . '</td>
-                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #eee; color: #333;">' . $item['price'] . '</td>
-                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #eee; color: #333; font-weight: bold;">' . $item['total'] . '</td>
-                            </tr>';
+                    <div style="background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
+                        <div style="margin-bottom: 8px;">
+                            <strong style="color: #333; font-size: 16px;">' . $item['name'] . '</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="color: #666; font-size: 14px;">Quantity:</span>
+                            <span style="color: #333; font-weight: bold;">' . $item['quantity'] . '</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="color: #666; font-size: 14px;">Unit Price:</span>
+                            <span style="color: #333;">' . $item['price'] . '</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
+                            <span style="color: #333; font-weight: bold; font-size: 15px;">Total:</span>
+                            <span style="color: #00BDE0; font-weight: bold; font-size: 15px;">' . $item['total'] . '</span>
+                        </div>
+                    </div>';
         }
 
         $template .= '
-                        </tbody>
+                </div>
+
+                <!-- Order Summary -->
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #333; font-size: 18px; margin-top: 0; margin-bottom: 15px;">Order Summary</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;">Subtotal:</td>
+                            <td style="padding: 8px 0; text-align: right; color: #333;">₹' . number_format($order->subtotal, 2) . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;">Shipping:</td>
+                            <td style="padding: 8px 0; text-align: right; color: #333;">₹' . number_format($order->shipping_cost, 2) . '</td>
+                        </tr>
+                        <tr style="border-top: 2px solid #00BDE0;">
+                            <td style="padding: 12px 0; color: #333; font-weight: bold; font-size: 16px;">Total Amount:</td>
+                            <td style="padding: 12px 0; text-align: right; color: #00BDE0; font-weight: bold; font-size: 16px;">₹' . number_format($order->subtotal + $order->shipping_cost, 2) . '</td>
+                        </tr>
                     </table>
                 </div>
 
@@ -469,9 +495,14 @@ class EmailService
                 <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
                     <h3 style="color: #333; font-size: 18px; margin-top: 0; margin-bottom: 15px;">Shipping Address</h3>
                     <p style="color: #666; line-height: 1.6; margin: 0;">
-                        ' . $order->user->name . '<br>
-                        ' . ($order->user->address ?? 'Address not provided') . '<br>
-                        Phone: ' . ($order->user->phone ?? 'Not provided') . '<br>
+                        ' . ($order->shipping_address['name'] ?? $order->user->name) . '<br>
+                        ' . ($order->shipping_address['address_line_1'] ?? '') . '<br>
+                        ' . ($order->shipping_address['address_line_2'] ? $order->shipping_address['address_line_2'] . '<br>' : '') . '
+                        ' . ($order->shipping_address['city'] ?? '') . '<br>
+                        ' . ($order->shipping_address['taluka'] ?? '') . ', ' . ($order->shipping_address['district'] ?? '') . '<br>
+                        ' . ($order->shipping_address['state'] ?? '') . ' - ' . ($order->shipping_address['postal_code'] ?? '') . '<br>
+                        ' . ($order->shipping_address['country'] ?? 'India') . '<br><br>
+                        Phone: ' . ($order->shipping_address['phone'] ?? $order->user->phone ?? 'Not provided') . '<br>
                         Email: ' . $order->user->email . '
                     </p>
                 </div>
@@ -484,12 +515,6 @@ class EmailService
                         <li>You\'ll receive a shipping confirmation email with tracking details</li>
                         <li>Your order will be delivered within 3-7 business days</li>
                     </ul>
-                </div>
-
-                <!-- Contact Info -->
-                <div style="text-align: center; color: #666; font-size: 14px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <p>Need help? Contact us at <a href="mailto:support@bookstore.com" style="color: #00BDE0;">support@bookstore.com</a></p>
-                    <p style="margin-top: 15px;">Thank you for choosing Bookstore!</p>
                 </div>
 
             </div>
@@ -521,7 +546,7 @@ class EmailService
                 'subject' => $subject,
                 'message' => $message,
                 'to' => json_encode([$to]),
-                'is_online_user' => '2',
+                'is_online_user' => '0',
                 'notification_name' => config('mail.notification_name', 'Bookstore Admin')
             ];
 

@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
-@section('title', 'Order #' . $order->order_number)
+@section('title', 'Order #' . $order->id)
 
 @section('content')
 <div class="container mx-auto px-6 py-8">
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Order #{{ $order->order_number }}</h1>
+            <h1 class="text-3xl font-bold text-gray-900">#IPDC{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</h1>
             <nav class="text-sm text-gray-600 mt-2">
                 <a href="{{ route('admin.dashboard') }}" class="hover:text-blue-600">Dashboard</a>
                 <span class="mx-2">/</span>
@@ -17,10 +17,6 @@
             </nav>
         </div>
         <div class="flex space-x-3">
-            <a onclick="sendOrderConfirmation()" 
-                    class="bg-[#00BDE0] text-white px-4 py-2 rounded-md hover:bg-[#1290a7] transition duration-200">
-                <i class="fas fa-envelope mr-2"></i>Send Confirmation Email
-            </button>
             <a href="{{ route('admin.orders.index') }}" 
                class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition duration-200">
                 <i class="fas fa-arrow-left mr-2"></i>Back to Orders
@@ -75,11 +71,17 @@
                         <p class="text-gray-600 font-medium">Courier Company</p>
                         <p class="text-gray-900">{{ $order->courier_company }}</p>
                     </div>
+                    
                     @endif
+
+                    <div>
+                        <p class="text-gray-600 font-medium">Payment Status</p>
+                        <p class="text-gray-900">{{ $order->payment_status }}</p>
+                    </div>
                 </div>
 
                 <!-- Status Update Forms -->
-                <div class="mt-6 pt-6 border-t grid grid-cols-1 md:grid-cols-2 gap-4">
+                {{-- <div class="mt-6 pt-6 border-t grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <form method="POST" action="{{ route('admin.orders.update-status', $order) }}" class="flex items-end space-x-2">
                             @csrf
@@ -118,7 +120,7 @@
                             </button>
                         </form>
                     </div>
-                </div>
+                </div> --}}
 
                 <!-- Shiprocket Section -->
                 @if($order->shiprocket_order_id)
@@ -170,6 +172,17 @@
                 @else
                 <div class="mt-6 pt-6 border-t">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Shiprocket Shipping</h3>
+                    @if($order->is_bulk_purchased)
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-600 mr-3"></i>
+                            <div>
+                                <p class="text-green-800 font-medium">Bulk Purchase Order - Free Shipping</p>
+                                <p class="text-green-700 text-sm">This order qualifies for bulk purchase with free shipping. Shiprocket is not needed.</p>
+                            </div>
+                        </div>
+                    </div>
+                    @else
                     <div class="bg-yellow-50 rounded-lg p-4">
                         <div class="flex items-center">
                             <i class="fas fa-exclamation-triangle text-yellow-600 mr-3"></i>
@@ -185,6 +198,7 @@
                             </button>
                         </div>
                     </div>
+                    @endif
                 </div>
                 @endif
             </div>
@@ -317,9 +331,9 @@
                 <!-- Quick Actions -->
                 <div class="mt-6 pt-6 border-t space-y-3">
                     @if($order->payment_status === 'paid')
-                    <a href="{{ route('orders.invoice', $order) }}" target="_blank"
+                    <a href="{{ route('admin.orders.invoice', $order) }}"
                        class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 font-medium text-center block transition duration-200">
-                        View Invoice
+                        Download Invoice
                     </a>
                     @endif
                     

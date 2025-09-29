@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Sign Up')
+
 @section('content')
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
@@ -13,7 +15,7 @@
                 Create your account
             </h2>
             <p class="mt-2 text-center text-sm text-gray-600">
-                Join BookStore today
+                Join IPDC today
             </p>
         </div>
         
@@ -48,11 +50,17 @@
                 </div>
                 
                 <div>
-                    <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number (Optional)</label>
-                    <input id="phone" name="phone" type="tel" autocomplete="tel" 
+                    <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number <span class="text-red-500">*</span></label>
+                    <input id="phone" name="phone" type="tel" autocomplete="tel" required
                            value="{{ old('phone') }}"
                            class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] focus:z-10 sm:text-sm @error('phone') border-red-300 @enderror"
-                           placeholder="Enter your phone number">
+                           placeholder="Enter 10-digit phone number"
+                           pattern="[0-9]{10}"
+                           maxlength="10"
+                           title="Please enter exactly 10 digits">
+                    @error('phone')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
                 
                 <div>
@@ -69,12 +77,6 @@
                            placeholder="Confirm your password">
                 </div>
                 
-                <div>
-                    <label for="address" class="block text-sm font-medium text-gray-700">Address (Optional)</label>
-                    <textarea id="address" name="address" rows="2" 
-                              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] focus:z-10 sm:text-sm @error('address') border-red-300 @enderror"
-                              placeholder="Enter your address">{{ old('address') }}</textarea>
-                </div>
             </div>
 
             <div>
@@ -95,4 +97,39 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneInput = document.getElementById('phone');
+    
+    // Allow only numeric input
+    phoneInput.addEventListener('input', function(e) {
+        // Remove any non-digit characters
+        this.value = this.value.replace(/\D/g, '');
+        
+        // Limit to 10 digits
+        if (this.value.length > 10) {
+            this.value = this.value.slice(0, 10);
+        }
+    });
+    
+    // Prevent non-numeric characters from being typed
+    phoneInput.addEventListener('keypress', function(e) {
+        // Allow backspace, delete, tab, escape, enter
+        if ([8, 9, 27, 13, 46].indexOf(e.keyCode) !== -1 ||
+            // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+            (e.keyCode === 65 && e.ctrlKey === true) ||
+            (e.keyCode === 67 && e.ctrlKey === true) ||
+            (e.keyCode === 86 && e.ctrlKey === true) ||
+            (e.keyCode === 88 && e.ctrlKey === true)) {
+            return;
+        }
+        
+        // Ensure that it is a number and stop the keypress
+        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
 @endsection

@@ -7,7 +7,7 @@
     <div class="max-w-6xl mx-auto">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Order #{{ $order->order_number }}</h1>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">#IPDC{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</h1>
             <nav class="text-sm text-gray-600">
                 <a href="{{ route('home') }}" class="hover:text-blue-600">Home</a>
                 <span class="mx-2">/</span>

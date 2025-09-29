@@ -23,18 +23,18 @@ class AdminUserSeeder extends Seeder
                 'password' => Hash::make('admin123'),
                 'role' => 'admin',
                 'phone' => '+1234567890',
-                'address' => 'Admin Address, BookStore HQ',
+                'address' => 'Admin Address, IPDC',
                 'email_verified_at' => now(),
             ]
         );
 
         // Create a sample regular user
         User::firstOrCreate(
-            ['email' => 'user@bookstore.com'],
+            ['email' => 'chiragkanjariya0712@gmail.com'],
             [
                 'name' => 'Sample User',
-                'email' => 'user@bookstore.com',
-                'password' => Hash::make('user123'),
+                'email' => 'chiragkanjariya0712@gmail.com',
+                'password' => Hash::make('chirag@1997'),
                 'role' => 'user',
                 'phone' => '+0987654321',
                 'address' => '123 Reader Street, Book City',

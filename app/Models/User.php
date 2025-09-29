@@ -23,6 +23,9 @@ class User extends Authenticatable
         'password',
         'phone',
         'address',
+        'state_id',
+        'district_id',
+        'taluka_id',
         'role',
     ];
 
@@ -72,6 +75,30 @@ class User extends Authenticatable
     public function getRoleName(): string
     {
         return ucfirst($this->role);
+    }
+
+    /**
+     * Get the state that the user belongs to
+     */
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }
+
+    /**
+     * Get the district that the user belongs to
+     */
+    public function district()
+    {
+        return $this->belongsTo(District::class);
+    }
+
+    /**
+     * Get the taluka that the user belongs to
+     */
+    public function taluka()
+    {
+        return $this->belongsTo(Taluka::class);
     }
 
     /**

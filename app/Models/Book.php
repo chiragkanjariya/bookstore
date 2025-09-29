@@ -14,9 +14,14 @@ class Book extends Model
         'title',
         'slug',
         'author',
+        'isbn',
         'description',
         'price',
         'shipping_price',
+        'height',
+        'width',
+        'depth',
+        'weight',
         'stock',
         'language',
         'cover_image',
@@ -27,6 +32,10 @@ class Book extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'shipping_price' => 'decimal:2',
+        'height' => 'decimal:2',
+        'width' => 'decimal:2',
+        'depth' => 'decimal:2',
+        'weight' => 'decimal:2',
         'stock' => 'integer',
     ];
 
@@ -88,13 +97,14 @@ class Book extends Model
     }
 
     /**
-     * Scope a query to search books by title or author.
+     * Scope a query to search books by title, author, or ISBN.
      */
     public function scopeSearch($query, $search)
     {
         return $query->where(function ($query) use ($search) {
             $query->where('title', 'like', "%{$search}%")
-                  ->orWhere('author', 'like', "%{$search}%");
+                  ->orWhere('author', 'like', "%{$search}%")
+                  ->orWhere('isbn', 'like', "%{$search}%");
         });
     }
 

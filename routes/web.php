@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\Api\LocationController;
 
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -78,6 +79,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('orders/{order}/create-shiprocket', [\App\Http\Controllers\Admin\OrderController::class, 'createShiprocketOrder'])->name('orders.create-shiprocket');
     Route::get('orders/track-shipment/{shiprocketOrderId}', [\App\Http\Controllers\Admin\OrderController::class, 'trackShipment'])->name('orders.track-shipment');
     Route::post('orders/{order}/send-confirmation', [\App\Http\Controllers\Admin\OrderController::class, 'sendOrderConfirmation'])->name('orders.send-confirmation');
+    Route::get('orders/{order}/invoice', [\App\Http\Controllers\Admin\OrderController::class, 'invoice'])->name('orders.invoice');
     
     // Email Testing Routes (for debugging)
     Route::get('test-email', [\App\Http\Controllers\Admin\TestEmailController::class, 'testEmail'])->name('test-email');
@@ -88,8 +90,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('accounts', [\App\Http\Controllers\Admin\AccountReportController::class, 'index'])->name('accounts.index');
         Route::get('accounts/export-csv', [\App\Http\Controllers\Admin\AccountReportController::class, 'exportCsv'])->name('accounts.export-csv');
         Route::post('accounts/combined-invoice', [\App\Http\Controllers\Admin\AccountReportController::class, 'generateCombinedInvoice'])->name('accounts.combined-invoice');
-        Route::get('accounts/user-details', [\App\Http\Controllers\Admin\AccountReportController::class, 'getUserDetails'])->name('accounts.user-details');
+        Route::get('accounts/order-details', [\App\Http\Controllers\Admin\AccountReportController::class, 'getOrderDetails'])->name('accounts.order-details');
     });
+    
+    // Settings Routes
+    Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+    Route::put('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
 });
 
 // Checkout Routes (Authenticated Users)
@@ -108,3 +114,24 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/orders/{order}/cancel', [\App\Http\Controllers\OrderController::class, 'cancel'])->name('orders.cancel');
     Route::get('/orders/{order}/invoice', [\App\Http\Controllers\OrderController::class, 'invoice'])->name('orders.invoice');
 });
+
+
+// API Routes for Location Data
+Route::prefix('api/locations')->group(function () {
+    Route::get('/states', [LocationController::class, 'getStates'])->name('api.locations.states');
+    Route::get('/districts', [LocationController::class, 'getDistricts'])->name('api.locations.districts');
+    Route::get('/talukas', [LocationController::class, 'getTalukas'])->name('api.locations.talukas');
+    Route::get('/talukas-by-state', [LocationController::class, 'getTalukasByState'])->name('api.locations.talukas-by-state');
+    Route::get('/search', [LocationController::class, 'searchLocations'])->name('api.locations.search');
+});
+
+// Static Pages Routes
+Route::get('/privacy-policy', [\App\Http\Controllers\PagesController::class, 'privacyPolicy'])->name('pages.privacy-policy');
+Route::get('/terms-of-use', [\App\Http\Controllers\PagesController::class, 'termsOfUse'])->name('pages.terms-of-use');
+Route::get('/payment-policies', [\App\Http\Controllers\PagesController::class, 'paymentPolicies'])->name('pages.payment-policies');
+Route::get('/about-us', [\App\Http\Controllers\PagesController::class, 'aboutUs'])->name('pages.about-us');
+Route::get('/contact-us', [\App\Http\Controllers\PagesController::class, 'contactUs'])->name('pages.contact-us');
+
+// Webhook Routes (No CSRF protection needed)
+Route::post('/webhook/razorpay', [\App\Http\Controllers\WebhookController::class, 'razorpayWebhook'])->name('webhook.razorpay');
+

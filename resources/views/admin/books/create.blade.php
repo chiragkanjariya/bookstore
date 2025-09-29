@@ -1,5 +1,6 @@
 @extends('layouts.admin')
 
+@section('title', 'Add Book')
 @section('breadcrumb', 'Add Book')
 
 @section('content')
@@ -63,6 +64,21 @@
                             @error('author')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
+                        </div>
+
+                        <!-- ISBN -->
+                        <div>
+                            <label for="isbn" class="block text-sm font-medium text-gray-700 mb-1">
+                                ISBN
+                            </label>
+                            <input type="text" name="isbn" id="isbn" value="{{ old('isbn') }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('isbn') border-red-300 @enderror"
+                                   placeholder="Enter ISBN (e.g., 978-0123456789)"
+                                   maxlength="20">
+                            @error('isbn')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-sm text-gray-500">International Standard Book Number (optional)</p>
                         </div>
 
                         <!-- Category -->
@@ -136,7 +152,7 @@
                                         </label>
                                         <p class="pl-1">or drag and drop</p>
                                     </div>
-                                    <p class="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                                    <p class="text-xs text-gray-500">PNG, JPG, GIF up to 6MB</p>
                                 </div>
                             </div>
                             @error('cover_image')
@@ -170,6 +186,64 @@
                                 @error('shipping_price')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
+                            </div>
+                        </div>
+
+                        <!-- Dimensions and Weight -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="text-sm font-medium text-gray-900 mb-4">Physical Properties</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Height -->
+                                <div>
+                                    <label for="height" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Height (cm)
+                                    </label>
+                                    <input type="number" name="height" id="height" value="{{ old('height') }}" min="0" step="0.01"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('height') border-red-300 @enderror"
+                                           placeholder="0.00">
+                                    @error('height')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Width -->
+                                <div>
+                                    <label for="width" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Width (cm)
+                                    </label>
+                                    <input type="number" name="width" id="width" value="{{ old('width') }}" min="0" step="0.01"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('width') border-red-300 @enderror"
+                                           placeholder="0.00">
+                                    @error('width')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Depth -->
+                                <div>
+                                    <label for="depth" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Depth (cm)
+                                    </label>
+                                    <input type="number" name="depth" id="depth" value="{{ old('depth') }}" min="0" step="0.01"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('depth') border-red-300 @enderror"
+                                           placeholder="0.00">
+                                    @error('depth')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Weight -->
+                                <div>
+                                    <label for="weight" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Weight (kg)
+                                    </label>
+                                    <input type="number" name="weight" id="weight" value="{{ old('weight') }}" min="0" step="0.01"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('weight') border-red-300 @enderror"
+                                           placeholder="0.00">
+                                    @error('weight')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
 

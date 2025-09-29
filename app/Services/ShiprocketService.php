@@ -54,9 +54,15 @@ class ShiprocketService
     /**
      * Create order in Shiprocket
      */
-    public function createOrder(Order $order)
+public function createOrder(Order $order)
     {
         try {
+            // Skip Shiprocket for bulk orders with free shipping
+            if ($order->is_bulk_purchased) {
+                Log::info('Skipping Shiprocket order creation for bulk purchase order: ' . $order->id);
+                return false;
+            }
+
             // Authenticate first
             if (!$this->authenticate()) {
                 throw new \Exception('Failed to authenticate with Shiprocket');
@@ -194,8 +200,9 @@ class ShiprocketService
                 'hsn' => '49019900' // HSN code for books
             ];
             
-            // Assume each book weighs 0.5 kg (you can add weight field to books table)
-            $totalWeight += (0.5 * $item->quantity);
+            // Use actual book weight or default to 0.5 kg if not set
+            $bookWeight = $item->book->weight ?? 0.5;
+            $totalWeight += ($bookWeight * $item->quantity);
         }
 
         return [
@@ -203,7 +210,7 @@ class ShiprocketService
             'order_date' => $order->created_at->format('Y-m-d H:i'),
             'pickup_location' => 'warehouse', // Use the actual pickup location name
             'channel_id' => '',
-            'comment' => $order->notes ?? 'Order from BookStore',
+            'comment' => $order->notes ?? 'Order from IPDC',
             'billing_customer_name' => $order->shipping_address['name'],
             'billing_last_name' => '',
             'billing_address' => $order->shipping_address['address_line_1'],
@@ -232,11 +239,48 @@ class ShiprocketService
             'transaction_charges' => 0,
             'total_discount' => 0,
             'sub_total' => $order->subtotal,
-            'length' => 20, // Default dimensions in cm
-            'breadth' => 15,
-            'height' => 5,
+            'length' => $this->getOrderDimensions($order, 'length'),
+            'breadth' => $this->getOrderDimensions($order, 'breadth'),
+            'height' => $this->getOrderDimensions($order, 'height'),
             'weight' => max($totalWeight, 0.5), // Minimum 0.5 kg
         ];
+    }
+
+    /**
+     * Get order dimensions based on books in the order
+     */
+    private function getOrderDimensions(Order $order, $dimension)
+    {
+        $maxDimensions = [
+            'length' => 0,
+            'breadth' => 0,
+            'height' => 0
+        ];
+
+        foreach ($order->orderItems as $item) {
+            $book = $item->book;
+            
+            // Use actual book dimensions or defaults
+            $bookLength = $book->width ?? 15; // width becomes length for shipping
+            $bookBreadth = $book->depth ?? 10; // depth becomes breadth for shipping
+            $bookHeight = $book->height ?? 5; // height stays height
+            
+            $maxDimensions['length'] = max($maxDimensions['length'], $bookLength);
+            $maxDimensions['breadth'] = max($maxDimensions['breadth'], $bookBreadth);
+            $maxDimensions['height'] = max($maxDimensions['height'], $bookHeight);
+        }
+
+        // Return default values if no books have dimensions set
+        if ($maxDimensions[$dimension] == 0) {
+            $defaults = [
+                'length' => 20,
+                'breadth' => 15,
+                'height' => 5
+            ];
+            return $defaults[$dimension];
+        }
+
+        return $maxDimensions[$dimension];
     }
 
     /**

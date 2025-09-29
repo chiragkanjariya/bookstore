@@ -56,18 +56,24 @@ class BookController extends Controller
         $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
+            'isbn' => ['nullable', 'string', 'max:20', 'unique:books,isbn'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'shipping_price' => ['nullable', 'numeric', 'min:0'],
+            'height' => ['nullable', 'numeric', 'min:0'],
+            'width' => ['nullable', 'numeric', 'min:0'],
+            'depth' => ['nullable', 'numeric', 'min:0'],
+            'weight' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
             'language' => ['required', 'string', 'max:100'],
-            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:5000'],
             'status' => ['required', Rule::in(['active', 'inactive', 'out_of_stock'])],
             'category_id' => ['required', 'exists:categories,id'],
         ]);
 
         $data = $request->only([
-            'title', 'author', 'description', 'price', 'shipping_price',
+            'title', 'author', 'isbn', 'description', 'price', 'shipping_price',
+            'height', 'width', 'depth', 'weight',
             'stock', 'language', 'status', 'category_id'
         ]);
 
@@ -111,18 +117,24 @@ class BookController extends Controller
         $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
+            'isbn' => ['nullable', 'string', 'max:20', 'unique:books,isbn,' . $book->id],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'shipping_price' => ['nullable', 'numeric', 'min:0'],
+            'height' => ['nullable', 'numeric', 'min:0'],
+            'width' => ['nullable', 'numeric', 'min:0'],
+            'depth' => ['nullable', 'numeric', 'min:0'],
+            'weight' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
             'language' => ['required', 'string', 'max:100'],
-            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:5000'],
             'status' => ['required', Rule::in(['active', 'inactive', 'out_of_stock'])],
             'category_id' => ['required', 'exists:categories,id'],
         ]);
 
         $data = $request->only([
-            'title', 'author', 'description', 'price', 'shipping_price',
+            'title', 'author', 'isbn', 'description', 'price', 'shipping_price',
+            'height', 'width', 'depth', 'weight',
             'stock', 'language', 'status', 'category_id'
         ]);
 

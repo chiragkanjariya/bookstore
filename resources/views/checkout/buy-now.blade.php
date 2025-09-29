@@ -39,15 +39,22 @@
                             </div>
                             
                             <div>
-                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number <span class="text-red-500">*</span></label>
                                 <input type="tel" id="phone" name="shipping_address[phone]" required
+                                       pattern="[0-9]{10}" 
+                                       maxlength="10"
+                                       placeholder="Enter 10 digit phone number"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <div class="text-red-500 text-sm mt-1 hidden" id="phone-error">Phone number must be exactly 10 digits.</div>
                             </div>
                             
                             <div class="md:col-span-2">
-                                <label for="address_line_1" class="block text-sm font-medium text-gray-700 mb-2">Address Line 1</label>
+                                <label for="address_line_1" class="block text-sm font-medium text-gray-700 mb-2">Address Line 1 <span class="text-red-500">*</span></label>
                                 <input type="text" id="address_line_1" name="shipping_address[address_line_1]" required
+                                       minlength="10"
+                                       placeholder="Enter complete address (minimum 10 characters)"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <div class="text-red-500 text-sm mt-1 hidden" id="address-error">Address must be at least 10 characters long.</div>
                             </div>
                             
                             <div class="md:col-span-2">
@@ -57,15 +64,34 @@
                             </div>
                             
                             <div>
-                                <label for="city" class="block text-sm font-medium text-gray-700 mb-2">City</label>
+                                <label for="city" class="block text-sm font-medium text-gray-700 mb-2">City <span class="text-red-500">*</span></label>
                                 <input type="text" id="city" name="shipping_address[city]" required
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Enter city name">
                             </div>
                             
                             <div>
-                                <label for="state" class="block text-sm font-medium text-gray-700 mb-2">State</label>
-                                <input type="text" id="state" name="shipping_address[state]" required
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <label for="state" class="block text-sm font-medium text-gray-700 mb-2">State <span class="text-red-500">*</span></label>
+                                <select id="state" name="shipping_address[state_id]" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">Select State</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="district" class="block text-sm font-medium text-gray-700 mb-2">District <span class="text-red-500">*</span></label>
+                                <select id="district" name="shipping_address[district_id]" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" disabled>
+                                    <option value="">Select District</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="taluka" class="block text-sm font-medium text-gray-700 mb-2">Taluka <span class="text-red-500">*</span></label>
+                                <select id="taluka" name="shipping_address[taluka_id]" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" disabled>
+                                    <option value="">Select Taluka</option>
+                                </select>
                             </div>
                             
                             <div>
@@ -84,12 +110,7 @@
                         </div>
                     </div>
 
-                    <!-- Order Notes -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Order Notes (Optional)</h2>
-                        <textarea name="notes" rows="3" placeholder="Any special instructions for delivery..."
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
+                    
                 </form>
             </div>
 
@@ -120,12 +141,26 @@
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Shipping</span>
-                            <span class="text-gray-900">₹{{ number_format($shipping, 2) }}</span>
+                            <span class="text-gray-900">
+                                @if($shipping == 0)
+                                    <span class="text-green-600 font-medium">FREE</span>
+                                @else
+                                    ₹{{ number_format($shipping, 2) }}
+                                @endif
+                            </span>
                         </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Tax (18% GST)</span>
-                            <span class="text-gray-900">₹{{ number_format($tax, 2) }}</span>
+                        @php
+                            $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
+                            $isBulkPurchase = $buyNowItem->quantity >= $minBulkPurchase;
+                        @endphp
+                        @if($isBulkPurchase)
+                        <div class="bg-green-50 border border-green-200 rounded-md p-2">
+                            <p class="text-xs text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                <strong>Bulk Purchase!</strong> You qualify for free shipping ({{ $buyNowItem->quantity }} items ≥ {{ $minBulkPurchase }} items)
+                            </p>
                         </div>
+                        @endif
                         <div class="border-t pt-2">
                             <div class="flex justify-between text-lg font-semibold">
                                 <span class="text-gray-900">Total</span>
@@ -168,9 +203,69 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnLoading = document.getElementById('btn-loading');
     const checkoutForm = document.getElementById('checkout-form');
 
+    // Custom validation functions
+    function validatePhone(phone) {
+        const phoneRegex = /^[0-9]{10}$/;
+        return phoneRegex.test(phone);
+    }
+
+    function validateAddress(address) {
+        return address && address.length >= 10;
+    }
+
+    // Real-time validation
+    const phoneInput = document.getElementById('phone');
+    const addressInput = document.getElementById('address_line_1');
+    const phoneError = document.getElementById('phone-error');
+    const addressError = document.getElementById('address-error');
+
+    phoneInput.addEventListener('input', function() {
+        const phone = this.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+        this.value = phone; // Set cleaned value
+        
+        if (phone.length > 0 && !validatePhone(phone)) {
+            phoneError.classList.remove('hidden');
+            this.classList.add('border-red-500');
+        } else {
+            phoneError.classList.add('hidden');
+            this.classList.remove('border-red-500');
+        }
+    });
+
+    addressInput.addEventListener('input', function() {
+        const address = this.value.trim();
+        
+        if (address.length > 0 && !validateAddress(address)) {
+            addressError.classList.remove('hidden');
+            this.classList.add('border-red-500');
+        } else {
+            addressError.classList.add('hidden');
+            this.classList.remove('border-red-500');
+        }
+    });
+
     placeOrderBtn.addEventListener('click', function() {
-        // Validate form
-        if (!checkoutForm.checkValidity()) {
+        // Custom validation before form submission
+        const phone = phoneInput.value.trim();
+        const address = addressInput.value.trim();
+        let isValid = true;
+
+        // Validate phone
+        if (!validatePhone(phone)) {
+            phoneError.classList.remove('hidden');
+            phoneInput.classList.add('border-red-500');
+            isValid = false;
+        }
+
+        // Validate address
+        if (!validateAddress(address)) {
+            addressError.classList.remove('hidden');
+            addressInput.classList.add('border-red-500');
+            isValid = false;
+        }
+
+        // Standard form validation
+        if (!checkoutForm.checkValidity() || !isValid) {
             checkoutForm.reportValidity();
             return;
         }
@@ -198,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     key: data.key,
                     amount: data.amount,
                     currency: data.currency,
-                    name: 'BookStore',
+                    name: 'IPDC',
                     description: 'Book Purchase - {{ $buyNowItem->book->title }}',
                     order_id: data.razorpay_order_id,
                     prefill: {
@@ -264,6 +359,95 @@ document.addEventListener('DOMContentLoaded', function() {
             placeOrderBtn.disabled = false;
         });
     });
+});
+
+// Location Dropdown Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const stateSelect = document.getElementById('state');
+    const districtSelect = document.getElementById('district');
+    const talukaSelect = document.getElementById('taluka');
+
+    // Load states on page load
+    loadStates();
+
+    // State change handler
+    stateSelect.addEventListener('change', function() {
+        const stateId = this.value;
+        if (stateId) {
+            loadDistricts(stateId);
+            districtSelect.disabled = false;
+            talukaSelect.disabled = true;
+            talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+        } else {
+            districtSelect.disabled = true;
+            talukaSelect.disabled = true;
+            districtSelect.innerHTML = '<option value="">Select District</option>';
+            talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+        }
+    });
+
+    // District change handler
+    districtSelect.addEventListener('change', function() {
+        const districtId = this.value;
+        if (districtId) {
+            loadTalukas(districtId);
+            talukaSelect.disabled = false;
+        } else {
+            talukaSelect.disabled = true;
+            talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+        }
+    });
+
+    function loadStates() {
+        fetch('/api/locations/states')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    stateSelect.innerHTML = '<option value="">Select State</option>';
+                    data.data.forEach(state => {
+                        const option = document.createElement('option');
+                        option.value = state.id;
+                        option.textContent = state.name;
+                        stateSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading states:', error));
+    }
+
+    function loadDistricts(stateId) {
+        fetch(`/api/locations/districts?state_id=${stateId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    districtSelect.innerHTML = '<option value="">Select District</option>';
+                    data.data.forEach(district => {
+                        const option = document.createElement('option');
+                        option.value = district.id;
+                        option.textContent = district.name;
+                        districtSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading districts:', error));
+    }
+
+    function loadTalukas(districtId) {
+        fetch(`/api/locations/talukas?district_id=${districtId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+                    data.data.forEach(taluka => {
+                        const option = document.createElement('option');
+                        option.value = taluka.id;
+                        option.textContent = taluka.name;
+                        talukaSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading talukas:', error));
+    }
 });
 </script>
 @endsection

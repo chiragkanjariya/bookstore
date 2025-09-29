@@ -28,8 +28,11 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::min(6)],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'address' => ['nullable', 'string', 'max:500'],
+            'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/', 'unique:users'],
+        ], [
+            'phone.required' => 'Phone number is required.',
+            'phone.regex' => 'Phone number must be exactly 10 digits.',
+            'phone.unique' => 'This phone number is already registered.',
         ]);
 
         $user = User::create([
@@ -37,7 +40,6 @@ class RegisterController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
-            'address' => $request->address,
             'role' => 'user', // Default role
         ]);
 
@@ -52,10 +54,10 @@ class RegisterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Registration successful! Welcome to BookStore!',
-                'redirect' => route('user.dashboard')
+                'redirect' => route('home')
             ]);
         }
 
-        return redirect()->route('user.dashboard')->with('success', 'Registration successful! Welcome to BookStore!');
+        return redirect()->route('home')->with('success', 'Registration successful! Welcome to BookStore!');
     }
 }

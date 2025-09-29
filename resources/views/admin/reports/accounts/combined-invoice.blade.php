@@ -113,23 +113,14 @@
 <body>
 @php
     $count = 0;
-    $total = $users->count();
+    $total = $orders->count();
 @endphp
 
-@foreach($users as $user)
+@foreach($orders as $order)
     @php
         $count++;
-        $userOrders = $user->orders;
-        if($dateFrom) {
-            $userOrders = $userOrders->where('created_at', '>=', $dateFrom);
-        }
-        if($dateTo) {
-            $userOrders = $userOrders->where('created_at', '<=', $dateTo);
-        }
-        $userOrdersCount = $userOrders->count();
+        $user = $order->user;
     @endphp
-    
-    @foreach($userOrders as $order)
         <div class="purchase-history-list-area" style="font-weight:500;">
             <div class="container" style="background: #fff;padding: 1.8rem;width:96%;padding-left:2%;padding-right:2%;">
                 <div class="row">
@@ -140,7 +131,7 @@
                                     <tr>
                                         <td>
                                             <div style="height: 50px; line-height: 50px; font-size: 24px; font-weight: bold; color: #00BDE0;">
-                                                BOOKSTORE
+                                                IPDC
                                             </div>
                                         </td>
                                         <td style="font-size: 24px; font-weight: 600; text-align:right;" class="text-end strong">
@@ -150,13 +141,23 @@
                                 </table><br>
                                 <table style="width:100%;">
                                     <tr>
-                                        <td style="font-size: 1.2rem;" class="strong">BOOKSTORE</td>
+                                        <td style="font-size: 1.2rem;" class="strong">B. A. P. S. VISION</td>
                                         <td style="font-size: 1.0rem;" class="text-end strong">{{ ucfirst($user->name) }}</td>
                                     </tr>
                                     <tr>
-                                        <td class="gry-color small w-50">{{ config('app.company_address', '123 Business Street, City, State 12345') }}</td>
+                                        <td class="gry-color small w-50">{{ \App\Models\Setting::get('company_address', '123 Business Street, City, State 12345') }}</td>
                                         <td class="gry-color text-end small w-50">
-                                            {{ $user->address ?? 'Address not available' }}<br />
+                                            @php
+                                                $shipping_address_str = '';
+                                                $shipping_address = $order->shipping_address; // Already an array due to casting
+                                                if (is_string($shipping_address)) {
+                                                    $shipping_address = json_decode($shipping_address, true);
+                                                }
+                                                if (is_array($shipping_address)) {
+                                                    $shipping_address_str .= ($shipping_address['address_line_1'] ?? '') . ', <br/>' . ($shipping_address['address_line_2'] ?? '') . ', <br/> ' . ($shipping_address['city'] ?? '') . ',  <br/>' . ($shipping_address['state'] ?? '') . ', ' . ($shipping_address['postal_code'] ?? '') . ', ' . ($shipping_address['country'] ?? '');
+                                                }
+                                            @endphp
+                                            {{ $shipping_address_str ?? 'Address not available' }}<br />
                                             Phone: {{ $user->phone ?? 'N/A' }}<br />
                                             Email: {{ $user->email }}
                                         </td>
@@ -175,20 +176,20 @@
                                         <td class="strong small text-end small w-50 gry-color"></td>
                                     </tr>
                                     <tr>
-                                        <td class="strong small gry-color">CIN : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {{ config('app.cin_number', 'U80904MH2021NPL364738') }}</td>
-                                        <td class="strong small text-end small w-50 gry-color"></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="strong small gry-color">Order No : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ORD-{{ $order->id }}</td>
-                                        <td class="strong small text-end small w-50 gry-color">Invoice No : &nbsp;&nbsp;INV-{{ $order->id }}</td>
+                                        <td class="strong small gry-color">Order No : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $order->order_number }}</td>
+                                        <td class="strong small text-end small w-50 gry-color">Invoice No : &nbsp;&nbsp;IPDC-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
                                     </tr>
                                     <tr>
                                         <td class="strong small gry-color">Order Date : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $order->created_at->format('d-M-Y') }}</td>
                                         <td class="strong small text-end small w-50 gry-color">Payment Date : &nbsp;&nbsp;{{ $order->created_at->format('d-M-Y') }}</td>
                                     </tr>
                                     <tr>
-                                        <td class="strong small gry-color">Place of : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $user->address ? explode(',', $user->address)[0] ?? 'N/A' : 'N/A' }}</td>
-                                        <td class="strong small text-end small w-50 gry-color"></td>
+                                        <td class="strong small gry-color">Place of : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ \App\Models\Setting::get('company_place', '123 Business Street, City, State 12345') }}</td>
+                                        <td class="strong small text-end small w-50 gry-color">
+                                            @if($order->is_bulk_purchased)
+                                                <span style="background-color: #d4edda; color: #155724; padding: 2px 6px; border-radius: 3px; font-size: 10px;">BULK PURCHASE - FREE SHIPPING</span>
+                                            @endif
+                                        </td>
                                     </tr>
                                 </table>
                             </div>
@@ -199,7 +200,6 @@
                                     <thead>
                                         <tr class="gry-color" style="background: #eceff4;padding:10px;">
                                             <th width="10%">#</th>
-                                            <th width="15%">HSN/SAC</th>
                                             <th width="60%" style="padding-left : 10px;">Book Name</th>
                                             <th width="15%" class="text-end">Amount</th>
                                         </tr>
@@ -217,52 +217,32 @@
                                         @foreach($order->orderItems as $orderDetail)
                                             @php
                                                 $item_total = $orderDetail->price * $orderDetail->quantity;
-                                                $item_cgst = $item_total * 0.09; // 9% CGST
-                                                $item_sgst = $item_total * 0.09; // 9% SGST
-                                                $item_igst = 0.00; // No IGST for local orders
-                                                
-                                                $cgst += $item_cgst;
-                                                $sgst += $item_sgst;
-                                                $igst += $item_igst;
                                                 $sub_total += $item_total;
-                                                $grand_total += $item_total + $item_cgst + $item_sgst + $item_igst;
+                                                $grand_total += $item_total;
                                             @endphp
                                             <tr>
                                                 <td>{{ $i }}</td>
-                                                <td>999293</td>
-                                                <td class="gry-color" style="padding: 30px;">{{ $orderDetail->book->title }}</td>
+                                                <td class="gry-color" style="padding: 15px;">{{ $orderDetail->book->title }}</td>
                                                 <td style="text-align:center" class="text-end">{{ number_format($item_total, 2) }}/-</td>
                                             </tr>
                                             @php $i++; @endphp
                                         @endforeach
+                                        @php
+                                            $grand_total += $order->shipping_cost;
+                                        @endphp
                                     </tbody>
                                     <tfoot>
-                                        <tr style="border-top: 2px solid #6c757d;">
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color text-end"> <strong>Sub Total:</strong> </td>
+                                        <tr style="border-top: 2px solid #6c757d; border-bottom: 2px solid #6c757d;">
+                                            <td></td>
+                                            <td class="gry-color text-end strong"><strong>Subtotal :</strong></td>
                                             <td style="text-align:center" class="text-end"><strong>{{ number_format($sub_total, 2) }}/-</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color text-end"> <strong>ADD CGST :</strong> </td>
-                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($cgst, 2) }}/-</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color text-end"> <strong>ADD SGST :</strong> </td>
-                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($sgst, 2) }}/-</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color"></td>
-                                            <td class="gry-color text-end"> <strong>ADD IGST :</strong> </td>
-                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($igst, 2) }}/-</strong></td>
                                         </tr>
                                         <tr style="border-top: 2px solid #6c757d; border-bottom: 2px solid #6c757d;">
                                             <td></td>
+                                            <td class="gry-color text-end strong"><strong>Shipping Amount :</strong></td>
+                                            <td style="text-align:center" class="text-end"><strong>{{ number_format($order->shipping_cost, 2) }}/-</strong></td>
+                                        </tr>
+                                        <tr style="border-top: 2px solid #6c757d; border-bottom: 2px solid #6c757d;">
                                             <td></td>
                                             <td class="gry-color text-end strong"><strong>Final Amount :</strong></td>
                                             <td style="text-align:center" class="text-end"><strong>{{ number_format($grand_total, 2) }}/-</strong></td>
@@ -283,10 +263,9 @@
                 </div>
             </div>
         </div>
-        @if($count != $total)
-            <div class="page-break"></div>
-        @endif
-    @endforeach
+    @if($count != $total)
+        <div class="page-break"></div>
+    @endif
 @endforeach
 </body>
 </html>
