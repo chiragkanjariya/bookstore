@@ -109,10 +109,7 @@
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('language') border-red-300 @enderror">
                                 <option value="English" {{ old('language', 'English') === 'English' ? 'selected' : '' }}>English</option>
                                 <option value="Hindi" {{ old('language') === 'Hindi' ? 'selected' : '' }}>Hindi</option>
-                                <option value="Spanish" {{ old('language') === 'Spanish' ? 'selected' : '' }}>Spanish</option>
-                                <option value="French" {{ old('language') === 'French' ? 'selected' : '' }}>French</option>
-                                <option value="German" {{ old('language') === 'German' ? 'selected' : '' }}>German</option>
-                                <option value="Other" {{ old('language') === 'Other' ? 'selected' : '' }}>Other</option>
+                                <option value="Gujarati" {{ old('language') === 'Gujarati' ? 'selected' : '' }}>Gujarati</option>
                             </select>
                             @error('language')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
