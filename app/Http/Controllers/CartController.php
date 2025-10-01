@@ -126,7 +126,6 @@ class CartController extends Controller
 
         return redirect()->back()->with('success', $message);
     }
-
     /**
      * Update cart item quantity.
      */
@@ -163,9 +162,17 @@ class CartController extends Controller
             $user = Auth::user();
             $cartItems = $user->cartItems()->with(['book.category'])->get();
             $subtotal = $cartItems->sum('total_price');
-            $shipping = $cartItems->sum(function ($item) {
+            
+            // Calculate total quantity for bulk purchase check
+            $totalQuantity = $cartItems->sum('quantity');
+            $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
+            $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
+            
+            // Apply bulk purchase free shipping logic
+            $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) {
                 return $item->book->shipping_price * $item->quantity;
             });
+            
             $total = $subtotal + $shipping;
 
             return response()->json([
@@ -175,7 +182,10 @@ class CartController extends Controller
                 'item_total' => $cartItem->total_price,
                 'subtotal' => $subtotal,
                 'shipping' => $shipping,
-                'total' => $total
+                'total' => $total,
+                'is_bulk_purchase' => $isBulkPurchase,
+                'total_quantity' => $totalQuantity,
+                'min_bulk_purchase' => $minBulkPurchase
             ]);
         }
 
