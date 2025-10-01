@@ -121,7 +121,7 @@
                                                            class="quantity-input w-16 text-center border-0 focus:ring-0" 
                                                            value="{{ $item->quantity }}" 
                                                            min="1" 
-                                                           max="{{ $item->max_quantity }}"
+                                                           max="{{ $item->book->stock }}"
                                                            data-item-id="{{ $item->id }}">
                                                     <button type="button" class="quantity-btn p-2 hover:bg-gray-100" data-action="increase" data-item-id="{{ $item->id }}">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,18 +167,29 @@
                             <span class="text-gray-600">Subtotal ({{ $cartItems->sum('quantity') }} items)</span>
                             <span class="font-medium" id="subtotal">₹{{ number_format($subtotal, 2) }}</span>
                         </div>
-                        
+                        @php
+                            $totalQuantity = $cartItems->sum('quantity');
+                            $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
+                            $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
+                        @endphp
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shipping</span>
                             <span class="font-medium" id="shipping">
-                                @if($shipping > 0)
+                                @if(!$isBulkPurchase)
                                     ₹{{ number_format($shipping, 2) }}
                                 @else
                                     Free
                                 @endif
                             </span>
                         </div>
-                        
+                        @if($isBulkPurchase)
+                        <div class="bg-green-50 border border-green-200 rounded-md p-2">
+                            <p class="text-xs text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                <strong>Bulk Purchase!</strong> You qualify for free shipping ({{ $totalQuantity }} items ≥ {{ $minBulkPurchase }} items)
+                            </p>
+                        </div>
+                        @endif
                         <div class="border-t border-gray-200 pt-4">
                             <div class="flex justify-between">
                                 <span class="text-lg font-semibold text-gray-900">Total</span>

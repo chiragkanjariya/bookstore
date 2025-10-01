@@ -138,7 +138,7 @@ class CartController extends Controller
         }
 
         $request->validate([
-            'quantity' => 'required|integer|min:1|max:10'
+            'quantity' => 'required|integer|min:1'
         ]);
 
         $quantity = $request->quantity;
