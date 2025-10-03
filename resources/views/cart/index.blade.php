@@ -121,7 +121,7 @@
                                                            class="quantity-input w-16 text-center border-0 focus:ring-0" 
                                                            value="{{ $item->quantity }}" 
                                                            min="1" 
-                                                           max="{{ $item->max_quantity }}"
+                                                           max="{{ $item->book->stock }}"
                                                            data-item-id="{{ $item->id }}">
                                                     <button type="button" class="quantity-btn p-2 hover:bg-gray-100" data-action="increase" data-item-id="{{ $item->id }}">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,18 +167,21 @@
                             <span class="text-gray-600">Subtotal ({{ $cartItems->sum('quantity') }} items)</span>
                             <span class="font-medium" id="subtotal">₹{{ number_format($subtotal, 2) }}</span>
                         </div>
-                        
+                        @php
+                            $totalQuantity = $cartItems->sum('quantity');
+                            $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
+                            $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
+                        @endphp
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shipping</span>
                             <span class="font-medium" id="shipping">
-                                @if($shipping > 0)
+                                @if(!$isBulkPurchase)
                                     ₹{{ number_format($shipping, 2) }}
                                 @else
                                     Free
                                 @endif
                             </span>
                         </div>
-                        
                         <div class="border-t border-gray-200 pt-4">
                             <div class="flex justify-between">
                                 <span class="text-lg font-semibold text-gray-900">Total</span>
@@ -215,7 +218,6 @@
         </div>
     @endif
 </div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Quantity controls
@@ -296,11 +298,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelector(`[data-item-id="${itemId}"] .item-total`).textContent = 
                     `₹${parseFloat(data.item_total).toFixed(2)}`;
                 
-                // Update order summary
+                // Update subtotal text with quantity
+                const subtotalElement = document.getElementById('subtotal').parentElement;
+                subtotalElement.querySelector('.text-gray-600').textContent = 
+                    `Subtotal (${data.total_quantity} items)`;
+                
+                // Update subtotal amount
                 document.getElementById('subtotal').textContent = `₹${parseFloat(data.subtotal).toFixed(2)}`;
+                
+                // Update shipping
                 document.getElementById('shipping').textContent = 
                     data.shipping > 0 ? `₹${parseFloat(data.shipping).toFixed(2)}` : 'Free';
+                
+                // Update total
                 document.getElementById('total').textContent = `₹${parseFloat(data.total).toFixed(2)}`;
+                
+                // Update or show/hide bulk purchase message
+                updateBulkPurchaseMessage(data.is_bulk_purchase, data.total_quantity, data.min_bulk_purchase);
                 
                 // Update cart count in header
                 updateCartCount(data.cart_count);
@@ -314,6 +328,36 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Error updating cart');
             location.reload();
         });
+    }
+
+    function updateBulkPurchaseMessage(isBulkPurchase, totalQuantity, minBulkPurchase) {
+        // Find or create the bulk purchase message container
+        let bulkMessageContainer = document.querySelector('.bulk-purchase-message');
+        
+        if (isBulkPurchase) {
+            if (!bulkMessageContainer) {
+                // Create the message if it doesn't exist
+                const shippingElement = document.getElementById('shipping').parentElement;
+                bulkMessageContainer = document.createElement('div');
+                bulkMessageContainer.className = 'bulk-purchase-message bg-green-50 border border-green-200 rounded-md p-2';
+                bulkMessageContainer.innerHTML = `
+                    <p class="text-xs text-green-800">
+                        <i class="fas fa-check-circle mr-1"></i>
+                        <strong>Bulk Purchase!</strong> You qualify for free shipping (<span class="bulk-qty">${totalQuantity}</span> items ≥ ${minBulkPurchase} items)
+                    </p>
+                `;
+                shippingElement.parentElement.insertBefore(bulkMessageContainer, shippingElement.nextElementSibling);
+            } else {
+                // Update the quantity in existing message
+                bulkMessageContainer.querySelector('.bulk-qty').textContent = totalQuantity;
+                bulkMessageContainer.style.display = 'block';
+            }
+        } else {
+            // Hide the message if it exists and bulk purchase doesn't qualify
+            if (bulkMessageContainer) {
+                bulkMessageContainer.style.display = 'none';
+            }
+        }
     }
 
     function updateCartCount(count) {
