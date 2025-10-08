@@ -109,8 +109,8 @@ class HomeController extends Controller
 
     public function show(Book $book)
     {
-        // Load the book with its category
-        $book->load('category');
+        // Load the book with its category and images
+        $book->load(['category', 'images']);
         
         // Get related books from the same category
         $relatedBooks = Book::with('category')

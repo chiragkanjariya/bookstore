@@ -160,6 +160,37 @@
                             @enderror
                         </div>
 
+                        <!-- Multiple Images Upload -->
+                        <div>
+                            <label for="images" class="block text-sm font-medium text-gray-700 mb-1">
+                                Additional Images (Optional)
+                            </label>
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                                <div class="space-y-1 text-center">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <div class="flex text-sm text-gray-600">
+                                        <label for="images" class="relative cursor-pointer bg-white rounded-md font-medium text-[#00BDE0] hover:text-[#00A5C7] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#00BDE0]">
+                                            <span>Upload multiple files</span>
+                                            <input id="images" name="images[]" type="file" accept="image/*" multiple class="sr-only">
+                                        </label>
+                                        <p class="pl-1">or drag and drop</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB each</p>
+                                </div>
+                            </div>
+                            @error('images.*')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            
+                            <!-- Selected Files Preview -->
+                            <div id="selected-images-preview" class="mt-4 hidden">
+                                <h5 class="text-sm font-medium text-gray-700 mb-2">Selected Images:</h5>
+                                <div id="images-preview-list" class="grid grid-cols-3 gap-2"></div>
+                            </div>
+                        </div>
+
                         <!-- Pricing -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- Price -->
@@ -252,11 +283,15 @@
                             <!-- Stock -->
                             <div>
                                 <label for="stock" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Stock Quantity <span class="text-red-500">*</span>
+                                    Stock Status <span class="text-red-500">*</span>
                                 </label>
-                                <input type="number" name="stock" id="stock" value="{{ old('stock', 0) }}" required min="0"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('stock') border-red-300 @enderror"
-                                       placeholder="0">
+                                <select name="stock" id="stock" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('stock') border-red-300 @enderror">
+                                    <option value="">Select stock status</option>
+                                    <option value="in_stock" {{ old('stock') === 'in_stock' ? 'selected' : '' }}>In Stock</option>
+                                    <option value="limited_stock" {{ old('stock') === 'limited_stock' ? 'selected' : '' }}>Limited Stock</option>
+                                    <option value="out_of_stock" {{ old('stock') === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                                </select>
                                 @error('stock')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -327,14 +362,46 @@ document.getElementById('cover_image').addEventListener('change', function(e) {
     }
 });
 
+// Multiple images preview
+document.getElementById('images').addEventListener('change', function(e) {
+    const files = Array.from(e.target.files);
+    const previewContainer = document.getElementById('selected-images-preview');
+    const previewList = document.getElementById('images-preview-list');
+    
+    if (files.length > 0) {
+        previewList.innerHTML = '';
+        
+        files.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageDiv = document.createElement('div');
+                imageDiv.className = 'relative';
+                imageDiv.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview ${index + 1}" 
+                         class="w-full h-20 object-cover rounded border">
+                    <div class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
+                        ${index + 1}
+                    </div>
+                `;
+                previewList.appendChild(imageDiv);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        previewContainer.classList.remove('hidden');
+    } else {
+        previewContainer.classList.add('hidden');
+    }
+});
+
 // Auto-update status based on stock
-document.getElementById('stock').addEventListener('input', function(e) {
-    const stock = parseInt(e.target.value) || 0;
+document.getElementById('stock').addEventListener('change', function(e) {
+    const stock = e.target.value;
     const statusSelect = document.getElementById('status');
     
-    if (stock <= 0 && statusSelect.value === 'active') {
+    if (stock === 'out_of_stock' && statusSelect.value === 'active') {
         statusSelect.value = 'out_of_stock';
-    } else if (stock > 0 && statusSelect.value === 'out_of_stock') {
+    } else if ((stock === 'in_stock' || stock === 'limited_stock') && statusSelect.value === 'out_of_stock') {
         statusSelect.value = 'active';
     }
 });

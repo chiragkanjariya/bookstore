@@ -119,7 +119,7 @@
                                     <div class="text-sm">
                                         <span class="text-gray-500">Stock:</span>
                                         <span class="{{ $book->stock_status_color }} font-medium">
-                                            {{ $book->stock }} ({{ $book->stock_status }})
+                                            {{ $book->stock_status }}
                                         </span>
                                     </div>
                                     

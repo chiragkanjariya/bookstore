@@ -184,7 +184,7 @@
                                         <td class="strong small text-end small w-50 gry-color">Payment Date : &nbsp;&nbsp;{{ $order->created_at->format('d-M-Y') }}</td>
                                     </tr>
                                     <tr>
-                                        <td class="strong small gry-color">Place of : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ \App\Models\Setting::get('company_place', '123 Business Street, City, State 12345') }}</td>
+                                        <td class="strong small gry-color"></td>
                                         <td class="strong small text-end small w-50 gry-color">
                                             @if($order->is_bulk_purchased)
                                                 <span style="background-color: #d4edda; color: #155724; padding: 2px 6px; border-radius: 3px; font-size: 10px;">BULK PURCHASE - FREE SHIPPING</span>
@@ -201,6 +201,7 @@
                                         <tr class="gry-color" style="background: #eceff4;padding:10px;">
                                             <th width="10%">#</th>
                                             <th width="60%" style="padding-left : 10px;">Book Name</th>
+                                            <th width="15%" style="padding-left : 10px;">QTY</th>
                                             <th width="15%" class="text-end">Amount</th>
                                         </tr>
                                     </thead>
@@ -223,6 +224,7 @@
                                             <tr>
                                                 <td>{{ $i }}</td>
                                                 <td class="gry-color" style="padding: 15px;">{{ $orderDetail->book->title }}</td>
+                                                <td class="gry-color" style="padding: 15px;">{{ $orderDetail->quantity }}</td>
                                                 <td style="text-align:center" class="text-end">{{ number_format($item_total, 2) }}/-</td>
                                             </tr>
                                             @php $i++; @endphp
@@ -234,17 +236,17 @@
                                     <tfoot>
                                         <tr style="border-top: 2px solid #6c757d; border-bottom: 2px solid #6c757d;">
                                             <td></td>
-                                            <td class="gry-color text-end strong"><strong>Subtotal :</strong></td>
+                                            <td colspan="2" class="gry-color text-end strong"><strong>Subtotal :</strong></td>
                                             <td style="text-align:center" class="text-end"><strong>{{ number_format($sub_total, 2) }}/-</strong></td>
                                         </tr>
                                         <tr style="border-top: 2px solid #6c757d; border-bottom: 2px solid #6c757d;">
                                             <td></td>
-                                            <td class="gry-color text-end strong"><strong>Shipping Amount :</strong></td>
+                                            <td colspan="2" class="gry-color text-end strong"><strong>Shipping Amount :</strong></td>
                                             <td style="text-align:center" class="text-end"><strong>{{ number_format($order->shipping_cost, 2) }}/-</strong></td>
                                         </tr>
                                         <tr style="border-top: 2px solid #6c757d; border-bottom: 2px solid #6c757d;">
                                             <td></td>
-                                            <td class="gry-color text-end strong"><strong>Final Amount :</strong></td>
+                                            <td colspan="2" class="gry-color text-end strong"><strong>Final Amount :</strong></td>
                                             <td style="text-align:center" class="text-end"><strong>{{ number_format($grand_total, 2) }}/-</strong></td>
                                         </tr>
                                     </tfoot>

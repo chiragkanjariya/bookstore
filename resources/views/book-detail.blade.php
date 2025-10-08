@@ -38,12 +38,59 @@
 
     <!-- Book Details -->
     <div class="lg:grid lg:grid-cols-2 lg:gap-x-8 xl:gap-x-16 mb-16">
-        <!-- Book Image -->
+        <!-- Book Images Carousel -->
         <div class="lg:max-w-lg lg:self-start">
-            <div class="aspect-w-1 aspect-h-1 rounded-lg overflow-hidden">
-                <img src="{{ $book->cover_image_url }}" alt="{{ $book->title }}" 
-                     class="w-full h-full object-cover">
-            </div>
+            @php
+                $allImages = $book->all_image_urls;
+            @endphp
+            
+            @if(count($allImages) > 1)
+                <!-- Multiple Images - Carousel -->
+                <div class="relative">
+                    <!-- Main Image Display -->
+                    <div class="aspect-w-1 aspect-h-1 rounded-lg overflow-hidden mb-4">
+                        <img id="main-image" src="{{ $allImages[0] }}" alt="{{ $book->title }}" 
+                             class="w-full h-full object-cover transition-opacity duration-300">
+                    </div>
+                    
+                    <!-- Navigation Arrows -->
+                    <button id="prev-btn" 
+                            class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-all z-10">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <button id="next-btn" 
+                            class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-all z-10">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                    
+                    <!-- Thumbnail Navigation -->
+                    <div class="flex space-x-2 overflow-x-auto pb-2">
+                        @foreach($allImages as $index => $imageUrl)
+                            <button class="thumbnail-btn flex-shrink-0 {{ $index === 0 ? 'ring-2 ring-[#00BDE0]' : '' }}" 
+                                    data-index="{{ $index }}"
+                                    onclick="showImage({{ $index }})">
+                                <img src="{{ $imageUrl }}" alt="Thumbnail {{ $index + 1 }}" 
+                                     class="w-16 h-20 object-cover rounded border-2 border-transparent hover:border-[#00BDE0] transition-colors">
+                            </button>
+                        @endforeach
+                    </div>
+                    
+                    <!-- Image Counter -->
+                    <div class="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                        <span id="current-image">1</span> / {{ count($allImages) }}
+                    </div>
+                </div>
+            @else
+                <!-- Single Image -->
+                <div class="aspect-w-1 aspect-h-1 rounded-lg overflow-hidden">
+                    <img src="{{ $allImages[0] }}" alt="{{ $book->title }}" 
+                         class="w-full h-full object-cover">
+                </div>
+            @endif
         </div>
 
         <!-- Book Info -->
@@ -85,19 +132,26 @@
 
             <!-- Stock Status -->
             <div class="mt-6">
-                @if($book->stock > 0)
+                @if($book->stock === 'in_stock')
                     <div class="flex items-center">
                         <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                         </svg>
-                        <span class="text-green-600 font-medium">{{ $book->stock }} copies in stock</span>
+                        <span class="text-green-600 font-medium">In Stock</span>
+                    </div>
+                @elseif($book->stock === 'limited_stock')
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="text-yellow-600 font-medium">Limited Stock</span>
                     </div>
                 @else
                     <div class="flex items-center">
                         <svg class="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                         </svg>
-                        <span class="text-red-600 font-medium">Out of stock</span>
+                        <span class="text-red-600 font-medium">Out of Stock</span>
                     </div>
                 @endif
             </div>
@@ -167,7 +221,7 @@
             <!-- Purchase Actions -->
             <div class="mt-10 flex flex-col sm:flex-row gap-4">
                 @auth
-                    @if($book->stock > 0)
+                    @if($book->is_available)
                         <!-- Add to Cart Form -->
                         <form method="POST" action="{{ route('cart.store') }}" class="flex-1 add-to-cart-form">
                             @csrf
@@ -280,7 +334,70 @@
 </div>
 
 <script>
+// Image Carousel Functionality
+let currentImageIndex = 0;
+const images = @json($allImages ?? []);
+
+function showImage(index) {
+    if (images.length <= 1) return;
+    
+    currentImageIndex = index;
+    const mainImage = document.getElementById('main-image');
+    const currentCounter = document.getElementById('current-image');
+    
+    if (mainImage && currentCounter) {
+        mainImage.style.opacity = '0';
+        
+        setTimeout(() => {
+            mainImage.src = images[index];
+            mainImage.style.opacity = '1';
+            currentCounter.textContent = index + 1;
+            
+            // Update thumbnail highlights
+            document.querySelectorAll('.thumbnail-btn').forEach((btn, i) => {
+                if (i === index) {
+                    btn.classList.add('ring-2', 'ring-[#00BDE0]');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-[#00BDE0]');
+                }
+            });
+        }, 150);
+    }
+}
+
+function nextImage() {
+    if (images.length <= 1) return;
+    const nextIndex = (currentImageIndex + 1) % images.length;
+    showImage(nextIndex);
+}
+
+function prevImage() {
+    if (images.length <= 1) return;
+    const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
+    showImage(prevIndex);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Setup carousel navigation
+    const nextBtn = document.getElementById('next-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    
+    if (nextBtn) nextBtn.addEventListener('click', nextImage);
+    if (prevBtn) prevBtn.addEventListener('click', prevImage);
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (images.length <= 1) return;
+        
+        if (e.key === 'ArrowLeft') {
+            prevImage();
+        } else if (e.key === 'ArrowRight') {
+            nextImage();
+        }
+    });
+    
+    // Auto-play carousel (optional)
+    // setInterval(nextImage, 5000);
     // Add to Cart AJAX
     const addToCartForm = document.querySelector('.add-to-cart-form');
     if (addToCartForm) {

@@ -64,6 +64,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('books/{book}/stock', [BookController::class, 'updateStock'])->name('books.update-stock');
     Route::patch('books/bulk-status', [BookController::class, 'bulkUpdateStatus'])->name('books.bulk-status');
     
+    // Book Image Management Routes
+    Route::post('books/{book}/images', [BookController::class, 'uploadImages'])->name('books.upload-images');
+    Route::delete('books/{book}/images/{image}', [BookController::class, 'deleteImage'])->name('books.delete-image');
+    Route::patch('books/{book}/images/{image}/primary', [BookController::class, 'setPrimaryImage'])->name('books.set-primary-image');
+    Route::patch('books/{book}/images/order', [BookController::class, 'updateImageOrder'])->name('books.update-image-order');
+    
     // User Management Routes
     Route::resource('users', UserController::class);
     Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');

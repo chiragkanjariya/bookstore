@@ -69,8 +69,11 @@
                             <form method="POST" action="{{ route('admin.books.update-stock', $book) }}" class="flex space-x-2">
                                 @csrf
                                 @method('PATCH')
-                                <input type="number" name="stock" value="{{ $book->stock }}" min="0" 
-                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                                <select name="stock" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                                    <option value="in_stock" {{ $book->stock === 'in_stock' ? 'selected' : '' }}>In Stock</option>
+                                    <option value="limited_stock" {{ $book->stock === 'limited_stock' ? 'selected' : '' }}>Limited Stock</option>
+                                    <option value="out_of_stock" {{ $book->stock === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                                </select>
                                 <button type="submit" class="bg-[#00BDE0] text-white px-4 py-2 rounded-md hover:bg-[#00A5C7] transition-colors">
                                     Update
                                 </button>
@@ -146,8 +149,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Stock</label>
                                 <p class="mt-1">
-                                    <span class="text-2xl font-bold {{ $book->stock_status_color }}">{{ $book->stock }}</span>
-                                    <span class="text-sm text-gray-500 ml-2">({{ $book->stock_status }})</span>
+                                    <span class="text-2xl font-bold {{ $book->stock_status_color }}">{{ $book->stock_status }}</span>
                                 </p>
                             </div>
 

@@ -200,17 +200,13 @@
                                 </div>
                                 
                                 <div class="text-right">
-                                    @if($book->stock > 0)
-                                        <span class="text-sm text-green-600 font-medium">{{ $book->stock }} in stock</span>
-                                    @else
-                                        <span class="text-sm text-red-600 font-medium">Out of stock</span>
-                                    @endif
+                                    <span class="text-sm {{ $book->stock_status_color }} font-medium">{{ $book->stock_status }}</span>
                                 </div>
                             </div>
                             
                             <div class="mt-4 space-y-2">
                                 @auth
-                                    @if($book->stock > 0 && $book->status === 'active')
+                                    @if($book->is_available)
                                         <div class="flex space-x-2">
                                             <!-- Add to Cart -->
                                             <form method="POST" action="{{ route('cart.store') }}" class="flex-1 add-to-cart-form">
