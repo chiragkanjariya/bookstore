@@ -170,6 +170,102 @@
                             @enderror
                         </div>
 
+                        <!-- Multiple Images Management -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-sm font-medium text-gray-900">Product Images</h4>
+                                <button type="button" id="add-images-btn" 
+                                        class="bg-[#00BDE0] text-white px-3 py-1 rounded text-sm hover:bg-[#00A5C7] transition-colors">
+                                    Add Images
+                                </button>
+                            </div>
+
+                            <!-- Current Images -->
+                            <div id="current-images" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                                @forelse($book->images as $image)
+                                    <div class="relative group image-item" data-image-id="{{ $image->id }}">
+                                        <img src="{{ $image->image_url }}" 
+                                             alt="Book Image" 
+                                             class="w-full h-32 object-cover rounded-lg">
+                                        
+                                        <!-- Image Controls -->
+                                        <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                            <div class="flex space-x-2">
+                                                @if(!$image->is_primary)
+                                                    <button type="button" 
+                                                            onclick="setPrimaryImage({{ $image->id }})"
+                                                            class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700"
+                                                            title="Set as Primary">
+                                                        Primary
+                                                    </button>
+                                                @endif
+                                                <button type="button" 
+                                                        onclick="deleteImage({{ $image->id }})"
+                                                        class="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700"
+                                                        title="Delete Image">
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Primary Badge -->
+                                        @if($image->is_primary)
+                                            <div class="absolute top-2 left-2 bg-green-600 text-white px-2 py-1 rounded text-xs">
+                                                Primary
+                                            </div>
+                                        @endif
+
+                                        <!-- Drag Handle -->
+                                        <div class="absolute top-2 right-2 bg-gray-800 text-white p-1 rounded cursor-move drag-handle opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="col-span-full text-center py-8 text-gray-500">
+                                        No additional images uploaded yet.
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            <!-- Upload New Images -->
+                            <div id="image-upload-area" class="hidden">
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                    <input type="file" id="new-images" name="images[]" multiple accept="image/*" class="hidden">
+                                    <div class="text-center">
+                                        <svg class="mx-auto h-8 w-8 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                        <p class="mt-2 text-sm text-gray-600">
+                                            <button type="button" onclick="document.getElementById('new-images').click()" 
+                                                    class="font-medium text-[#00BDE0] hover:text-[#00A5C7]">
+                                                Click to upload
+                                            </button>
+                                            or drag and drop
+                                        </p>
+                                        <p class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB each</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Selected Files Preview -->
+                                <div id="selected-files" class="mt-4 hidden">
+                                    <h5 class="text-sm font-medium text-gray-700 mb-2">Selected Files:</h5>
+                                    <div id="file-list" class="space-y-2"></div>
+                                    <div class="mt-4 flex space-x-2">
+                                        <button type="button" onclick="uploadNewImages()" 
+                                                class="bg-[#00BDE0] text-white px-4 py-2 rounded text-sm hover:bg-[#00A5C7]">
+                                            Upload Images
+                                        </button>
+                                        <button type="button" onclick="cancelImageUpload()" 
+                                                class="bg-gray-300 text-gray-700 px-4 py-2 rounded text-sm hover:bg-gray-400">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Pricing -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- Price -->
@@ -262,11 +358,15 @@
                             <!-- Stock -->
                             <div>
                                 <label for="stock" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Stock Quantity <span class="text-red-500">*</span>
+                                    Stock Status <span class="text-red-500">*</span>
                                 </label>
-                                <input type="number" name="stock" id="stock" value="{{ old('stock', $book->stock) }}" required min="0"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('stock') border-red-300 @enderror"
-                                       placeholder="0">
+                                <select name="stock" id="stock" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('stock') border-red-300 @enderror">
+                                    <option value="">Select stock status</option>
+                                    <option value="in_stock" {{ old('stock', $book->stock) === 'in_stock' ? 'selected' : '' }}>In Stock</option>
+                                    <option value="limited_stock" {{ old('stock', $book->stock) === 'limited_stock' ? 'selected' : '' }}>Limited Stock</option>
+                                    <option value="out_of_stock" {{ old('stock', $book->stock) === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                                </select>
                                 @error('stock')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -366,15 +466,190 @@ document.getElementById('cover_image').addEventListener('change', function(e) {
 });
 
 // Auto-update status based on stock
-document.getElementById('stock').addEventListener('input', function(e) {
-    const stock = parseInt(e.target.value) || 0;
+document.getElementById('stock').addEventListener('change', function(e) {
+    const stock = e.target.value;
     const statusSelect = document.getElementById('status');
     
-    if (stock <= 0 && statusSelect.value === 'active') {
+    if (stock === 'out_of_stock' && statusSelect.value === 'active') {
         statusSelect.value = 'out_of_stock';
-    } else if (stock > 0 && statusSelect.value === 'out_of_stock') {
+    } else if ((stock === 'in_stock' || stock === 'limited_stock') && statusSelect.value === 'out_of_stock') {
         statusSelect.value = 'active';
     }
 });
+
+// Multiple Images Management
+document.getElementById('add-images-btn').addEventListener('click', function() {
+    document.getElementById('image-upload-area').classList.remove('hidden');
+    this.style.display = 'none';
+});
+
+document.getElementById('new-images').addEventListener('change', function(e) {
+    const files = Array.from(e.target.files);
+    const fileList = document.getElementById('file-list');
+    const selectedFiles = document.getElementById('selected-files');
+    
+    if (files.length > 0) {
+        fileList.innerHTML = '';
+        files.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'flex items-center justify-between bg-white p-2 rounded border';
+            fileItem.innerHTML = `
+                <span class="text-sm text-gray-700">${file.name}</span>
+                <span class="text-xs text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        selectedFiles.classList.remove('hidden');
+    }
+});
+
+function uploadNewImages() {
+    const formData = new FormData();
+    const files = document.getElementById('new-images').files;
+    
+    for (let i = 0; i < files.length; i++) {
+        formData.append('images[]', files[i]);
+    }
+    
+    // Add CSRF token
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    
+    fetch(`{{ route('admin.books.upload-images', $book) }}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Reload to show new images
+        } else {
+            alert('Error uploading images: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error uploading images');
+    });
+}
+
+function cancelImageUpload() {
+    document.getElementById('image-upload-area').classList.add('hidden');
+    document.getElementById('add-images-btn').style.display = 'inline-block';
+    document.getElementById('new-images').value = '';
+    document.getElementById('selected-files').classList.add('hidden');
+}
+
+function deleteImage(imageId) {
+    if (confirm('Are you sure you want to delete this image?')) {
+        fetch(`{{ route('admin.books.delete-image', ['book' => $book, 'image' => '__IMAGE_ID__']) }}`.replace('__IMAGE_ID__', imageId), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting image: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting image');
+        });
+    }
+}
+
+function setPrimaryImage(imageId) {
+    fetch(`{{ route('admin.books.set-primary-image', ['book' => $book, 'image' => '__IMAGE_ID__']) }}`.replace('__IMAGE_ID__', imageId), {
+        method: 'PATCH',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error setting primary image: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error setting primary image');
+    });
+}
+
+// Make images sortable (drag and drop)
+let draggedElement = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const imageItems = document.querySelectorAll('.image-item');
+    
+    imageItems.forEach(item => {
+        item.addEventListener('dragstart', function(e) {
+            draggedElement = this;
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        
+        item.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        });
+        
+        item.addEventListener('drop', function(e) {
+            e.preventDefault();
+            if (draggedElement !== this) {
+                const container = this.parentNode;
+                const draggedIndex = Array.from(container.children).indexOf(draggedElement);
+                const targetIndex = Array.from(container.children).indexOf(this);
+                
+                if (draggedIndex < targetIndex) {
+                    container.insertBefore(draggedElement, this.nextSibling);
+                } else {
+                    container.insertBefore(draggedElement, this);
+                }
+                
+                updateImageOrder();
+            }
+        });
+        
+        item.draggable = true;
+    });
+});
+
+function updateImageOrder() {
+    const imageItems = document.querySelectorAll('.image-item');
+    const imageIds = Array.from(imageItems).map(item => item.dataset.imageId);
+    
+    fetch(`{{ route('admin.books.update-image-order', $book) }}`, {
+        method: 'PATCH',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            image_ids: imageIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            console.error('Error updating image order:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
 </script>
 @endsection

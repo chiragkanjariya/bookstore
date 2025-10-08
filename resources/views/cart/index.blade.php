@@ -121,7 +121,7 @@
                                                            class="quantity-input w-16 text-center border-0 focus:ring-0" 
                                                            value="{{ $item->quantity }}" 
                                                            min="1" 
-                                                           max="{{ $item->book->stock }}"
+                                                           max="99999"
                                                            data-item-id="{{ $item->id }}">
                                                     <button type="button" class="quantity-btn p-2 hover:bg-gray-100" data-action="increase" data-item-id="{{ $item->id }}">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,10 +131,10 @@
                                                 </div>
 
                                                 <!-- Stock Status -->
-                                                @if($item->book->stock < $item->quantity)
-                                                    <span class="text-red-600 text-sm font-medium">Limited Stock!</span>
-                                                @elseif($item->book->stock <= 5)
-                                                    <span class="text-yellow-600 text-sm">Only {{ $item->book->stock }} left</span>
+                                                @if($item->book->stock === 'out_of_stock')
+                                                    <span class="text-red-600 text-sm font-medium">Out of Stock!</span>
+                                                @elseif($item->book->stock === 'limited_stock')
+                                                    <span class="text-yellow-600 text-sm">Limited Stock</span>
                                                 @endif
                                             </div>
 

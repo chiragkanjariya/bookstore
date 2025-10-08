@@ -36,7 +36,6 @@ class Book extends Model
         'width' => 'decimal:2',
         'depth' => 'decimal:2',
         'weight' => 'decimal:2',
-        'stock' => 'integer',
     ];
 
     /**
@@ -57,8 +56,8 @@ class Book extends Model
                 $book->slug = Str::slug($book->title);
             }
             
-            // Auto set status to out_of_stock if stock is 0
-            if ($book->stock <= 0 && $book->status === 'active') {
+            // Auto set status to out_of_stock if stock is out_of_stock
+            if ($book->stock === 'out_of_stock' && $book->status === 'active') {
                 $book->status = 'out_of_stock';
             }
         });
@@ -70,6 +69,22 @@ class Book extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * Get the images for the book.
+     */
+    public function images()
+    {
+        return $this->hasMany(BookImage::class)->ordered();
+    }
+
+    /**
+     * Get the primary image for the book.
+     */
+    public function primaryImage()
+    {
+        return $this->hasOne(BookImage::class)->primary();
     }
 
     /**
@@ -154,12 +169,18 @@ class Book extends Model
         return '₹' . number_format($this->total_price, 2);
     }
 
+
+
     /**
-     * Check if the book is available.
+     * Get available stock options.
      */
-    public function getIsAvailableAttribute()
+    public static function getStockOptions()
     {
-        return $this->status === 'active' && $this->stock > 0;
+        return [
+            'in_stock' => 'In Stock',
+            'limited_stock' => 'Limited Stock',
+            'out_of_stock' => 'Out of Stock',
+        ];
     }
 
     /**
@@ -167,13 +188,8 @@ class Book extends Model
      */
     public function getStockStatusAttribute()
     {
-        if ($this->stock <= 0) {
-            return 'Out of Stock';
-        } elseif ($this->stock <= 5) {
-            return 'Low Stock';
-        } else {
-            return 'In Stock';
-        }
+        $options = self::getStockOptions();
+        return $options[$this->stock] ?? 'Unknown';
     }
 
     /**
@@ -181,13 +197,21 @@ class Book extends Model
      */
     public function getStockStatusColorAttribute()
     {
-        if ($this->stock <= 0) {
-            return 'text-red-600';
-        } elseif ($this->stock <= 5) {
-            return 'text-yellow-600';
-        } else {
-            return 'text-green-600';
-        }
+        $colors = [
+            'in_stock' => 'text-green-600',
+            'limited_stock' => 'text-yellow-600',
+            'out_of_stock' => 'text-red-600',
+        ];
+        
+        return $colors[$this->stock] ?? 'text-gray-600';
+    }
+
+    /**
+     * Check if the book is available for purchase.
+     */
+    public function getIsAvailableAttribute()
+    {
+        return $this->status === 'active' && in_array($this->stock, ['in_stock', 'limited_stock']);
     }
 
     /**
@@ -195,11 +219,44 @@ class Book extends Model
      */
     public function getCoverImageUrlAttribute()
     {
+        // First check if there's a primary image
+        $primaryImage = $this->primaryImage;
+        if ($primaryImage) {
+            return $primaryImage->image_url;
+        }
+
+        // Then check if there are any images
+        $firstImage = $this->images()->first();
+        if ($firstImage) {
+            return $firstImage->image_url;
+        }
+
+        // Fall back to the old cover_image field
         if ($this->cover_image && file_exists(public_path('storage/' . $this->cover_image))) {
             return asset('storage/' . $this->cover_image);
         }
         
         return 'https://via.placeholder.com/300x400/4F46E5/FFFFFF?text=' . urlencode($this->title);
+    }
+
+    /**
+     * Get all image URLs for the book.
+     */
+    public function getAllImageUrlsAttribute()
+    {
+        $imageUrls = $this->images->pluck('image_url')->toArray();
+        
+        // If no images exist, fall back to cover_image
+        if (empty($imageUrls) && $this->cover_image && file_exists(public_path('storage/' . $this->cover_image))) {
+            $imageUrls[] = asset('storage/' . $this->cover_image);
+        }
+        
+        // If still no images, return placeholder
+        if (empty($imageUrls)) {
+            $imageUrls[] = 'https://via.placeholder.com/300x400/4F46E5/FFFFFF?text=' . urlencode($this->title);
+        }
+        
+        return $imageUrls;
     }
 
     /**

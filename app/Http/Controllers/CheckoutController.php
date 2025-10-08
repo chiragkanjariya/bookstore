@@ -316,7 +316,6 @@ class CheckoutController extends Controller
             // Update book stock and clear cart if needed
             foreach ($order->orderItems as $orderItem) {
                 $book = $orderItem->book;
-                $book->decrement('stock', $orderItem->quantity);
             }
 
             // Clear cart if this was a cart checkout (not buy now)
