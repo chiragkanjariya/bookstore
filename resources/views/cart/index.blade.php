@@ -121,7 +121,7 @@
                                                            class="quantity-input w-16 text-center border-0 focus:ring-0" 
                                                            value="{{ $item->quantity }}" 
                                                            min="1" 
-                                                           max="{{ $item->book->stock }}"
+                                                           max="99999"
                                                            data-item-id="{{ $item->id }}">
                                                     <button type="button" class="quantity-btn p-2 hover:bg-gray-100" data-action="increase" data-item-id="{{ $item->id }}">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
