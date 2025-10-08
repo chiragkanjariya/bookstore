@@ -154,7 +154,7 @@
                                                     $shipping_address = json_decode($shipping_address, true);
                                                 }
                                                 if (is_array($shipping_address)) {
-                                                    $shipping_address_str .= ($shipping_address['address_line_1'] ?? '') . ', <br/>' . ($shipping_address['address_line_2'] ?? '') . ', <br/> ' . ($shipping_address['city'] ?? '') . ',  <br/>' . ($shipping_address['state'] ?? '') . ', ' . ($shipping_address['postal_code'] ?? '') . ', ' . ($shipping_address['country'] ?? '');
+                                                    $shipping_address_str .= ($shipping_address['address_line_1'] ?? '') . ', ' . ($shipping_address['address_line_2'] ?? '') . ',  ' . ($shipping_address['city'] ?? '') . ',  ' . ($shipping_address['state'] ?? '') . ', ' . ($shipping_address['postal_code'] ?? '') . ', ' . ($shipping_address['country'] ?? '');
                                                 }
                                             @endphp
                                             {{ $shipping_address_str ?? 'Address not available' }}<br />
