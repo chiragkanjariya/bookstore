@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Home - Discover Your Next Great Read')
+@section('title', 'Where Curriculum Meets Character.')
 
 @section('content')
 <!-- Hero Banner Section -->
@@ -11,12 +11,10 @@
             <!-- Left Content -->
             <div class="text-center lg:text-left">
                 <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                    Discover Your Next
-                    <span class="text-yellow-300">Great Read</span>
+                    Where Curriculum Meets Character.
                 </h1>
                 <p class="text-lg md:text-xl mb-8 text-gray-100 max-w-2xl">
-                    Explore thousands of books across all genres. From bestsellers to hidden gems, 
-                    find the perfect book for every moment.
+                    Empowering educators and students through the IPDC Workbook — aligned with NEP 2020’s vision of holistic development.
                 </p>
             </div>
             
