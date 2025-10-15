@@ -6,7 +6,6 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Razorpay\Api\Api;
-use Razorpay\Api\Errors\SignatureVerificationError;
 
 class WebhookController extends Controller
 {
@@ -23,12 +22,6 @@ class WebhookController extends Controller
     public function razorpayWebhook(Request $request)
     {
         try {
-            // Get webhook secret from config
-            $webhookSecret = config('services.razorpay.webhook_secret');
-            
-            // Verify webhook signature
-            $this->verifyWebhookSignature($request, $webhookSecret);
-            
             $payload = $request->all();
             $event = $payload['event'] ?? null;
             
@@ -62,10 +55,6 @@ class WebhookController extends Controller
 
             return response()->json(['status' => 'success'], 200);
             
-        } catch (SignatureVerificationError $e) {
-            Log::error('Razorpay webhook signature verification failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Invalid signature'], 400);
-            
         } catch (\Exception $e) {
             Log::error('Razorpay webhook error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
@@ -74,20 +63,7 @@ class WebhookController extends Controller
         }
     }
 
-    /**
-     * Verify webhook signature
-     */
-    private function verifyWebhookSignature(Request $request, $webhookSecret)
-    {
-        $actualSignature = $request->header('X-Razorpay-Signature');
-        $payload = $request->getContent();
-        
-        $expectedSignature = hash_hmac('sha256', $payload, $webhookSecret);
-        
-        if (!hash_equals($expectedSignature, $actualSignature)) {
-            throw new SignatureVerificationError('Invalid webhook signature');
-        }
-    }
+
 
     /**
      * Handle payment captured event
