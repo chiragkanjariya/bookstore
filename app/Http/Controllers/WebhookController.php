@@ -22,10 +22,19 @@ class WebhookController extends Controller
     public function razorpayWebhook(Request $request)
     {
         try {
+            // Log all incoming webhook data for debugging
+            Log::info('Razorpay Webhook Received - Full Request', [
+                'method' => $request->method(),
+                'url' => $request->fullUrl(),
+                'headers' => $request->headers->all(),
+                'body' => $request->getContent(),
+                'all_data' => $request->all()
+            ]);
+
             $payload = $request->all();
             $event = $payload['event'] ?? null;
             
-            Log::info('Razorpay Webhook Received', [
+            Log::info('Razorpay Webhook Event Processing', [
                 'event' => $event,
                 'payload' => $payload
             ]);
@@ -61,6 +70,25 @@ class WebhookController extends Controller
             ]);
             return response()->json(['error' => 'Webhook processing failed'], 500);
         }
+    }
+
+    /**
+     * Test endpoint to verify webhook is reachable
+     */
+    public function testWebhook(Request $request)
+    {
+        Log::info('Webhook test endpoint hit', [
+            'method' => $request->method(),
+            'data' => $request->all(),
+            'timestamp' => now()
+        ]);
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Webhook endpoint is working',
+            'timestamp' => now(),
+            'received_data' => $request->all()
+        ]);
     }
 
 
