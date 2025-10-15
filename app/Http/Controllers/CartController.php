@@ -57,17 +57,6 @@ class CartController extends Controller
             return redirect()->back()->with('error', 'This book is not available for purchase.');
         }
 
-        // Check stock availability
-        if ($book->stock < $quantity) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Not enough stock available. Only ' . $book->stock . ' copies left.'
-                ], 400);
-            }
-            return redirect()->back()->with('error', 'Not enough stock available. Only ' . $book->stock . ' copies left.');
-        }
-
         $user = Auth::user();
         
         // Check if item already exists in cart
@@ -75,29 +64,6 @@ class CartController extends Controller
         
         if ($existingItem) {
             $newQuantity = $existingItem->quantity + $quantity;
-            
-            // Check if new quantity exceeds stock
-            if ($newQuantity > $book->stock) {
-                $maxAdditional = $book->stock - $existingItem->quantity;
-                if ($request->expectsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "You already have {$existingItem->quantity} copies in your cart. You can only add {$maxAdditional} more."
-                    ], 400);
-                }
-                return redirect()->back()->with('error', "You already have {$existingItem->quantity} copies in your cart. You can only add {$maxAdditional} more.");
-            }
-            
-            // Check max quantity limit (10 per item)
-            if ($newQuantity > 10) {
-                if ($request->expectsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Maximum 10 copies allowed per item.'
-                    ], 400);
-                }
-                return redirect()->back()->with('error', 'Maximum 10 copies allowed per item.');
-            }
             
             $existingItem->update([
                 'quantity' => $newQuantity,
@@ -142,17 +108,6 @@ class CartController extends Controller
 
         $quantity = $request->quantity;
         
-        // Check stock availability
-        if ($cartItem->book->stock < $quantity) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Not enough stock available. Only ' . $cartItem->book->stock . ' copies left.'
-                ], 400);
-            }
-            return redirect()->back()->with('error', 'Not enough stock available. Only ' . $cartItem->book->stock . ' copies left.');
-        }
-
         $cartItem->update([
             'quantity' => $quantity,
             'price' => $cartItem->book->price // Update to current price

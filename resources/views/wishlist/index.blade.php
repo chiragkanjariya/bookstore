@@ -105,10 +105,8 @@
                             <div class="flex items-center justify-between">
                                 <span class="text-2xl font-bold text-[#00BDE0]">₹{{ number_format($wishlistItem->book->price, 2) }}</span>
                                 <div class="text-right text-sm">
-                                    @if($wishlistItem->book->status === 'active' && $wishlistItem->book->stock > 0)
-                                        <span class="text-green-600 font-medium">In Stock ({{ $wishlistItem->book->stock }})</span>
-                                    @elseif($wishlistItem->book->stock == 0)
-                                        <span class="text-red-600 font-medium">Out of Stock</span>
+                                    @if($wishlistItem->book->is_available)
+                                        <span class="{{ $wishlistItem->book->stock_status_color }} font-medium">{{ $wishlistItem->book->stock_status }}</span>
                                     @else
                                         <span class="text-gray-500 font-medium">Unavailable</span>
                                     @endif
@@ -123,7 +121,7 @@
                         
                         <!-- Action Buttons -->
                         <div class="space-y-2">
-                            @if($wishlistItem->book->status === 'active' && $wishlistItem->book->stock > 0)
+                            @if($wishlistItem->book->is_available)
                                 <!-- Move to Cart Button -->
                                 <form method="POST" action="{{ route('wishlist.move-to-cart', $wishlistItem) }}" class="move-to-cart-form">
                                     @csrf
