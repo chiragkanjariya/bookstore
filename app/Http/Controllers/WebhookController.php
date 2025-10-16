@@ -6,6 +6,7 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Razorpay\Api\Api;
+use App\Services\ShiprocketService;
 
 class WebhookController extends Controller
 {
@@ -138,6 +139,9 @@ class WebhookController extends Controller
                 'order_number' => $order->order_number,
                 'payment_status' => 'paid'
             ]);
+
+            // Create Shiprocket order automatically
+            $this->createShiprocketOrderIfNeeded($order);
 
             // Send order confirmation email if not already sent
             $this->sendOrderConfirmationIfNeeded($order);
@@ -274,8 +278,65 @@ class WebhookController extends Controller
                 'order_number' => $dbOrder->order_number
             ]);
 
+            // Create Shiprocket order automatically
+            $this->createShiprocketOrderIfNeeded($dbOrder);
+
             // Send order confirmation email if not already sent
             $this->sendOrderConfirmationIfNeeded($dbOrder);
+        }
+    }
+
+    /**
+     * Create Shiprocket order if needed
+     */
+    private function createShiprocketOrderIfNeeded($order)
+    {
+        try {
+            // Skip if Shiprocket order already exists
+            if ($order->shiprocket_order_id) {
+                Log::info('Shiprocket order already exists for order', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'shiprocket_order_id' => $order->shiprocket_order_id
+                ]);
+                return;
+            }
+
+            // Skip Shiprocket for bulk orders with free shipping
+            if ($order->is_bulk_purchased) {
+                Log::info('Skipping Shiprocket order creation for bulk purchase order', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number
+                ]);
+                return;
+            }
+
+            // Load order relationships needed for Shiprocket
+            $order->load(['orderItems.book', 'user']);
+
+            $shiprocketService = new ShiprocketService();
+            $response = $shiprocketService->createOrder($order);
+
+            if ($response) {
+                Log::info('Shiprocket order created successfully via webhook', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'shiprocket_order_id' => $response['order_id'] ?? null,
+                    'shiprocket_shipment_id' => $response['shipment_id'] ?? null
+                ]);
+            } else {
+                Log::error('Failed to create Shiprocket order via webhook', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error creating Shiprocket order via webhook', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
