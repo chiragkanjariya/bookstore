@@ -14,7 +14,7 @@ class ServiceableZipcodeSeeder extends Seeder
      */
     public function run(): void
     {
-        $csvFile = database_path('seeders/data/servicable-zips-maruti.csv');
+        $csvFile = '/Users/chirag/Downloads/servicable-zips-maruti.csv';
 
         if (!file_exists($csvFile)) {
             $this->command->error("CSV file not found at: {$csvFile}");
