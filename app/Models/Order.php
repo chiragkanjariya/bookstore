@@ -21,6 +21,11 @@ class Order extends Model
         'shiprocket_shipment_id',
         'tracking_number',
         'courier_company',
+        'courier_provider',
+        'courier_document_ref',
+        'courier_awb_number',
+        'requires_manual_shipping',
+        'manual_shipping_marked_at',
         'subtotal',
         'shipping_cost',
         'tax_amount',
@@ -50,7 +55,7 @@ class Order extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($order) {
             if (empty($order->order_number)) {
                 $order->order_number = 'ORD-' . strtoupper(uniqid());
@@ -79,7 +84,7 @@ class Order extends Model
      */
     public function getStatusBadgeColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'warning',
             'processing' => 'info',
             'shipped' => 'primary',
@@ -94,7 +99,7 @@ class Order extends Model
      */
     public function getPaymentStatusBadgeColorAttribute(): string
     {
-        return match($this->payment_status) {
+        return match ($this->payment_status) {
             'pending' => 'warning',
             'paid' => 'success',
             'failed' => 'danger',
@@ -108,8 +113,8 @@ class Order extends Model
      */
     public function canBeCancelled(): bool
     {
-        return in_array($this->status, ['pending', 'processing']) && 
-               $this->payment_status !== 'paid';
+        return in_array($this->status, ['pending', 'processing']) &&
+            $this->payment_status !== 'paid';
     }
 
     /**
@@ -140,8 +145,48 @@ class Order extends Model
     /**
      * Get bulk purchase badge color.
      */
+    /**
+     * Get bulk purchase badge color.
+     */
     public function getBulkPurchaseBadgeColorAttribute(): string
     {
         return $this->is_bulk_purchased ? 'success' : 'secondary';
+    }
+
+    /**
+     * Scope for manual shipping orders.
+     */
+    public function scopeRequiresManualShipping($query)
+    {
+        return $query->where('requires_manual_shipping', true);
+    }
+
+    /**
+     * Scope for pending manual shipping orders.
+     */
+    public function scopePendingManualShipping($query)
+    {
+        return $query->where('requires_manual_shipping', true)
+            ->whereNull('manual_shipping_marked_at');
+    }
+
+    /**
+     * Check if order is marked as manually shipped.
+     */
+    public function isManuallyShipped(): bool
+    {
+        return $this->requires_manual_shipping && !is_null($this->manual_shipping_marked_at);
+    }
+
+    /**
+     * Mark order as manually shipped.
+     */
+    public function markAsManuallyShipped(): bool
+    {
+        return $this->update([
+            'manual_shipping_marked_at' => now(),
+            'status' => 'shipped',
+            'shipped_at' => now(),
+        ]);
     }
 }

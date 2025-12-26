@@ -6,12 +6,12 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Razorpay\Api\Api;
-use App\Services\ShiprocketService;
+use App\Services\CourierManager;
 
 class WebhookController extends Controller
 {
     private $razorpayApi;
-    
+
     public function __construct()
     {
         $this->razorpayApi = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
@@ -34,7 +34,7 @@ class WebhookController extends Controller
 
             $payload = $request->all();
             $event = $payload['event'] ?? null;
-            
+
             Log::info('Razorpay Webhook Event Processing', [
                 'event' => $event,
                 'payload' => $payload
@@ -45,26 +45,26 @@ class WebhookController extends Controller
                 case 'payment.captured':
                     $this->handlePaymentCaptured($payload);
                     break;
-                    
+
                 case 'payment.failed':
                     $this->handlePaymentFailed($payload);
                     break;
-                    
+
                 case 'payment.authorized':
                     $this->handlePaymentAuthorized($payload);
                     break;
-                    
+
                 case 'order.paid':
                     $this->handleOrderPaid($payload);
                     break;
-                    
+
                 default:
                     Log::info('Unhandled Razorpay webhook event: ' . $event);
                     break;
             }
 
             return response()->json(['status' => 'success'], 200);
-            
+
         } catch (\Exception $e) {
             Log::error('Razorpay webhook error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
@@ -83,7 +83,7 @@ class WebhookController extends Controller
             'data' => $request->all(),
             'timestamp' => now()
         ]);
-        
+
         return response()->json([
             'status' => 'success',
             'message' => 'Webhook endpoint is working',
@@ -100,7 +100,7 @@ class WebhookController extends Controller
     private function handlePaymentCaptured($payload)
     {
         $payment = $payload['payload']['payment']['entity'] ?? null;
-        
+
         if (!$payment) {
             Log::error('Payment data not found in webhook payload');
             return;
@@ -120,7 +120,7 @@ class WebhookController extends Controller
 
         // Find order by Razorpay order ID
         $order = Order::where('razorpay_order_id', $razorpayOrderId)->first();
-        
+
         if (!$order) {
             Log::error('Order not found for Razorpay order ID: ' . $razorpayOrderId);
             return;
@@ -140,8 +140,8 @@ class WebhookController extends Controller
                 'payment_status' => 'paid'
             ]);
 
-            // Create Shiprocket order automatically
-            $this->createShiprocketOrderIfNeeded($order);
+            // Create courier order automatically
+            $this->createCourierOrderIfNeeded($order);
 
             // Send order confirmation email if not already sent
             $this->sendOrderConfirmationIfNeeded($order);
@@ -154,7 +154,7 @@ class WebhookController extends Controller
     private function handlePaymentFailed($payload)
     {
         $payment = $payload['payload']['payment']['entity'] ?? null;
-        
+
         if (!$payment) {
             Log::error('Payment data not found in webhook payload');
             return;
@@ -174,7 +174,7 @@ class WebhookController extends Controller
 
         // Find order by Razorpay order ID
         $order = Order::where('razorpay_order_id', $razorpayOrderId)->first();
-        
+
         if (!$order) {
             Log::error('Order not found for Razorpay order ID: ' . $razorpayOrderId);
             return;
@@ -201,7 +201,7 @@ class WebhookController extends Controller
     private function handlePaymentAuthorized($payload)
     {
         $payment = $payload['payload']['payment']['entity'] ?? null;
-        
+
         if (!$payment) {
             Log::error('Payment data not found in webhook payload');
             return;
@@ -217,7 +217,7 @@ class WebhookController extends Controller
 
         // Find order by Razorpay order ID
         $order = Order::where('razorpay_order_id', $razorpayOrderId)->first();
-        
+
         if (!$order) {
             Log::error('Order not found for Razorpay order ID: ' . $razorpayOrderId);
             return;
@@ -242,7 +242,7 @@ class WebhookController extends Controller
     private function handleOrderPaid($payload)
     {
         $order = $payload['payload']['order']['entity'] ?? null;
-        
+
         if (!$order) {
             Log::error('Order data not found in webhook payload');
             return;
@@ -260,7 +260,7 @@ class WebhookController extends Controller
 
         // Find order by Razorpay order ID
         $dbOrder = Order::where('razorpay_order_id', $razorpayOrderId)->first();
-        
+
         if (!$dbOrder) {
             Log::error('Order not found for Razorpay order ID: ' . $razorpayOrderId);
             return;
@@ -278,8 +278,8 @@ class WebhookController extends Controller
                 'order_number' => $dbOrder->order_number
             ]);
 
-            // Create Shiprocket order automatically
-            $this->createShiprocketOrderIfNeeded($dbOrder);
+            // Create courier order automatically
+            $this->createCourierOrderIfNeeded($dbOrder);
 
             // Send order confirmation email if not already sent
             $this->sendOrderConfirmationIfNeeded($dbOrder);
@@ -287,51 +287,62 @@ class WebhookController extends Controller
     }
 
     /**
-     * Create Shiprocket order if needed
+     * Create courier order if needed
      */
-    private function createShiprocketOrderIfNeeded($order)
+    private function createCourierOrderIfNeeded($order)
     {
         try {
-            // Skip if Shiprocket order already exists
-            if ($order->shiprocket_order_id) {
-                Log::info('Shiprocket order already exists for order', [
+            // Skip if courier order already exists
+            if ($order->courier_provider || $order->shiprocket_order_id) {
+                Log::info('Courier order already exists for order', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
+                    'courier_provider' => $order->courier_provider,
                     'shiprocket_order_id' => $order->shiprocket_order_id
                 ]);
                 return;
             }
 
-            // Skip Shiprocket for bulk orders with free shipping
+            // Skip courier for bulk orders with free shipping
             if ($order->is_bulk_purchased) {
-                Log::info('Skipping Shiprocket order creation for bulk purchase order', [
+                Log::info('Skipping courier order creation for bulk purchase order', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number
                 ]);
                 return;
             }
 
-            // Load order relationships needed for Shiprocket
+            // Load order relationships needed for courier
             $order->load(['orderItems.book', 'user']);
 
-            $shiprocketService = new ShiprocketService();
-            $response = $shiprocketService->createOrder($order);
+            $courierManager = app(CourierManager::class);
+            $providerName = $courierManager->getActiveProviderName();
+
+            if (!$providerName) {
+                Log::info('No active courier provider configured', [
+                    'order_id' => $order->id
+                ]);
+                return;
+            }
+
+            $response = $courierManager->createOrder($order);
 
             if ($response) {
-                Log::info('Shiprocket order created successfully via webhook', [
+                Log::info('Courier order created successfully via webhook', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
-                    'shiprocket_order_id' => $response['order_id'] ?? null,
-                    'shiprocket_shipment_id' => $response['shipment_id'] ?? null
+                    'courier_provider' => $providerName,
+                    'response' => $response
                 ]);
             } else {
-                Log::error('Failed to create Shiprocket order via webhook', [
+                Log::error('Failed to create courier order via webhook', [
                     'order_id' => $order->id,
-                    'order_number' => $order->order_number
+                    'order_number' => $order->order_number,
+                    'courier_provider' => $providerName
                 ]);
             }
         } catch (\Exception $e) {
-            Log::error('Error creating Shiprocket order via webhook', [
+            Log::error('Error creating courier order via webhook', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'error' => $e->getMessage(),
@@ -387,10 +398,10 @@ class WebhookController extends Controller
         try {
             // Load order relationships
             $order->load(['orderItems.book.category', 'user']);
-            
+
             // Use the new structure with orders collection
             $orders = collect([$order]);
-            
+
             $pdf = app('dompdf.wrapper');
             $pdf->loadView('admin.reports.accounts.combined-invoice', [
                 'orders' => $orders,
@@ -402,7 +413,7 @@ class WebhookController extends Controller
             // Generate filename and path
             $filename = 'invoice_' . $order->order_number . '.pdf';
             $tempPath = storage_path('app/temp/' . $filename);
-            
+
             // Ensure temp directory exists
             if (!file_exists(storage_path('app/temp'))) {
                 mkdir(storage_path('app/temp'), 0755, true);

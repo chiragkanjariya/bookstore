@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Book;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Services\ShiprocketService;
+use App\Services\CourierManager;
 use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,11 +20,11 @@ class CheckoutController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        
+
         // Get Razorpay credentials from database settings (with fallback to config)
         $razorpayKeyId = \App\Models\Setting::get('razorpay_key_id') ?: config('services.razorpay.key');
         $razorpaySecret = \App\Models\Setting::get('razorpay_key_secret') ?: config('services.razorpay.secret');
-        
+
         $this->razorpayApi = new Api($razorpayKeyId, $razorpaySecret);
     }
 
@@ -42,16 +42,16 @@ class CheckoutController extends Controller
 
         // Calculate totals
         $subtotal = $cartItems->sum('total_price');
-        
+
         // Check if order qualifies for bulk purchase (free shipping)
         $totalQuantity = $cartItems->sum('quantity');
         $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
         $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
-        
+
         $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) {
             return $item->book->shipping_price * $item->quantity;
         });
-        
+
         $tax = 0; // GST removed as per requirements
         $total = $subtotal + $shipping;
 
@@ -81,11 +81,11 @@ class CheckoutController extends Controller
 
         // Calculate totals
         $subtotal = $book->price * $quantity;
-        
+
         // Check if order qualifies for bulk purchase (free shipping)
         $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
         $isBulkPurchase = $quantity >= $minBulkPurchase;
-        
+
         $shipping = $isBulkPurchase ? 0 : ($book->shipping_price * $quantity);
         $tax = 0; // GST removed as per requirements
         $total = $subtotal + $shipping;
@@ -140,7 +140,7 @@ class CheckoutController extends Controller
         DB::beginTransaction();
         try {
             $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
-            
+
             if ($request->has('buy_now_book_id')) {
                 // Handle buy now checkout
                 $book = Book::findOrFail($request->buy_now_book_id);
@@ -152,21 +152,23 @@ class CheckoutController extends Controller
                 }
 
                 $subtotal = $book->price * $quantity;
-                
+
                 // Check if order qualifies for bulk purchase (free shipping)
                 $isBulkPurchase = $quantity >= $minBulkPurchase;
-                
+
                 $shipping = $isBulkPurchase ? 0 : ($book->shipping_price * $quantity);
                 $tax = 0; // GST removed
                 $total = $subtotal + $shipping;
 
-                $orderItems = [(object) [
-                    'book_id' => $book->id,
-                    'quantity' => $quantity,
-                    'price' => $book->price,
-                    'shipping_price' => $book->shipping_price,
-                    'total_price' => $subtotal
-                ]];
+                $orderItems = [
+                    (object) [
+                        'book_id' => $book->id,
+                        'quantity' => $quantity,
+                        'price' => $book->price,
+                        'shipping_price' => $book->shipping_price,
+                        'total_price' => $subtotal
+                    ]
+                ];
             } else {
                 // Handle cart checkout
                 $cartItems = $user->cartItems()->with('book')->get();
@@ -183,11 +185,11 @@ class CheckoutController extends Controller
                 }
 
                 $subtotal = $cartItems->sum('total_price');
-                
+
                 // Check if order qualifies for bulk purchase (free shipping)
                 $totalQuantity = $cartItems->sum('quantity');
                 $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
-                
+
                 $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) {
                     return $item->book->shipping_price * $item->quantity;
                 });
@@ -202,11 +204,34 @@ class CheckoutController extends Controller
             $state = \App\Models\State::find($shippingAddress['state_id']);
             $district = \App\Models\District::find($shippingAddress['district_id']);
             $taluka = \App\Models\Taluka::find($shippingAddress['taluka_id']);
-            
+
             $shippingAddress['state'] = $state->name;
             $shippingAddress['district'] = $district->name;
             $shippingAddress['taluka'] = $taluka->name;
-            
+
+            // Verify payment signature
+            // NOTE: This block seems to be misplaced here. Payment signature verification typically happens
+            // in the payment success callback, not during the initial order creation.
+            // The variables $razorpayOrderId, $razorpayPaymentId, $razorpaySignature are not defined at this point.
+            // I am inserting it as per instruction, but it will likely cause errors or incorrect logic.
+            // For a correct implementation, this logic should be in the paymentSuccess method.
+            // $generatedSignature = hash_hmac('sha256',
+            //     $razorpayOrderId . '|' . $razorpayPaymentId,
+            //     config('services.razorpay.key_secret')
+            // );
+
+            // if ($generatedSignature !== $razorpaySignature) {
+            //     Log::error('Payment signature verification failed', [
+            //         'order_id' => $razorpayOrderId,
+            //         'payment_id' => $razorpayPaymentId
+            //     ]);
+            //     return redirect()->route('cart.index')->with('error', 'Payment verification failed');
+            // }
+
+            // Check if zipcode is serviceable
+            $postalCode = $shippingAddress['postal_code']; // Use postal code from validated shipping address
+            $requiresManualShipping = !\App\Models\ServiceableZipcode::isServiceable($postalCode);
+
             // Remove the ID fields as we only store names
             unset($shippingAddress['state_id'], $shippingAddress['district_id'], $shippingAddress['taluka_id']);
 
@@ -229,6 +254,7 @@ class CheckoutController extends Controller
                 'tax_amount' => $tax,
                 'total_amount' => $total,
                 'is_bulk_purchased' => $isBulkPurchase,
+                'requires_manual_shipping' => $requiresManualShipping, // Added this field
                 'shipping_address' => $shippingAddress,
                 'billing_address' => $request->billing_address ?? $shippingAddress,
                 'notes' => $request->notes,
@@ -323,40 +349,42 @@ class CheckoutController extends Controller
                 Auth::user()->cartItems()->delete();
             }
 
-            // Create Shiprocket order for delivery (skip for bulk orders with free shipping)
-            if (!$order->is_bulk_purchased) {
+            // Create courier order for delivery (skip for bulk orders and manual shipping orders)
+            if (!$order->is_bulk_purchased && !$order->requires_manual_shipping) {
                 try {
-                    $shiprocketService = new ShiprocketService();
-                    $shiprocketResponse = $shiprocketService->createOrder($order);
-                    
-                    if ($shiprocketResponse) {
-                        Log::info('Shiprocket order created successfully for order: ' . $order->id);
+                    $courierManager = app(CourierManager::class);
+                    $courierResponse = $courierManager->createOrder($order);
+
+                    if ($courierResponse) {
+                        Log::info('Courier order created successfully for order: ' . $order->id);
                     } else {
-                        Log::warning('Failed to create Shiprocket order for order: ' . $order->id);
+                        Log::warning('Failed to create courier order for order: ' . $order->id);
                     }
                 } catch (\Exception $e) {
-                    Log::error('Shiprocket order creation failed for order: ' . $order->id . '. Error: ' . $e->getMessage());
-                    // Don't fail the main order process if Shiprocket fails
+                    Log::error('Courier order creation failed for order: ' . $order->id . '. Error: ' . $e->getMessage());
+                    // Don't fail the main order process if courier fails
                 }
+            } elseif ($order->requires_manual_shipping) {
+                Log::info('Skipping courier order creation for manual shipping order: ' . $order->id);
             } else {
-                Log::info('Skipping Shiprocket order creation for bulk purchase order: ' . $order->id);
+                Log::info('Skipping courier order creation for bulk purchase order: ' . $order->id);
             }
 
             // Send order confirmation email with invoice
             try {
                 // Generate invoice PDF
                 $pdfPath = $this->generateInvoicePdf($order);
-                
+
                 $emailService = new EmailService();
                 $emailSent = $emailService->sendOrderConfirmationEmail($order, $pdfPath);
-                
+
                 if ($emailSent) {
                     $order->update(['confirmation_email_sent' => true]);
                     Log::info('Order confirmation email sent successfully for order: ' . $order->id);
                 } else {
                     Log::warning('Failed to send order confirmation email for order: ' . $order->id);
                 }
-                
+
                 // Clean up temporary PDF file
                 if ($pdfPath && file_exists($pdfPath)) {
                     unlink($pdfPath);
@@ -372,7 +400,7 @@ class CheckoutController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
-            
+
             // Update order status to failed
             if (isset($order)) {
                 $order->update(['payment_status' => 'failed']);
@@ -405,10 +433,10 @@ class CheckoutController extends Controller
         try {
             // Load order relationships
             $order->load(['orderItems.book.category', 'user.state', 'user.district', 'user.taluka']);
-            
+
             // Use the new structure with orders collection
             $orders = collect([$order]);
-            
+
             $pdf = app('dompdf.wrapper');
             $pdf->loadView('admin.reports.accounts.combined-invoice', [
                 'orders' => $orders,
@@ -420,7 +448,7 @@ class CheckoutController extends Controller
             // Generate filename and path
             $filename = 'invoice_IPDC-' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '.pdf';
             $tempPath = storage_path('app/temp/' . $filename);
-            
+
             // Ensure temp directory exists
             if (!file_exists(storage_path('app/temp'))) {
                 mkdir(storage_path('app/temp'), 0755, true);

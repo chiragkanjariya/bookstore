@@ -40,9 +40,25 @@ return [
         'secret' => env('RAZORPAY_KEY_SECRET'),
     ],
 
+    'courier' => [
+        'provider' => env('COURIER_PROVIDER', 'shree_maruti'),
+    ],
+
     'shiprocket' => [
+        'enabled' => env('SHIPROCKET_ENABLED', false),
         'email' => env('SHIPROCKET_EMAIL'),
         'password' => env('SHIPROCKET_PASSWORD'),
+    ],
+
+    'shree_maruti' => [
+        'enabled' => env('SHREE_MARUTI_ENABLED', true),
+        'environment' => env('SHREE_MARUTI_ENVIRONMENT', 'beta'),
+        'client_code' => env('SHREE_MARUTI_CLIENT_CODE'),
+        'client_name' => env('SHREE_MARUTI_CLIENT_NAME'),
+        'username' => env('SHREE_MARUTI_USERNAME'),
+        'password' => env('SHREE_MARUTI_PASSWORD'),
+        'secret_key_prod' => env('SHREE_MARUTI_SECRET_KEY_PROD'),
+        'secret_key_beta' => env('SHREE_MARUTI_SECRET_KEY_BETA'),
     ],
 
 ];

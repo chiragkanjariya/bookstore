@@ -136,6 +136,99 @@
 
         <hr class="border-gray-300" />
 
+        <!-- Courier Provider Settings -->
+        <section>
+            <h4 class="text-xl font-semibold text-[#00BDE0] mb-4">Courier Provider Settings</h4>
+
+            <div class="mb-6">
+                <label for="courier_provider" class="block text-sm font-medium text-gray-700 mb-2">
+                    Active Courier Provider <span class="text-red-500">*</span>
+                </label>
+                <select id="courier_provider" name="courier_provider" required
+                    class="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                    <option value="shiprocket" {{ old('courier_provider', $settings['courier']['courier_provider']) == 'shiprocket' ? 'selected' : '' }}>Shiprocket</option>
+                    <option value="shree_maruti" {{ old('courier_provider', $settings['courier']['courier_provider']) == 'shree_maruti' ? 'selected' : '' }}>Shree Maruti Courier</option>
+                    <option value="none" {{ old('courier_provider', $settings['courier']['courier_provider']) == 'none' ? 'selected' : '' }}>None (Disable Courier Integration)</option>
+                </select>
+                <p class="text-sm text-gray-600 mt-1">Select which courier service to use for order fulfillment</p>
+            </div>
+
+            <!-- Shiprocket Settings -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-md">
+                <div class="flex items-center mb-4">
+                    <input type="checkbox" id="shiprocket_enabled" name="shiprocket_enabled" value="1"
+                        {{ old('shiprocket_enabled', $settings['courier']['shiprocket_enabled']) ? 'checked' : '' }}
+                        class="rounded text-[#00BDE0] focus:ring-[#00BDE0]">
+                    <label for="shiprocket_enabled" class="ml-2 text-sm font-medium text-gray-700">Enable Shiprocket</label>
+                </div>
+                <p class="text-xs text-gray-600 mb-3">Shiprocket credentials are configured in the "Shipping (Shiprocket)" section above</p>
+            </div>
+
+            <!-- Shree Maruti Courier Settings -->
+            <div class="p-4 bg-gray-50 rounded-md">
+                <div class="flex items-center mb-4">
+                    <input type="checkbox" id="shree_maruti_enabled" name="shree_maruti_enabled" value="1"
+                        {{ old('shree_maruti_enabled', $settings['courier']['shree_maruti_enabled']) ? 'checked' : '' }}
+                        class="rounded text-[#00BDE0] focus:ring-[#00BDE0]">
+                    <label for="shree_maruti_enabled" class="ml-2 text-sm font-medium text-gray-700">Enable Shree Maruti Courier</label>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="shree_maruti_client_name" class="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
+                        <input type="text" id="shree_maruti_client_name" name="shree_maruti_client_name"
+                            value="{{ old('shree_maruti_client_name', $settings['courier']['shree_maruti_client_name']) }}"
+                            placeholder="e.g., BAPS VISION"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                    </div>
+
+                    <div>
+                        <label for="shree_maruti_client_code" class="block text-sm font-medium text-gray-700 mb-1">Client Code</label>
+                        <input type="text" id="shree_maruti_client_code" name="shree_maruti_client_code"
+                            value="{{ old('shree_maruti_client_code', $settings['courier']['shree_maruti_client_code']) }}"
+                            placeholder="e.g., 973096"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                    </div>
+
+                    <div>
+                        <label for="shree_maruti_username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <input type="text" id="shree_maruti_username" name="shree_maruti_username"
+                            value="{{ old('shree_maruti_username', $settings['courier']['shree_maruti_username']) }}"
+                            placeholder="API Username"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                    </div>
+
+                    <div>
+                        <label for="shree_maruti_password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="shree_maruti_password" name="shree_maruti_password"
+                            value="{{ old('shree_maruti_password', $settings['courier']['shree_maruti_password']) }}"
+                            placeholder="API Password"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                    </div>
+
+                    <div>
+                        <label for="shree_maruti_api_secret_key" class="block text-sm font-medium text-gray-700 mb-1">API Secret Key</label>
+                        <input type="text" id="shree_maruti_api_secret_key" name="shree_maruti_api_secret_key"
+                            value="{{ old('shree_maruti_api_secret_key', $settings['courier']['shree_maruti_api_secret_key']) }}"
+                            placeholder="API Secret Key"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                    </div>
+
+                    <div>
+                        <label for="shree_maruti_environment" class="block text-sm font-medium text-gray-700 mb-1">Environment</label>
+                        <select id="shree_maruti_environment" name="shree_maruti_environment"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                            <option value="beta" {{ old('shree_maruti_environment', $settings['courier']['shree_maruti_environment']) == 'beta' ? 'selected' : '' }}>Beta (Testing)</option>
+                            <option value="production" {{ old('shree_maruti_environment', $settings['courier']['shree_maruti_environment']) == 'production' ? 'selected' : '' }}>Production</option>
+                        </select>
+                        <p class="text-xs text-gray-600 mt-1">Note: Production requires IP whitelisting</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="border-gray-300" />
+
         <!-- Bulk Purchase Settings -->
         <section>
             <h4 class="text-xl font-semibold text-[#00BDE0] mb-4">Bulk Purchase Settings</h4>
