@@ -5,8 +5,9 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Order;
+use App\Services\Contracts\CourierServiceInterface;
 
-class ShiprocketService
+class ShiprocketService implements CourierServiceInterface
 {
     private $baseUrl;
     private $email;
@@ -54,7 +55,7 @@ class ShiprocketService
     /**
      * Create order in Shiprocket
      */
-public function createOrder(Order $order)
+    public function createOrder(Order $order)
     {
         try {
             // Skip Shiprocket for bulk orders with free shipping
@@ -77,13 +78,13 @@ public function createOrder(Order $order)
 
             if ($response->successful()) {
                 $responseData = $response->json();
-                
+
                 // Log the full response for debugging
                 Log::info('Shiprocket API Response', [
                     'order_id' => $order->id,
                     'response_data' => $responseData
                 ]);
-                
+
                 // Check if the response contains an error message
                 if (isset($responseData['message']) && !isset($responseData['order_id'])) {
                     Log::error('Shiprocket API Error', [
@@ -93,7 +94,7 @@ public function createOrder(Order $order)
                     ]);
                     return false;
                 }
-                
+
                 // Update order with Shiprocket details
                 $order->update([
                     'shiprocket_order_id' => $responseData['order_id'] ?? null,
@@ -199,7 +200,7 @@ public function createOrder(Order $order)
                 'tax' => 0,
                 'hsn' => '49019900' // HSN code for books
             ];
-            
+
             // Use actual book weight or default to 0.5 kg if not set
             $bookWeight = $item->book->weight ?? 0.5;
             $totalWeight += ($bookWeight * $item->quantity);
@@ -259,12 +260,12 @@ public function createOrder(Order $order)
 
         foreach ($order->orderItems as $item) {
             $book = $item->book;
-            
+
             // Use actual book dimensions or defaults
             $bookLength = $book->width ?? 15; // width becomes length for shipping
             $bookBreadth = $book->depth ?? 10; // depth becomes breadth for shipping
             $bookHeight = $book->height ?? 5; // height stays height
-            
+
             $maxDimensions['length'] = max($maxDimensions['length'], $bookLength);
             $maxDimensions['breadth'] = max($maxDimensions['breadth'], $bookBreadth);
             $maxDimensions['height'] = max($maxDimensions['height'], $bookHeight);
@@ -312,5 +313,21 @@ public function createOrder(Order $order)
             ]);
             return false;
         }
+    }
+
+    /**
+     * Check if Shiprocket service is enabled
+     */
+    public function isEnabled()
+    {
+        return config('services.shiprocket.enabled', false);
+    }
+
+    /**
+     * Get the provider name
+     */
+    public function getProviderName()
+    {
+        return 'shiprocket';
     }
 }

@@ -53,28 +53,28 @@ Route::middleware(['auth'])->group(function () {
 // Admin Dashboard Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'adminDashboard'])->name('dashboard');
-    
+
     // Category Management Routes
     Route::resource('categories', CategoryController::class);
     Route::patch('categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
-    
+
     // Book Management Routes
     Route::resource('books', BookController::class);
     Route::patch('books/{book}/status', [BookController::class, 'updateStatus'])->name('books.update-status');
     Route::patch('books/{book}/stock', [BookController::class, 'updateStock'])->name('books.update-stock');
     Route::patch('books/bulk-status', [BookController::class, 'bulkUpdateStatus'])->name('books.bulk-status');
-    
+
     // Book Image Management Routes
     Route::post('books/{book}/images', [BookController::class, 'uploadImages'])->name('books.upload-images');
     Route::delete('books/{book}/images/{image}', [BookController::class, 'deleteImage'])->name('books.delete-image');
     Route::patch('books/{book}/images/{image}/primary', [BookController::class, 'setPrimaryImage'])->name('books.set-primary-image');
     Route::patch('books/{book}/images/order', [BookController::class, 'updateImageOrder'])->name('books.update-image-order');
-    
+
     // User Management Routes
     Route::resource('users', UserController::class);
     Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
     Route::patch('users/bulk-status', [UserController::class, 'bulkUpdateStatus'])->name('users.bulk-status');
-    
+
     // Order Management Routes
     Route::get('orders', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [\App\Http\Controllers\Admin\OrderController::class, 'show'])->name('orders.show');
@@ -86,11 +86,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('orders/track-shipment/{shiprocketOrderId}', [\App\Http\Controllers\Admin\OrderController::class, 'trackShipment'])->name('orders.track-shipment');
     Route::post('orders/{order}/send-confirmation', [\App\Http\Controllers\Admin\OrderController::class, 'sendOrderConfirmation'])->name('orders.send-confirmation');
     Route::get('orders/{order}/invoice', [\App\Http\Controllers\Admin\OrderController::class, 'invoice'])->name('orders.invoice');
-    
+
     // Email Testing Routes (for debugging)
     Route::get('test-email', [\App\Http\Controllers\Admin\TestEmailController::class, 'testEmail'])->name('test-email');
     Route::get('test-order-email', [\App\Http\Controllers\Admin\TestEmailController::class, 'testOrderEmail'])->name('test-order-email');
-    
+
     // Account Report Routes
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('accounts', [\App\Http\Controllers\Admin\AccountReportController::class, 'index'])->name('accounts.index');
@@ -98,7 +98,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('accounts/combined-invoice', [\App\Http\Controllers\Admin\AccountReportController::class, 'generateCombinedInvoice'])->name('accounts.combined-invoice');
         Route::get('accounts/order-details', [\App\Http\Controllers\Admin\AccountReportController::class, 'getOrderDetails'])->name('accounts.order-details');
     });
-    
+
+    // Manual Shipping Routes
+    Route::prefix('manual-shipping')->name('manual-shipping.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ManualShippingController::class, 'index'])->name('index');
+        Route::post('/{order}/mark-shipped', [\App\Http\Controllers\Admin\ManualShippingController::class, 'markAsShipped'])->name('mark-shipped');
+        Route::post('/bulk-mark-shipped', [\App\Http\Controllers\Admin\ManualShippingController::class, 'bulkMarkAsShipped'])->name('bulk-mark-shipped');
+        Route::get('/export', [\App\Http\Controllers\Admin\ManualShippingController::class, 'export'])->name('export');
+    });
+
     // Settings Routes
     Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
     Route::put('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
@@ -129,6 +137,12 @@ Route::prefix('api/locations')->group(function () {
     Route::get('/talukas', [LocationController::class, 'getTalukas'])->name('api.locations.talukas');
     Route::get('/talukas-by-state', [LocationController::class, 'getTalukasByState'])->name('api.locations.talukas-by-state');
     Route::get('/search', [LocationController::class, 'searchLocations'])->name('api.locations.search');
+});
+
+// API Routes for Zipcode
+Route::prefix('api/zipcodes')->group(function () {
+    Route::get('/autocomplete', [\App\Http\Controllers\Api\ZipcodeController::class, 'autocomplete'])->name('api.zipcodes.autocomplete');
+    Route::post('/validate', [\App\Http\Controllers\Api\ZipcodeController::class, 'validateZipcode'])->name('api.zipcodes.validate');
 });
 
 // Static Pages Routes

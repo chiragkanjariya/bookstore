@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Services\ShiprocketService;
+use App\Services\CourierManager;
 use App\Services\EmailService;
 use Illuminate\Http\Request;
 
@@ -21,7 +21,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $query = Order::with(['user', 'orderItems.book'])
-                     ->orderBy('created_at', 'desc');
+            ->orderBy('created_at', 'desc');
 
         // Filter by status
         if ($request->filled('status')) {
@@ -36,12 +36,12 @@ class OrderController extends Controller
         // Search by order number or user name
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', '%' . $search . '%')
-                  ->orWhereHas('user', function($userQuery) use ($search) {
-                      $userQuery->where('name', 'like', '%' . $search . '%')
-                               ->orWhere('email', 'like', '%' . $search . '%');
-                  });
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', '%' . $search . '%')
+                            ->orWhere('email', 'like', '%' . $search . '%');
+                    });
             });
         }
 
@@ -135,7 +135,7 @@ class OrderController extends Controller
         ]);
 
         $orders = Order::whereIn('id', $request->order_ids)->get();
-        
+
         foreach ($orders as $order) {
             $oldStatus = $order->status;
             $order->update([
@@ -171,33 +171,39 @@ class OrderController extends Controller
         }
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', '%' . $search . '%')
-                  ->orWhereHas('user', function($userQuery) use ($search) {
-                      $userQuery->where('name', 'like', '%' . $search . '%')
-                               ->orWhere('email', 'like', '%' . $search . '%');
-                  });
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', '%' . $search . '%')
+                            ->orWhere('email', 'like', '%' . $search . '%');
+                    });
             });
         }
 
         $orders = $query->get();
 
         $filename = 'orders_' . date('Y-m-d_H-i-s') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($orders) {
+        $callback = function () use ($orders) {
             $file = fopen('php://output', 'w');
-            
+
             // CSV headers
             fputcsv($file, [
-                'Order Number', 'Customer', 'Email', 'Status', 'Payment Status',
-                'Total Amount', 'Order Date', 'Items Count'
+                'Order Number',
+                'Customer',
+                'Email',
+                'Status',
+                'Payment Status',
+                'Total Amount',
+                'Order Date',
+                'Items Count'
             ]);
-            
+
             foreach ($orders as $order) {
                 fputcsv($file, [
                     $order->order_number,
@@ -210,7 +216,7 @@ class OrderController extends Controller
                     $order->orderItems->count()
                 ]);
             }
-            
+
             fclose($file);
         };
 
@@ -218,58 +224,70 @@ class OrderController extends Controller
     }
 
     /**
-     * Create Shiprocket order for an existing order.
+     * Create courier order for an existing order.
      */
-    public function createShiprocketOrder(Order $order)
+    public function createCourierOrder(Order $order)
     {
         try {
-            if ($order->shiprocket_order_id) {
+            if ($order->courier_provider || $order->shiprocket_order_id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Shiprocket order already exists for this order.'
+                    'message' => 'Courier order already exists for this order.'
                 ], 400);
             }
 
-            // Skip Shiprocket for bulk orders with free shipping
+            // Skip courier for bulk orders with free shipping
             if ($order->is_bulk_purchased) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No Shiprocket order created for bulk purchase order (free shipping).'
+                    'message' => 'No courier order created for bulk purchase order (free shipping).'
                 ], 400);
             }
 
-            $shiprocketService = new ShiprocketService();
-            $response = $shiprocketService->createOrder($order);
+            $courierManager = app(CourierManager::class);
+            $response = $courierManager->createOrder($order);
 
             if ($response) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Shiprocket order created successfully.',
+                    'message' => 'Courier order created successfully.',
                     'data' => $response
                 ]);
             }
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create Shiprocket order. Please check the logs for more details.'
+                'message' => 'Failed to create courier order. Please check the logs for more details.'
             ], 500);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error creating Shiprocket order: ' . $e->getMessage()
+                'message' => 'Error creating courier order: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Track shipment in Shiprocket.
+     * Track shipment with courier provider.
      */
-    public function trackShipment($shiprocketOrderId)
+    public function trackShipment(Order $order)
     {
         try {
-            $shiprocketService = new ShiprocketService();
-            $trackingData = $shiprocketService->trackOrder($shiprocketOrderId);
+            $courierManager = app(CourierManager::class);
+
+            // Use the provider from the order, or fall back to active provider
+            $trackingReference = $order->courier_document_ref ?? $order->tracking_number ?? $order->shiprocket_order_id;
+            $providerName = $order->courier_provider;
+
+            if (!$trackingReference) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tracking reference found for this order.'
+                ], 404);
+            }
+
+            $trackingData = $courierManager->trackOrder($trackingReference, $providerName);
 
             if ($trackingData) {
                 return response()->json([
@@ -299,15 +317,15 @@ class OrderController extends Controller
         try {
             // Generate invoice PDF
             $pdfPath = $this->generateInvoicePdf($order);
-            
+
             $emailService = new EmailService();
             $emailSent = $emailService->sendOrderConfirmationEmail($order, $pdfPath);
-            
+
             // Clean up temporary PDF file
             if ($pdfPath && file_exists($pdfPath)) {
                 unlink($pdfPath);
             }
-            
+
             if ($emailSent) {
                 $order->update(['confirmation_email_sent' => true]);
                 return response()->json([
@@ -339,10 +357,10 @@ class OrderController extends Controller
         }
 
         $order->load(['orderItems.book.category', 'user.state', 'user.district', 'user.taluka']);
-        
+
         // Use the new structure with orders collection
         $orders = collect([$order]);
-        
+
         $pdf = app('dompdf.wrapper');
         $pdf->loadView('admin.reports.accounts.combined-invoice', [
             'orders' => $orders,
@@ -352,7 +370,7 @@ class OrderController extends Controller
         ]);
 
         $filename = 'invoice_IPDC-' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '.pdf';
-        
+
         return $pdf->download($filename);
     }
 
@@ -364,10 +382,10 @@ class OrderController extends Controller
         try {
             // Load order relationships
             $order->load(['orderItems.book.category', 'user.state', 'user.district', 'user.taluka']);
-            
+
             // Use the new structure with orders collection
             $orders = collect([$order]);
-            
+
             $pdf = app('dompdf.wrapper');
             $pdf->loadView('admin.reports.accounts.combined-invoice', [
                 'orders' => $orders,
@@ -379,7 +397,7 @@ class OrderController extends Controller
             // Generate filename and path
             $filename = 'invoice_IPDC-' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '.pdf';
             $tempPath = storage_path('app/temp/' . $filename);
-            
+
             // Ensure temp directory exists
             if (!file_exists(storage_path('app/temp'))) {
                 mkdir(storage_path('app/temp'), 0755, true);
