@@ -245,7 +245,7 @@ class CheckoutController extends Controller
             // Create order in database
             $order = Order::create([
                 'user_id' => $user->id,
-                'status' => 'pending',
+                'status' => Order::STATUS_PENDING_TO_BE_PREPARED, // New order flow - pending to be prepared
                 'payment_status' => 'pending',
                 'payment_method' => 'razorpay',
                 'razorpay_order_id' => $razorpayOrder['id'],
@@ -334,7 +334,7 @@ class CheckoutController extends Controller
             // Update order with payment details
             $order->update([
                 'payment_status' => 'paid',
-                'status' => 'processing',
+                'status' => Order::STATUS_PENDING_TO_BE_PREPARED, // Keep as pending to be prepared after payment
                 'razorpay_payment_id' => $request->razorpay_payment_id,
                 'razorpay_signature' => $request->razorpay_signature,
             ]);
@@ -349,26 +349,9 @@ class CheckoutController extends Controller
                 Auth::user()->cartItems()->delete();
             }
 
-            // Create courier order for delivery (skip for bulk orders and manual shipping orders)
-            if (!$order->is_bulk_purchased && !$order->requires_manual_shipping) {
-                try {
-                    $courierManager = app(CourierManager::class);
-                    $courierResponse = $courierManager->createOrder($order);
-
-                    if ($courierResponse) {
-                        Log::info('Courier order created successfully for order: ' . $order->id);
-                    } else {
-                        Log::warning('Failed to create courier order for order: ' . $order->id);
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Courier order creation failed for order: ' . $order->id . '. Error: ' . $e->getMessage());
-                    // Don't fail the main order process if courier fails
-                }
-            } elseif ($order->requires_manual_shipping) {
-                Log::info('Skipping courier order creation for manual shipping order: ' . $order->id);
-            } else {
-                Log::info('Skipping courier order creation for bulk purchase order: ' . $order->id);
-            }
+            // NOTE: Courier order creation is now handled via the "Ship Now" bulk action in admin panel
+            // Orders are set to "pending_to_be_prepared" and admin will use bulk ship functionality
+            Log::info('Order created and set to pending_to_be_prepared status: ' . $order->id);
 
             // Send order confirmation email with invoice
             try {

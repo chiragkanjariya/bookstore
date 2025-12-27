@@ -131,7 +131,7 @@ class OrderController extends Controller
         $request->validate([
             'order_ids' => 'required|array',
             'order_ids.*' => 'exists:orders,id',
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled'
+            'status' => 'required|in:pending_to_be_prepared,ready_to_ship,pending,processing,shipped,delivered,cancelled'
         ]);
 
         $orders = Order::whereIn('id', $request->order_ids)->get();
@@ -153,6 +153,72 @@ class OrderController extends Controller
         }
 
         return redirect()->back()->with('success', count($request->order_ids) . ' orders updated successfully.');
+    }
+
+    /**
+     * Bulk ship now - mark orders as ready to ship and submit to Maruti.
+     */
+    public function bulkShipNow(Request $request)
+    {
+        $request->validate([
+            'order_ids' => 'required|array',
+            'order_ids.*' => 'exists:orders,id',
+        ]);
+
+        $orders = Order::whereIn('id', $request->order_ids)
+            ->where('status', Order::STATUS_PENDING_TO_BE_PREPARED)
+            ->get();
+
+        if ($orders->isEmpty()) {
+            return redirect()->back()->with('error', 'No eligible orders found to ship.');
+        }
+
+        $courierManager = app(CourierManager::class);
+        $emailService = new EmailService();
+        $successCount = 0;
+        $failedCount = 0;
+        $errors = [];
+
+        foreach ($orders as $order) {
+            try {
+                // Skip bulk orders
+                if ($order->is_bulk_purchased) {
+                    $failedCount++;
+                    $errors[] = "Order #{$order->order_number}: Bulk orders are not shipped via courier";
+                    continue;
+                }
+
+                // Submit to Maruti API
+                $response = $courierManager->createOrder($order);
+
+                if ($response && isset($response['success']) && $response['success']) {
+                    // Mark as ready to ship
+                    $order->markAsReadyToShip();
+
+                    // Send email notification
+                    $emailService->sendOrderReadyToShipEmail($order);
+
+                    $successCount++;
+                } else {
+                    $failedCount++;
+                    $errors[] = "Order #{$order->order_number}: Failed to create courier order";
+                }
+            } catch (\Exception $e) {
+                $failedCount++;
+                $errors[] = "Order #{$order->order_number}: {$e->getMessage()}";
+            }
+        }
+
+        $message = "{$successCount} orders shipped successfully.";
+        if ($failedCount > 0) {
+            $message .= " {$failedCount} orders failed.";
+        }
+
+        if (!empty($errors)) {
+            return redirect()->back()->with('warning', $message)->with('errors', $errors);
+        }
+
+        return redirect()->back()->with('success', $message);
     }
 
     /**

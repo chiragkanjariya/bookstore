@@ -30,10 +30,10 @@ class EmailService
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->authToken
             ])->asForm()->post('https://mail.ipdc.org/api/v1/user/mail_access_token', [
-                'email' => $email,
-                'user_type' => '4',
-                'password' => $password
-            ]);
+                        'email' => $email,
+                        'user_type' => '4',
+                        'password' => $password
+                    ]);
             if ($response->successful()) {
                 $data = $response->json();
                 $this->accessToken = $data['token'] ?? null;
@@ -92,21 +92,21 @@ class EmailService
 
             // Use cURL directly to match the working curl command exactly
             $curl = curl_init();
-            
+
             $postFields = [];
-            
+
             // Add form fields
             foreach ($formData as $key => $value) {
                 $postFields[$key] = $value;
             }
-            
+
             // Add file attachments if provided
             foreach ($attachments as $attachment) {
                 if (file_exists($attachment['path'])) {
                     $postFields['file'] = new \CURLFile($attachment['path'], 'application/pdf', $attachment['name']);
                 }
             }
-            
+
             curl_setopt_array($curl, [
                 CURLOPT_URL => $this->baseUrl . '/user/send_smtp_mail',
                 CURLOPT_RETURNTRANSFER => true,
@@ -121,33 +121,37 @@ class EmailService
                     'Authorization: Bearer ' . $this->accessToken
                 ],
             ]);
-            
+
             $response_body = curl_exec($curl);
             $response_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
             $curl_error = curl_error($curl);
             curl_close($curl);
-            
+
             // Create a response object similar to Laravel's HTTP response
-            $response = new class($response_body, $response_code, $curl_error) {
+            $response = new class ($response_body, $response_code, $curl_error) {
                 private $body;
                 private $status;
                 private $error;
-                
-                public function __construct($body, $status, $error) {
+
+                public function __construct($body, $status, $error)
+                {
                     $this->body = $body;
                     $this->status = $status;
                     $this->error = $error;
                 }
-                
-                public function body() {
+
+                public function body()
+                {
                     return $this->body;
                 }
-                
-                public function status() {
+
+                public function status()
+                {
                     return $this->status;
                 }
-                
-                public function successful() {
+
+                public function successful()
+                {
                     return $this->status >= 200 && $this->status < 300 && empty($this->error);
                 }
             };
@@ -192,17 +196,17 @@ class EmailService
             // Prepare email data
             $customerEmail = $order->user->email;
             $customerName = $order->user->name;
-            $orderNumber = '#IPDC'.str_pad($order->id, 5, '0', STR_PAD_LEFT);
-            
+            $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+
             // Generate invoice PDF if not provided
             if (!$pdfPath) {
                 $pdfPath = $this->generateInvoicePDF($order);
             }
 
             // Prepare email content
-            $subject = "Order Confirmation - #IPDC".str_pad($order->id, 5, '0', STR_PAD_LEFT);
+            $subject = "Order Confirmation - #IPDC" . str_pad($order->id, 5, '0', STR_PAD_LEFT);
             $message = $this->getOrderConfirmationEmailTemplate($order);
-            
+
             // Prepare recipients
             $to = [
                 $customerEmail => $customerName
@@ -250,10 +254,10 @@ class EmailService
         try {
             // Load order relationships
             $order->load(['orderItems.book.category', 'user.state', 'user.district', 'user.taluka']);
-            
+
             // Use the new structure with orders collection
             $orders = collect([$order]);
-            
+
             $pdf = app('dompdf.wrapper');
             $pdf->loadView('admin.reports.accounts.combined-invoice', [
                 'orders' => $orders,
@@ -264,7 +268,7 @@ class EmailService
 
             // Create temporary file
             $tempPath = storage_path('app/temp/invoice_' . $order->id . '_' . time() . '.pdf');
-            
+
             // Ensure temp directory exists
             $tempDir = dirname($tempPath);
             if (!is_dir($tempDir)) {
@@ -573,5 +577,322 @@ class EmailService
             Log::error('Email sending error: ' . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Send order ready to ship notification email
+     */
+    public function sendOrderReadyToShipEmail($order)
+    {
+        try {
+            if (!$this->accessToken) {
+                $this->getAccessToken();
+            }
+
+            if (!$this->accessToken) {
+                throw new Exception('Unable to get email access token');
+            }
+
+            $customerEmail = $order->user->email;
+            $customerName = $order->user->name;
+            $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+
+            $subject = "Your Order is Ready to Ship - {$orderNumber}";
+            $message = $this->getOrderReadyToShipEmailTemplate($order);
+
+            $to = [
+                $customerEmail => $customerName
+            ];
+
+            $result = $this->sendEmailViaAPI($to, $subject, $message);
+
+            if ($result) {
+                Log::info('Order ready to ship email sent successfully', [
+                    'order_id' => $order->id,
+                    'customer_email' => $customerEmail
+                ]);
+            }
+
+            return $result;
+
+        } catch (Exception $e) {
+            Log::error('Order ready to ship email error: ' . $e->getMessage(), [
+                'order_id' => $order->id ?? null
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Send order shipped notification email
+     */
+    public function sendOrderShippedEmail($order)
+    {
+        try {
+            if (!$this->accessToken) {
+                $this->getAccessToken();
+            }
+
+            if (!$this->accessToken) {
+                throw new Exception('Unable to get email access token');
+            }
+
+            $customerEmail = $order->user->email;
+            $customerName = $order->user->name;
+            $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+
+            $subject = "Your Order Has Been Shipped - {$orderNumber}";
+            $message = $this->getOrderShippedEmailTemplate($order);
+
+            $to = [
+                $customerEmail => $customerName
+            ];
+
+            $result = $this->sendEmailViaAPI($to, $subject, $message);
+
+            if ($result) {
+                Log::info('Order shipped email sent successfully', [
+                    'order_id' => $order->id,
+                    'customer_email' => $customerEmail
+                ]);
+            }
+
+            return $result;
+
+        } catch (Exception $e) {
+            Log::error('Order shipped email error: ' . $e->getMessage(), [
+                'order_id' => $order->id ?? null
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Send order delivered notification email
+     */
+    public function sendOrderDeliveredEmail($order)
+    {
+        try {
+            if (!$this->accessToken) {
+                $this->getAccessToken();
+            }
+
+            if (!$this->accessToken) {
+                throw new Exception('Unable to get email access token');
+            }
+
+            $customerEmail = $order->user->email;
+            $customerName = $order->user->name;
+            $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+
+            $subject = "Your Order Has Been Delivered - {$orderNumber}";
+            $message = $this->getOrderDeliveredEmailTemplate($order);
+
+            $to = [
+                $customerEmail => $customerName
+            ];
+
+            $result = $this->sendEmailViaAPI($to, $subject, $message);
+
+            if ($result) {
+                Log::info('Order delivered email sent successfully', [
+                    'order_id' => $order->id,
+                    'customer_email' => $customerEmail
+                ]);
+            }
+
+            return $result;
+
+        } catch (Exception $e) {
+            Log::error('Order delivered email error: ' . $e->getMessage(), [
+                'order_id' => $order->id ?? null
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Get order ready to ship email template
+     */
+    private function getOrderReadyToShipEmailTemplate($order)
+    {
+        $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+
+        return '
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+            <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #00BDE0; padding-bottom: 20px;">
+                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '</h1>
+                    <p style="color: #666; font-size: 16px; margin: 5px 0 0 0;">Order Ready to Ship</p>
+                </div>
+
+                <!-- Greeting -->
+                <div style="margin-bottom: 25px;">
+                    <h2 style="color: #333; font-size: 22px; margin-bottom: 10px;">Hello ' . $order->user->name . ',</h2>
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                        Great news! Your order ' . $orderNumber . ' is ready to ship and will be dispatched soon.
+                    </p>
+                </div>
+
+                <!-- Order Details -->
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #333; font-size: 18px; margin-top: 0; margin-bottom: 15px;">Order Details</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Number:</td>
+                            <td style="padding: 8px 0; color: #333;">' . $orderNumber . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
+                            <td style="padding: 8px 0; color: #333;">' . $order->created_at->format('F d, Y') . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Status:</td>
+                            <td style="padding: 8px 0; color: #00BDE0; font-weight: bold;">Ready to Ship</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Next Steps -->
+                <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #1976d2; font-size: 18px; margin-top: 0; margin-bottom: 15px;">What\'s Next?</h3>
+                    <ul style="color: #666; line-height: 1.6; margin: 0; padding-left: 20px;">
+                        <li>Your order will be shipped within 1-2 business days</li>
+                        <li>You\'ll receive a shipping confirmation email with tracking details</li>
+                        <li>Your order will be delivered within 3-7 business days</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>';
+    }
+
+    /**
+     * Get order shipped email template
+     */
+    private function getOrderShippedEmailTemplate($order)
+    {
+        $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+        $trackingNumber = $order->tracking_number ?? $order->courier_awb_number ?? 'N/A';
+
+        return '
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+            <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #00BDE0; padding-bottom: 20px;">
+                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '</h1>
+                    <p style="color: #666; font-size: 16px; margin: 5px 0 0 0;">Order Shipped</p>
+                </div>
+
+                <!-- Greeting -->
+                <div style="margin-bottom: 25px;">
+                    <h2 style="color: #333; font-size: 22px; margin-bottom: 10px;">Hello ' . $order->user->name . ',</h2>
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                        Your order ' . $orderNumber . ' has been shipped and is on its way to you!
+                    </p>
+                </div>
+
+                <!-- Tracking Information -->
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #333; font-size: 18px; margin-top: 0; margin-bottom: 15px;">Tracking Information</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Number:</td>
+                            <td style="padding: 8px 0; color: #333;">' . $orderNumber . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Tracking Number:</td>
+                            <td style="padding: 8px 0; color: #00BDE0; font-weight: bold;">' . $trackingNumber . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Shipped Date:</td>
+                            <td style="padding: 8px 0; color: #333;">' . ($order->shipped_at ? $order->shipped_at->format('F d, Y') : now()->format('F d, Y')) . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Courier:</td>
+                            <td style="padding: 8px 0; color: #333;">Shree Maruti Courier</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Delivery Information -->
+                <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #1976d2; font-size: 18px; margin-top: 0; margin-bottom: 15px;">Delivery Information</h3>
+                    <ul style="color: #666; line-height: 1.6; margin: 0; padding-left: 20px;">
+                        <li>Expected delivery: 3-7 business days</li>
+                        <li>You\'ll receive a notification when your order is delivered</li>
+                        <li>Please keep your tracking number for reference</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>';
+    }
+
+    /**
+     * Get order delivered email template
+     */
+    private function getOrderDeliveredEmailTemplate($order)
+    {
+        $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+
+        return '
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+            <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #00BDE0; padding-bottom: 20px;">
+                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '</h1>
+                    <p style="color: #666; font-size: 16px; margin: 5px 0 0 0;">Order Delivered</p>
+                </div>
+
+                <!-- Greeting -->
+                <div style="margin-bottom: 25px;">
+                    <h2 style="color: #333; font-size: 22px; margin-bottom: 10px;">Hello ' . $order->user->name . ',</h2>
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                        Great news! Your order ' . $orderNumber . ' has been successfully delivered.
+                    </p>
+                </div>
+
+                <!-- Order Details -->
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #333; font-size: 18px; margin-top: 0; margin-bottom: 15px;">Order Details</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Number:</td>
+                            <td style="padding: 8px 0; color: #333;">' . $orderNumber . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Delivered Date:</td>
+                            <td style="padding: 8px 0; color: #333;">' . ($order->delivered_at ? $order->delivered_at->format('F d, Y') : now()->format('F d, Y')) . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Status:</td>
+                            <td style="padding: 8px 0; color: #28a745; font-weight: bold;">Delivered</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Thank You Message -->
+                <div style="background-color: #d4edda; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #c3e6cb;">
+                    <h3 style="color: #155724; font-size: 18px; margin-top: 0; margin-bottom: 15px;">Thank You!</h3>
+                    <p style="color: #155724; line-height: 1.6; margin: 0;">
+                        We hope you enjoy your purchase. If you have any questions or concerns about your order, please don\'t hesitate to contact us.
+                    </p>
+                </div>
+
+                <!-- Feedback Request -->
+                <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #1976d2; font-size: 18px; margin-top: 0; margin-bottom: 15px;">We Value Your Feedback</h3>
+                    <p style="color: #666; line-height: 1.6; margin: 0;">
+                        Your satisfaction is important to us. If you have a moment, we\'d love to hear about your experience with us.
+                    </p>
+                </div>
+
+            </div>
+        </div>';
     }
 }

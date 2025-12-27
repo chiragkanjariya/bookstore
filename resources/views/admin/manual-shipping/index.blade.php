@@ -110,8 +110,13 @@
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-gray-900">Manual Shipping Orders</h2>
                     <div class="flex items-center space-x-3">
+                        <button type="button" id="bulk-print-labels"
+                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm transition duration-200 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled>
+                            <i class="fas fa-print mr-2"></i>Print Selected Labels
+                        </button>
                         <button type="button" id="bulk-mark-shipped"
-                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm transition duration-200"
+                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm transition duration-200 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
                             disabled>
                             <i class="fas fa-check mr-2"></i>Mark Selected as Shipped
                         </button>
@@ -209,15 +214,23 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-sm font-medium space-x-2">
-                                    <a href="{{ route('admin.orders.show', $order) }}"
-                                        class="text-blue-600 hover:text-blue-900">View</a>
-                                    @if(!$order->isManuallyShipped())
-                                        <button type="button" onclick="markAsShipped({{ $order->id }})"
-                                            class="text-green-600 hover:text-green-900">
-                                            Mark Shipped
-                                        </button>
-                                    @endif
+                                <td class="px-6 py-4 text-sm font-medium">
+                                    <div class="flex flex-col space-y-2">
+                                        <a href="{{ route('admin.orders.show', $order) }}"
+                                            class="text-blue-600 hover:text-blue-900">
+                                            <i class="fas fa-eye mr-1"></i>View Details
+                                        </a>
+                                        <a href="{{ route('admin.manual-shipping.print-label', $order) }}"
+                                            class="text-purple-600 hover:text-purple-900" target="_blank">
+                                            <i class="fas fa-print mr-1"></i>Print Label & Invoice
+                                        </a>
+                                        @if(!$order->isManuallyShipped())
+                                            <button type="button" onclick="markAsShipped({{ $order->id }})"
+                                                class="text-left text-green-600 hover:text-green-900">
+                                                <i class="fas fa-check mr-1"></i>Mark Shipped
+                                            </button>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -246,25 +259,65 @@
             const selectAll = document.getElementById('select-all');
             const orderCheckboxes = document.querySelectorAll('.order-checkbox');
             const bulkMarkShipped = document.getElementById('bulk-mark-shipped');
+            const bulkPrintLabels = document.getElementById('bulk-print-labels');
 
             // Select all functionality
             selectAll.addEventListener('change', function () {
                 orderCheckboxes.forEach(checkbox => {
                     checkbox.checked = this.checked;
                 });
-                updateBulkButton();
+                updateBulkButtons();
             });
 
             // Individual checkbox change
             orderCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', updateBulkButton);
+                checkbox.addEventListener('change', updateBulkButtons);
             });
 
-            // Update bulk button state
-            function updateBulkButton() {
+            // Update bulk button states
+            function updateBulkButtons() {
                 const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
-                bulkMarkShipped.disabled = checkedBoxes.length === 0;
+                const hasSelection = checkedBoxes.length > 0;
+                bulkMarkShipped.disabled = !hasSelection;
+                bulkPrintLabels.disabled = !hasSelection;
             }
+
+            // Bulk print labels
+            bulkPrintLabels.addEventListener('click', function () {
+                const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+                if (checkedBoxes.length === 0) {
+                    alert('Please select at least one order.');
+                    return;
+                }
+
+                const orderIds = Array.from(checkedBoxes).map(cb => cb.value);
+
+                // Create a form and submit it to download PDF
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ route("admin.manual-shipping.bulk-print-pdf") }}';
+                form.style.display = 'none';
+
+                // Add CSRF token
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = '{{ csrf_token() }}';
+                form.appendChild(csrfInput);
+
+                // Add order IDs
+                orderIds.forEach(orderId => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'order_ids[]';
+                    input.value = orderId;
+                    form.appendChild(input);
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+            });
 
             // Bulk mark as shipped
             bulkMarkShipped.addEventListener('click', function () {

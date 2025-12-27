@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Helpers\AWBNumberGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ManualShippingController extends Controller
 {
@@ -216,5 +218,54 @@ class ManualShippingController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Print invoice and shipping label for manual shipping order
+     */
+    public function printLabel(Order $order)
+    {
+        if (!$order->requires_manual_shipping) {
+            abort(404, 'This order does not require manual shipping');
+        }
+
+        // Generate AWB number if not exists
+        if (!$order->awb_number) {
+            AWBNumberGenerator::assignToOrder($order);
+            $order->refresh();
+        }
+
+        return view('admin.manual-shipping.print-label', compact('order'));
+    }
+
+    /**
+     * Bulk print labels and invoices as PDF
+     */
+    public function bulkPrintPdf(Request $request)
+    {
+        $request->validate([
+            'order_ids' => 'required|array',
+            'order_ids.*' => 'exists:orders,id'
+        ]);
+
+        $orders = Order::with(['user', 'orderItems.book'])
+            ->whereIn('id', $request->order_ids)
+            ->requiresManualShipping()
+            ->get();
+
+        // Generate AWB numbers for orders that don't have them
+        foreach ($orders as $order) {
+            if (!$order->awb_number) {
+                AWBNumberGenerator::assignToOrder($order);
+            }
+        }
+
+        // Refresh to get updated AWB numbers
+        $orders = $orders->fresh(['user', 'orderItems.book']);
+
+        $pdf = Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('manual_shipping_labels_' . date('Y-m-d_H-i-s') . '.pdf');
     }
 }
