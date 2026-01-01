@@ -44,6 +44,7 @@ class SettingsController extends Controller
                 'shree_maruti_password' => Setting::get('shree_maruti_password', ''),
                 'shree_maruti_api_secret_key' => Setting::get('shree_maruti_api_secret_key', ''),
                 'shree_maruti_environment' => Setting::get('shree_maruti_environment', 'beta'),
+                'awb_number_prefix' => Setting::get('awb_number_prefix', 'IPDC'),
             ],
             'bulk' => [
                 'min_bulk_purchase' => Setting::get('min_bulk_purchase', 10),
@@ -77,6 +78,7 @@ class SettingsController extends Controller
             'shree_maruti_password' => 'nullable|string|max:255',
             'shree_maruti_api_secret_key' => 'nullable|string|max:255',
             'shree_maruti_environment' => 'nullable|in:beta,production',
+            'awb_number_prefix' => 'nullable|string|max:10',
             'min_bulk_purchase' => 'required|integer|min:1',
         ]);
 
@@ -105,6 +107,7 @@ class SettingsController extends Controller
         Setting::set('shree_maruti_password', $request->shree_maruti_password, 'string', 'courier', 'Shree Maruti Password');
         Setting::set('shree_maruti_api_secret_key', $request->shree_maruti_api_secret_key, 'string', 'courier', 'Shree Maruti API Secret Key');
         Setting::set('shree_maruti_environment', $request->shree_maruti_environment, 'string', 'courier', 'Shree Maruti Environment');
+        Setting::set('awb_number_prefix', $request->awb_number_prefix, 'string', 'courier', 'AWB Number Prefix');
 
         // Update bulk purchase settings
         Setting::set('min_bulk_purchase', $request->min_bulk_purchase, 'integer', 'bulk', 'Minimum Bulk Purchase Quantity');

@@ -224,6 +224,16 @@
                         <p class="text-xs text-gray-600 mt-1">Note: Production requires IP whitelisting</p>
                     </div>
                 </div>
+
+                <div class="mt-4">
+                    <label for="awb_number_prefix" class="block text-sm font-medium text-gray-700 mb-1">AWB Number Prefix</label>
+                    <input type="text" id="awb_number_prefix" name="awb_number_prefix"
+                        value="{{ old('awb_number_prefix', $settings['courier']['awb_number_prefix']) }}"
+                        placeholder="e.g., IPDC"
+                        maxlength="10"
+                        class="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                    <p class="text-xs text-gray-600 mt-1">Prefix for auto-generated AWB numbers for manual shipping (e.g., IPDC251226000001)</p>
+                </div>
             </div>
         </section>
 

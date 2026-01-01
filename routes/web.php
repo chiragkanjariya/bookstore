@@ -81,6 +81,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('orders/{order}/status', [\App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::patch('orders/{order}/payment-status', [\App\Http\Controllers\Admin\OrderController::class, 'updatePaymentStatus'])->name('orders.update-payment-status');
     Route::patch('orders/bulk-status', [\App\Http\Controllers\Admin\OrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-status');
+    Route::post('orders/bulk-ship-now', [\App\Http\Controllers\Admin\OrderController::class, 'bulkShipNow'])->name('orders.bulk-ship-now');
     Route::get('orders/export', [\App\Http\Controllers\Admin\OrderController::class, 'export'])->name('orders.export');
     Route::post('orders/{order}/create-shiprocket', [\App\Http\Controllers\Admin\OrderController::class, 'createShiprocketOrder'])->name('orders.create-shiprocket');
     Route::get('orders/track-shipment/{shiprocketOrderId}', [\App\Http\Controllers\Admin\OrderController::class, 'trackShipment'])->name('orders.track-shipment');
@@ -102,8 +103,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Manual Shipping Routes
     Route::prefix('manual-shipping')->name('manual-shipping.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ManualShippingController::class, 'index'])->name('index');
+        Route::get('/{order}/print-label', [\App\Http\Controllers\Admin\ManualShippingController::class, 'printLabel'])->name('print-label');
         Route::post('/{order}/mark-shipped', [\App\Http\Controllers\Admin\ManualShippingController::class, 'markAsShipped'])->name('mark-shipped');
         Route::post('/bulk-mark-shipped', [\App\Http\Controllers\Admin\ManualShippingController::class, 'bulkMarkAsShipped'])->name('bulk-mark-shipped');
+        Route::post('/bulk-print-pdf', [\App\Http\Controllers\Admin\ManualShippingController::class, 'bulkPrintPdf'])->name('bulk-print-pdf');
         Route::get('/export', [\App\Http\Controllers\Admin\ManualShippingController::class, 'export'])->name('export');
     });
 

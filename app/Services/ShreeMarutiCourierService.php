@@ -323,16 +323,10 @@ class ShreeMarutiCourierService implements CourierServiceInterface
         // Convert weight to grams
         $weightInGrams = max(50, $totalWeight * 1000); // Minimum 50 grams
 
-        // Determine document type: 1 = Dox (<=500g), 2 = Non-Dox (>500g)
-        $typeId = $weightInGrams <= 500 ? 1 : 2;
-
-        // Service type: 1 = Standard, 2 = FastTrack
-        $serviceTypeId = 1; // Default to Standard
-
-        // Travel by: 1 = Surface, 2 = Air
-        $travelBy = 1; // Default to Surface
-
-        // COD booking: 0 = Prepaid, 1 = COD
+        // Fixed values as per requirements
+        $typeId = 1; // Fixed
+        $serviceTypeId = 1; // Fixed
+        $travelBy = 1; // Fixed
         $codBooking = 0; // All orders are prepaid via Razorpay
 
         // Get state ID from state name (you may need to implement state mapping)
@@ -341,9 +335,9 @@ class ShreeMarutiCourierService implements CourierServiceInterface
         return [
             'ClientRefID' => $this->clientCode,
             'IsDP' => 1,
-            'DocumentNoRef' => 'BAPS' . $order->order_number,
-            'OrderNo' => $order->order_number,
-            'PickupPincode' => '380015', // Your warehouse pincode - UPDATE THIS
+            'DocumentNoRef' => 'IWB2500001', // Fixed value as per requirements
+            'OrderNo' => $order->razorpay_order_id ?? $order->order_number, // Use Razorpay order ID
+            'PickupPincode' => '390007', // Fixed value as per requirements
             'ToPincode' => $order->shipping_address['postal_code'],
             'CodBooking' => $codBooking,
             'TypeID' => $typeId,
@@ -361,7 +355,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
             'Area' => $order->shipping_address['city'], // Using city as area
             'ReceiverMobile' => $order->shipping_address['phone'],
             'ReceiverEmail' => $order->user->email,
-            'Remarks' => $order->notes ?? 'Order from IPDC Bookstore',
+            'Remarks' => 'Pickup from center', // Fixed value as per requirements
             'UserID' => config('services.shree_maruti.user_id', '12345') // Get from login response
         ];
     }
@@ -545,6 +539,68 @@ class ShreeMarutiCourierService implements CourierServiceInterface
             return false;
         } catch (\Exception $e) {
             Log::error('ShreeMaruti: Get AWB error', [
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Get shipment status details for status updates
+     */
+    public function getShipmentStatus($documentRef)
+    {
+        try {
+            if (!$this->authenticate()) {
+                throw new \Exception('Failed to authenticate with Shree Maruti');
+            }
+
+            $response = Http::withHeaders([
+                'token' => $this->token,
+                'clientcode' => $this->clientCode,
+                'Content-Type' => 'application/json'
+            ])->post($this->baseUrl . '/client_tracking_all', [
+                        'data' => [
+                            'reference_no' => $documentRef
+                        ]
+                    ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                if (isset($data['success']) && $data['success'] == '1') {
+                    $trackingData = $data['data'] ?? [];
+
+                    if (!empty($trackingData)) {
+                        // Get the latest status
+                        $latestStatus = end($trackingData);
+
+                        Log::info('ShreeMaruti: Shipment status retrieved', [
+                            'reference' => $documentRef,
+                            'status' => $latestStatus['Status'] ?? 'Unknown'
+                        ]);
+
+                        return [
+                            'success' => true,
+                            'status' => $latestStatus['Status'] ?? null,
+                            'status_code' => $latestStatus['StatusCode'] ?? null,
+                            'tracking_data' => $trackingData,
+                            'awb_number' => $latestStatus['AWBNo'] ?? null,
+                        ];
+                    }
+                }
+            }
+
+            Log::error('ShreeMaruti: Failed to get shipment status', [
+                'reference' => $documentRef,
+                'status' => $response->status(),
+                'response' => $response->body()
+            ]);
+
+            return false;
+        } catch (\Exception $e) {
+            Log::error('ShreeMaruti: Get shipment status error', [
+                'reference' => $documentRef,
                 'error' => $e->getMessage()
             ]);
             return false;

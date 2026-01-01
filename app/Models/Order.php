@@ -8,6 +8,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
+    // Order status constants
+    const STATUS_PENDING_TO_BE_PREPARED = 'pending_to_be_prepared';
+    const STATUS_READY_TO_SHIP = 'ready_to_ship';
+    const STATUS_PENDING = 'pending';
+    const STATUS_PROCESSING = 'processing';
+    const STATUS_SHIPPED = 'shipped';
+    const STATUS_DELIVERED = 'delivered';
+    const STATUS_CANCELLED = 'cancelled';
+
     protected $fillable = [
         'order_number',
         'user_id',
@@ -24,6 +33,7 @@ class Order extends Model
         'courier_provider',
         'courier_document_ref',
         'courier_awb_number',
+        'awb_number',
         'requires_manual_shipping',
         'manual_shipping_marked_at',
         'subtotal',
@@ -85,6 +95,8 @@ class Order extends Model
     public function getStatusBadgeColorAttribute(): string
     {
         return match ($this->status) {
+            'pending_to_be_prepared' => 'info',
+            'ready_to_ship' => 'primary',
             'pending' => 'warning',
             'processing' => 'info',
             'shipped' => 'primary',
@@ -187,6 +199,32 @@ class Order extends Model
             'manual_shipping_marked_at' => now(),
             'status' => 'shipped',
             'shipped_at' => now(),
+        ]);
+    }
+
+    /**
+     * Scope for pending to be prepared orders.
+     */
+    public function scopePendingToBePrepared($query)
+    {
+        return $query->where('status', self::STATUS_PENDING_TO_BE_PREPARED);
+    }
+
+    /**
+     * Scope for ready to ship orders.
+     */
+    public function scopeReadyToShip($query)
+    {
+        return $query->where('status', self::STATUS_READY_TO_SHIP);
+    }
+
+    /**
+     * Mark order as ready to ship.
+     */
+    public function markAsReadyToShip(): bool
+    {
+        return $this->update([
+            'status' => self::STATUS_READY_TO_SHIP,
         ]);
     }
 }
