@@ -61,11 +61,6 @@
                                 <p class="text-gray-600 font-medium">Maruti Document Ref</p>
                                 <p class="text-gray-900">{{ $order->courier_document_ref }}</p>
                             </div>
-                        @elseif($order->shiprocket_order_id)
-                            <div>
-                                <p class="text-gray-600 font-medium">Shiprocket Order ID</p>
-                                <p class="text-gray-900">{{ $order->shiprocket_order_id }}</p>
-                            </div>
                         @endif
                         @if($order->tracking_number || $order->courier_awb_number)
                             <div>
@@ -149,128 +144,85 @@
                         </div>
                     </div> --}}
 
-    
-                <!-- Maruti Courier Section -->
-                @if($order->courier_provider == 'shree_maruti')
-                <div class="mt-6 pt-6 border-t">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Shree Maruti Courier Details</h3>
-                    <div class="bg-blue-50 rounded-lg p-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            @if($order->courier_document_ref)
-                            <div>
-                                <p class="text-gray-600 font-medium">Document Reference</p>
-                                <p class="text-gray-900 font-mono">{{ $order->courier_document_ref }}</p>
-                            </div>
-                            @endif
-                            @if($order->tracking_number || $order->courier_awb_number)
-                            <div>
-                                <p class="text-gray-600 font-medium">AWB / Tracking Number</p>
-                                <p class="text-gray-900 font-mono">{{ $order->tracking_number ?? $order->courier_awb_number }}</p>
-                            </div>
-                            @endif
-                            <div>
-                                <p class="text-gray-600 font-medium">Courier Provider</p>
-                                <p class="text-gray-900">Shree Maruti Courier</p>
-                            </div>
-                            @if($order->shipped_at)
-                            <div>
-                                <p class="text-gray-600 font-medium">Shipped Date</p>
-                                <p class="text-gray-900">{{ $order->shipped_at->format('M d, Y h:i A') }}</p>
-                            </div>
-                            @endif
-                            @if($order->delivered_at)
-                            <div>
-                                <p class="text-gray-600 font-medium">Delivered Date</p>
-                                <p class="text-gray-900">{{ $order->delivered_at->format('M d, Y h:i A') }}</p>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-                @elseif($order->shiprocket_order_id)
-                <!-- Legacy Shiprocket Section -->
-                <div class="mt-6 pt-6 border-t">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Shiprocket Shipping Details</h3>
-                    <div class="bg-blue-50 rounded-lg p-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <p class="text-gray-600 font-medium">Shiprocket Order ID</p>
-                                <p class="text-gray-900 font-mono">{{ $order->shiprocket_order_id }}</p>
-                            </div>
-                            @if($order->shiprocket_shipment_id)
-                            <div>
-                                <p class="text-gray-600 font-medium">Shipment ID</p>
-                                <p class="text-gray-900 font-mono">{{ $order->shiprocket_shipment_id }}</p>
-                            </div>
-                            @endif
-                            @if($order->tracking_number)
-                            <div>
-                                <p class="text-gray-600 font-medium">Tracking Number</p>
-                                <p class="text-gray-900 font-mono">{{ $order->tracking_number }}</p>
-                            </div>
-                            @endif
-                            @if($order->courier_company)
-                            <div>
-                                <p class="text-gray-600 font-medium">Courier Company</p>
-                                <p class="text-gray-900">{{ $order->courier_company }}</p>
-                            </div>
-                            @endif
-                        </div>
-                        
-                        <div class="mt-4 flex space-x-3">
-                            @if($order->shiprocket_order_id)
-                            <button onclick="trackShipment({{ $order->shiprocket_order_id }})" 
-                                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium transition duration-200">
-                                <i class="fas fa-search mr-2"></i>Track Shipment
-                            </button>
-                            @endif
-                            @if($order->tracking_number)
-                            <a href="https://www.shiprocket.in/shipment-tracking/{{ $order->tracking_number }}" 
-                               target="_blank"
-                               class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-medium transition duration-200">
-                                <i class="fas fa-external-link-alt mr-2"></i>Track on Shiprocket
-                            </a>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-                @else
-                <div class="mt-6 pt-6 border-t">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Shipping Information</h3>
-                    @if($order->is_bulk_purchased)
-                    <div class="bg-green-50 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-green-600 mr-3"></i>
-                            <div>
-                                <p class="text-green-800 font-medium">Bulk Purchase Order - Free Shipping</p>
-                                <p class="text-green-700 text-sm">This order qualifies for bulk purchase with free shipping.</p>
+
+                    <!-- Maruti Courier Section -->
+                    @if($order->courier_provider == 'shree_maruti')
+                        <div class="mt-6 pt-6 border-t">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Shree Maruti Courier Details</h3>
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    @if($order->courier_document_ref)
+                                        <div>
+                                            <p class="text-gray-600 font-medium">Document Reference</p>
+                                            <p class="text-gray-900 font-mono">{{ $order->courier_document_ref }}</p>
+                                        </div>
+                                    @endif
+                                    @if($order->tracking_number || $order->courier_awb_number)
+                                        <div>
+                                            <p class="text-gray-600 font-medium">AWB / Tracking Number</p>
+                                            <p class="text-gray-900 font-mono">
+                                                {{ $order->tracking_number ?? $order->courier_awb_number }}</p>
+                                        </div>
+                                    @endif
+                                    <div>
+                                        <p class="text-gray-600 font-medium">Courier Provider</p>
+                                        <p class="text-gray-900">Shree Maruti Courier</p>
+                                    </div>
+                                    @if($order->shipped_at)
+                                        <div>
+                                            <p class="text-gray-600 font-medium">Shipped Date</p>
+                                            <p class="text-gray-900">{{ $order->shipped_at->format('M d, Y h:i A') }}</p>
+                                        </div>
+                                    @endif
+                                    @if($order->delivered_at)
+                                        <div>
+                                            <p class="text-gray-600 font-medium">Delivered Date</p>
+                                            <p class="text-gray-900">{{ $order->delivered_at->format('M d, Y h:i A') }}</p>
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    @elseif($order->requires_manual_shipping)
-                    <div class="bg-blue-50 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <i class="fas fa-info-circle text-blue-600 mr-3"></i>
-                            <div>
-                                <p class="text-blue-800 font-medium">Manual Shipping Required</p>
-                                <p class="text-blue-700 text-sm">This order requires manual shipping arrangement.</p>
-                            </div>
-                        </div>
-                    </div>
                     @else
-                    <div class="bg-yellow-50 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <i class="fas fa-exclamation-triangle text-yellow-600 mr-3"></i>
-                            <div>
-                                <p class="text-yellow-800 font-medium">Pending Shipment</p>
-                                <p class="text-yellow-700 text-sm">This order is {{ ucfirst(str_replace('_', ' ', $order->status)) }} and will be shipped via bulk action from the orders list.</p>
-                            </div>
+                        <div class="mt-6 pt-6 border-t">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Shipping Information</h3>
+                            @if($order->is_bulk_purchased)
+                                <div class="bg-green-50 rounded-lg p-4">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-check-circle text-green-600 mr-3"></i>
+                                        <div>
+                                            <p class="text-green-800 font-medium">Bulk Purchase Order - Free Shipping</p>
+                                            <p class="text-green-700 text-sm">This order qualifies for bulk purchase with free
+                                                shipping.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @elseif($order->requires_manual_shipping)
+                                <div class="bg-blue-50 rounded-lg p-4">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                                        <div>
+                                            <p class="text-blue-800 font-medium">Manual Shipping Required</p>
+                                            <p class="text-blue-700 text-sm">This order requires manual shipping arrangement.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="bg-yellow-50 rounded-lg p-4">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-exclamation-triangle text-yellow-600 mr-3"></i>
+                                        <div>
+                                            <p class="text-yellow-800 font-medium">Pending Shipment</p>
+                                            <p class="text-yellow-700 text-sm">This order is
+                                                {{ ucfirst(str_replace('_', ' ', $order->status)) }} and will be shipped via bulk
+                                                action from the orders list.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
-                    </div>
                     @endif
                 </div>
-                @endif
-            </div>
 
                 <!-- Customer Information -->
                 <div class="bg-white rounded-lg shadow p-6">
@@ -297,7 +249,8 @@
                                     <p>{{ $order->shipping_address['address_line_2'] }}</p>
                                 @endif
                                 <p>{{ $order->shipping_address['city'] }}, {{ $order->shipping_address['state'] }}
-                                    {{ $order->shipping_address['postal_code'] }}</p>
+                                    {{ $order->shipping_address['postal_code'] }}
+                                </p>
                                 <p>{{ $order->shipping_address['country'] }}</p>
                             </div>
                         </div>

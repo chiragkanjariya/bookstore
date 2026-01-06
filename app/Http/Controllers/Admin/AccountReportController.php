@@ -26,8 +26,8 @@ class AccountReportController extends Controller
             $search = $request->get('search');
             $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
@@ -90,7 +90,7 @@ class AccountReportController extends Controller
 
         $callback = function () use ($orders) {
             $file = fopen('php://output', 'w');
-            
+
             // CSV Headers
             fputcsv($file, [
                 'Name',
@@ -103,6 +103,7 @@ class AccountReportController extends Controller
                 'City',
                 'Total Amount (₹)',
                 'Shipping Cost (₹)',
+                'Maruti Shipping Rate (₹)',
                 'Total Amount Excluding Shipping (₹)',
                 'Invoice Number',
                 'Payment Date',
@@ -113,8 +114,8 @@ class AccountReportController extends Controller
             foreach ($orders as $order) {
                 $user = $order->user;
                 $shippingAddress = $order->shipping_address;
-                $totalExcludingShipping = $order->total_amount - $order->shipping_cost;
-                
+                $totalExcludingShipping = $order->total_amount - $order->shipping_cost - ($order->maruti_shipping_rate ?? 0);
+
                 fputcsv($file, [
                     $user->name ?? 'N/A',
                     $user->email ?? 'N/A',
@@ -126,6 +127,7 @@ class AccountReportController extends Controller
                     $shippingAddress['city'] ?? 'N/A',
                     number_format($order->total_amount, 2),
                     number_format($order->shipping_cost, 2),
+                    number_format($order->maruti_shipping_rate ?? 0, 2),
                     number_format($totalExcludingShipping, 2),
                     'IPDC-' . str_pad($order->id, 5, '0', STR_PAD_LEFT),
                     $order->created_at->format('Y-m-d H:i:s'),
@@ -154,9 +156,9 @@ class AccountReportController extends Controller
 
         // Get orders with their details
         $orders = Order::whereIn('id', $orderIds)
-                    ->where('payment_status', 'paid')
-                    ->with(['user.state', 'user.district', 'user.taluka', 'orderItems.book'])
-                    ->get();
+            ->where('payment_status', 'paid')
+            ->with(['user.state', 'user.district', 'user.taluka', 'orderItems.book'])
+            ->get();
 
         // Calculate totals
         $totalOrders = $orders->count();
@@ -166,11 +168,14 @@ class AccountReportController extends Controller
         // Generate PDF
         $pdf = app('dompdf.wrapper');
         $pdf->loadView('admin.reports.accounts.combined-invoice', compact(
-            'orders', 'totalOrders', 'totalAmount', 'totalShipping'
+            'orders',
+            'totalOrders',
+            'totalAmount',
+            'totalShipping'
         ));
 
         $filename = 'combined_invoice_' . now()->format('Y-m-d_H-i-s') . '.pdf';
-        
+
         return $pdf->download($filename);
     }
 
@@ -184,7 +189,7 @@ class AccountReportController extends Controller
         ]);
 
         $order = Order::with(['user.state', 'user.district', 'user.taluka', 'orderItems.book'])
-                     ->findOrFail($request->get('order_id'));
+            ->findOrFail($request->get('order_id'));
 
         return response()->json($order);
     }
@@ -198,8 +203,8 @@ class AccountReportController extends Controller
             $search = $request->get('search');
             $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
