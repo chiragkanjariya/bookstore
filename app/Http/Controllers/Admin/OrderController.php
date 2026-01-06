@@ -265,7 +265,12 @@ class OrderController extends Controller
                 'Email',
                 'Status',
                 'Payment Status',
+                'Subtotal',
+                'Shipping Cost',
+                'Maruti Shipping Rate',
                 'Total Amount',
+                'Tracking Number',
+                'Courier Provider',
                 'Order Date',
                 'Items Count'
             ]);
@@ -277,12 +282,16 @@ class OrderController extends Controller
                     $order->user->email,
                     ucfirst($order->status),
                     ucfirst($order->payment_status),
+                    '₹' . number_format($order->subtotal, 2),
+                    '₹' . number_format($order->shipping_cost, 2),
+                    '₹' . number_format($order->maruti_shipping_rate ?? 0, 2),
                     '₹' . number_format($order->total_amount, 2),
+                    $order->tracking_number ?? $order->courier_awb_number ?? 'N/A',
+                    $order->courier_provider ? ucfirst(str_replace('_', ' ', $order->courier_provider)) : 'N/A',
                     $order->created_at->format('Y-m-d H:i:s'),
                     $order->orderItems->count()
                 ]);
             }
-
             fclose($file);
         };
 

@@ -228,9 +228,9 @@
                                             @endif
                                             @if($order->courier_provider == 'shree_maruti' && $order->courier_document_ref)
                                                 <div class="text-xs text-blue-600">Maruti: {{ $order->courier_document_ref }}</div>
-                                            @elseif($order->shiprocket_order_id)
-                                                <div class="text-xs text-blue-600">Shiprocket: {{ $order->shiprocket_order_id }}
-                                                </div>
+                                            @elseif($order->tracking_number || $order->courier_awb_number)
+                                                <div class="text-xs text-blue-600">Tracking:
+                                                    {{ $order->tracking_number ?? $order->courier_awb_number }}</div>
                                             @endif
                                         </div>
                                     </td>
