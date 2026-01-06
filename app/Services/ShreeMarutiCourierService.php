@@ -276,11 +276,12 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                     ];
                 }
 
+                $errorMessage = $data['message'] ?? 'Unknown error from Maruti API';
                 Log::error('ShreeMaruti: Order creation failed', [
                     'order_id' => $order->id,
                     'response' => $data
                 ]);
-                return false;
+                return ['success' => false, 'message' => $errorMessage];
             }
 
             Log::error('ShreeMaruti: Order creation request failed', [
@@ -289,14 +290,14 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                 'response' => $response->body()
             ]);
 
-            return false;
+            return ['success' => false, 'message' => 'API request failed: ' . $response->body()];
         } catch (\Exception $e) {
             Log::error('ShreeMaruti: Order creation error', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return false;
+            return ['success' => false, 'message' => 'Exception: ' . $e->getMessage()];
         }
     }
 
