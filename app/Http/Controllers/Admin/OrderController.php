@@ -182,9 +182,9 @@ class OrderController extends Controller
         foreach ($orders as $order) {
             try {
                 // Skip bulk orders
-                if ($order->is_bulk_purchased) {
+                if ($order->requires_manual_shipping) {
                     $failedCount++;
-                    $errors[] = "Order #{$order->order_number}: Bulk orders are not shipped via courier";
+                    $errors[] = "Order #{$order->order_number}: Manual shipping orders are not shipped via maruti courier";
                     continue;
                 }
 
@@ -213,7 +213,8 @@ class OrderController extends Controller
         if ($failedCount > 0) {
             $message .= " {$failedCount} orders failed.";
         }
-
+        print_r($errors);
+        print_r($message);
         // if (!empty($errors)) {
         //     return redirect()->back()->with('warning', $message)->with('errors', $errors);
         // }
