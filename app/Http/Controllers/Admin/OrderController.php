@@ -214,7 +214,7 @@ class OrderController extends Controller
             $message .= " {$failedCount} orders failed.";
         }
         if (!empty($errors)) {
-            return redirect()->back()->with('warning', $message)->with('errors', $errors);
+            return redirect()->back()->with('warning', $message)->withErrors($errors);
         }
 
         return redirect()->back()->with('success', $message);

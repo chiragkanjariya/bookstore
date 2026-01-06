@@ -227,8 +227,8 @@ class ShreeMarutiCourierService implements CourierServiceInterface
     {
         try {
             // Skip for bulk orders
-            if ($order->is_bulk_purchased) {
-                Log::info('ShreeMaruti: Skipping order creation for bulk purchase', [
+            if ($order->requires_manual_shipping) {
+                Log::info('ShreeMaruti: Skipping order creation for manual shipping', [
                     'order_id' => $order->id
                 ]);
                 return false;
