@@ -201,7 +201,10 @@ class OrderController extends Controller
                     $successCount++;
                 } else {
                     $failedCount++;
-                    $errors[] = "Order #{$order->order_number}: Failed to create courier order";
+                    $errorMessage = is_array($response) && isset($response['message'])
+                        ? $response['message']
+                        : "Failed to create courier order";
+                    $errors[] = "Order #{$order->order_number}: {$errorMessage}";
                 }
             } catch (\Exception $e) {
                 $failedCount++;
