@@ -350,6 +350,24 @@
                     bulkForm.action = originalAction;
                 }
             });
+
+            // Print Labels button
+            const printLabelsBtn = document.getElementById('print-labels-btn');
+            printLabelsBtn.addEventListener('click', function () {
+                const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+                if (checkedBoxes.length === 0) {
+                    alert('Please select at least one order.');
+                    return;
+                }
+
+                // Change form action to bulk print route
+                const originalAction = bulkForm.action;
+                // Currently reusing the manual shipping bulk print as it has the generic label format
+                // Note: This will only print orders that are marked for manual shipping
+                bulkForm.action = '{{ route("manual-shipping.bulk-print-pdf") }}';
+                bulkForm.submit();
+                bulkForm.action = originalAction;
+            });
         });
     </script>
 @endsection
