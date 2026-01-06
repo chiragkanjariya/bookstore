@@ -161,7 +161,7 @@
                                 <i class="fas fa-shipping-fast mr-2"></i>Ship Now
                             </button>
                             <button type="button" id="print-labels-btn"
-                                class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 text-sm transition duration-200"
+                                class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm transition duration-200"
                                 disabled>
                                 <i class="fas fa-print mr-2"></i>Print Labels
                             </button>
