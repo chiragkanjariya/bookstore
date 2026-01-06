@@ -213,13 +213,11 @@ class OrderController extends Controller
         if ($failedCount > 0) {
             $message .= " {$failedCount} orders failed.";
         }
-        print_r($errors);
-        print_r($message);
-        // if (!empty($errors)) {
-        //     return redirect()->back()->with('warning', $message)->with('errors', $errors);
-        // }
+        if (!empty($errors)) {
+            return redirect()->back()->with('warning', $message)->with('errors', $errors);
+        }
 
-        // return redirect()->back()->with('success', $message);
+        return redirect()->back()->with('success', $message);
     }
 
     /**
