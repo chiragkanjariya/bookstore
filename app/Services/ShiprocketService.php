@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Order;
 use App\Services\Contracts\CourierServiceInterface;
+use App\Models\Setting;
 
 class ShiprocketService implements CourierServiceInterface
 {

@@ -362,9 +362,8 @@
 
                 // Change form action to bulk print route
                 const originalAction = bulkForm.action;
-                // Currently reusing the manual shipping bulk print as it has the generic label format
-                // Note: This will only print orders that are marked for manual shipping
-                bulkForm.action = '{{ route("admin.manual-shipping.bulk-print-pdf") }}';
+                // Use the generic bulk print route for all orders
+                bulkForm.action = '{{ route("admin.orders.bulk-print-label") }}';
                 bulkForm.submit();
                 bulkForm.action = originalAction;
             });

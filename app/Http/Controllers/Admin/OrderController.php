@@ -156,6 +156,36 @@ class OrderController extends Controller
     }
 
     /**
+     * Bulk print labels for selected orders.
+     */
+    public function bulkPrintLabel(Request $request)
+    {
+        $request->validate([
+            'order_ids' => 'required|array',
+            'order_ids.*' => 'exists:orders,id'
+        ]);
+
+        $orders = Order::with(['user', 'orderItems.book'])
+            ->whereIn('id', $request->order_ids)
+            ->get();
+
+        // Generate AWB numbers for orders that don't have them
+        foreach ($orders as $order) {
+            if (!$order->awb_number) {
+                \App\Helpers\AWBNumberGenerator::assignToOrder($order);
+            }
+        }
+
+        // Refresh to get updated AWB numbers
+        $orders = $orders->fresh(['user', 'orderItems.book']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('shipping_labels_' . date('Y-m-d_H-i-s') . '.pdf');
+    }
+
+    /**
      * Bulk ship now - mark orders as ready to ship and submit to Maruti.
      */
     public function bulkShipNow(Request $request)
