@@ -164,4 +164,16 @@ class User extends Authenticatable
     {
         return $this->wishlists()->where('book_id', $book->id)->exists();
     }
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $emailService = new \App\Services\EmailService();
+        $emailService->sendPasswordResetEmail($this, $token);
+    }
 }

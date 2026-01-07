@@ -895,4 +895,106 @@ class EmailService
             </div>
         </div>';
     }
+
+    /**
+     * Send password reset email
+     */
+    public function sendPasswordResetEmail($user, $token)
+    {
+        try {
+            if (!$this->accessToken) {
+                $this->getAccessToken();
+            }
+
+            if (!$this->accessToken) {
+                throw new Exception('Unable to get email access token');
+            }
+
+            $resetUrl = route('password.reset', $token) . '?email=' . urlencode($user->email);
+
+            $subject = "Reset Your Password - " . (\App\Models\Setting::get('company_name') ?: 'IPDC');
+            $message = $this->getPasswordResetEmailTemplate($user, $resetUrl);
+
+            $to = [
+                $user->email => $user->name
+            ];
+
+            $result = $this->sendEmailViaAPI($to, $subject, $message);
+
+            if ($result) {
+                Log::info('Password reset email sent successfully', [
+                    'user_id' => $user->id,
+                    'email' => $user->email
+                ]);
+            }
+
+            return $result;
+
+        } catch (Exception $e) {
+            Log::error('Password reset email error: ' . $e->getMessage(), [
+                'user_id' => $user->id ?? null
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Get password reset email template
+     */
+    private function getPasswordResetEmailTemplate($user, $url)
+    {
+        return '
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+            <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #00BDE0; padding-bottom: 20px;">
+                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '</h1>
+                    <p style="color: #666; font-size: 16px; margin: 5px 0 0 0;">Password Reset Request</p>
+                </div>
+
+                <!-- Greeting -->
+                <div style="margin-bottom: 25px;">
+                    <h2 style="color: #333; font-size: 22px; margin-bottom: 10px;">Hello ' . $user->name . ',</h2>
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                        You are receiving this email because we received a password reset request for your account.
+                    </p>
+                </div>
+
+                <!-- Action Button -->
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <a href="' . $url . '" style="display: inline-block; background-color: #00BDE0; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 16px;">Reset Password</a>
+                </div>
+
+                <!-- Expiry Notice -->
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <p style="color: #666; font-size: 14px; margin: 0; text-align: center;">
+                        This password reset link will expire in 60 minutes.
+                    </p>
+                </div>
+
+                <!-- Fallback Link -->
+                <div style="margin-bottom: 25px;">
+                    <p style="color: #666; font-size: 14px; line-height: 1.6; word-break: break-all;">
+                        If you\'re having trouble clicking the "Reset Password" button, copy and paste the URL below into your web browser:<br>
+                        <a href="' . $url . '" style="color: #00BDE0;">' . $url . '</a>
+                    </p>
+                </div>
+
+                <!-- Security Notice -->
+                <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                    <p style="color: #856404; font-size: 14px; margin: 0;">
+                        If you did not request a password reset, no further action is required.
+                    </p>
+                </div>
+
+                <!-- Footer -->
+                <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <p style="color: #999; font-size: 12px; margin: 0;">
+                        &copy; ' . date('Y') . ' ' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>';
+    }
 }
