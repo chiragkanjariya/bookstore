@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Order;
 use App\Services\Contracts\CourierServiceInterface;
+use App\Models\Setting;
 
 class ShreeMarutiCourierService implements CourierServiceInterface
 {
@@ -22,20 +23,19 @@ class ShreeMarutiCourierService implements CourierServiceInterface
 
     public function __construct()
     {
-        $this->environment = config('services.shree_maruti.environment', 'beta');
-        $this->clientCode = config('services.shree_maruti.client_code');
-        $this->clientName = config('services.shree_maruti.client_name');
-        $this->username = config('services.shree_maruti.username');
-        $this->password = config('services.shree_maruti.password');
+        $this->environment = Setting::get('shree_maruti_environment', 'IPDC');
+        $this->clientCode = Setting::get('shree_maruti_client_code', 'IPDC');
+        $this->clientName = Setting::get('shree_maruti_client_name', 'IPDC');
+        $this->username = Setting::get('shree_maruti_username', 'IPDC');
+        $this->password = Setting::get('shree_maruti_password', 'IPDC');
 
         // Set base URL based on environment
         if ($this->environment === 'production') {
             $this->baseUrl = 'https://customerapi.sevasetu.in/index.php/clientbooking_v5';
-            $this->secretKey = config('services.shree_maruti.secret_key_prod');
         } else {
             $this->baseUrl = 'https://customerapi.sevasetu.in/index.php/clientbookingbeta_v5';
-            $this->secretKey = config('services.shree_maruti.secret_key_beta');
         }
+        $this->secretKey = Setting::get('shree_maruti_api_secret_key', 'IPDC');
     }
 
     /**
@@ -281,7 +281,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                     'order_id' => $order->id,
                     'response' => $data
                 ]);
-                return ['success' => false, 'message' => $errorMessage];
+                return ['success' => false, 'message' => $errorMessage . json_encode($orderData)];
             }
 
             Log::error('ShreeMaruti: Order creation request failed', [
@@ -485,7 +485,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
      */
     public function isEnabled()
     {
-        return config('services.shree_maruti.enabled', false);
+        return \App\Models\Setting::get('shree_maruti_enabled', config('services.shree_maruti.enabled', false));
     }
 
     /**

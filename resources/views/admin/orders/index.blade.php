@@ -162,7 +162,7 @@
                             </button>
                             <button type="button" id="print-labels-btn"
                                 class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm transition duration-200"
-                                disabled>
+                                >
                                 <i class="fas fa-print mr-2"></i>Print Labels
                             </button>
                             <select id="bulk-status" name="status"
@@ -362,9 +362,8 @@
 
                 // Change form action to bulk print route
                 const originalAction = bulkForm.action;
-                // Currently reusing the manual shipping bulk print as it has the generic label format
-                // Note: This will only print orders that are marked for manual shipping
-                bulkForm.action = '{{ route("admin.manual-shipping.bulk-print-pdf") }}';
+                // Use the generic bulk print route for all orders
+                bulkForm.action = '{{ route("admin.orders.bulk-print-label") }}';
                 bulkForm.submit();
                 bulkForm.action = originalAction;
             });
