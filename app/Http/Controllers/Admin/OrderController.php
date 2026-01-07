@@ -180,7 +180,7 @@ class OrderController extends Controller
         $orders = $orders->fresh(['user', 'orderItems.book']);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
-            ->setPaper('a4', 'landscape');
+            ->setPaper('a4', 'portrait');
 
         return $pdf->download('shipping_labels_' . date('Y-m-d_H-i-s') . '.pdf');
     }

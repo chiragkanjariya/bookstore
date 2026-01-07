@@ -3,11 +3,15 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Manual Shipping Labels</title>
+    <title>Shipping Labels</title>
     <style>
         @page {
-            size: A4;
+            size: A4 portrait;
             margin: 10mm;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -16,17 +20,13 @@
             padding: 0;
         }
 
-        .page-break {
-            page-break-after: always;
-        }
-
         /* Two orders per page layout */
         .order-pair {
             display: table;
-            width: 100%;
-            height: 277mm;
-            /* A4 height minus margins */
             page-break-inside: avoid;
+        }
+        .page-break {
+            page-break-before: always;
         }
 
         .order-column {
@@ -47,15 +47,16 @@
 
         /* Label section - top half */
         .label-section {
-            height: 130mm;
+            height: 120mm;
+            /* Reduced slightly to ensure fit with margin */
             border: 3px solid black;
             padding: 5mm;
-            margin-bottom: 5mm;
+            margin-bottom: 4mm;
         }
 
         /* Invoice section - bottom half */
         .invoice-section {
-            height: 130mm;
+            height: 120mm;
             border: 2px solid #666;
             padding: 5mm;
         }
@@ -143,16 +144,17 @@
 
 <body>
     @php
-        use Picqer\Barcode\BarcodeGeneratorSVG;
-        $barcodeGenerator = new BarcodeGeneratorSVG();
+        use Picqer\Barcode\BarcodeGeneratorPNG;
+        $pngGenerator = new BarcodeGeneratorPNG();
 
         // Group orders in pairs
         $orderPairs = $orders->chunk(2);
+        
     @endphp
 
     @foreach($orderPairs as $pairIndex => $pair)
-        <div class="order-pair {{ !$loop->last ? 'page-break' : '' }}">
-            @foreach($pair as $order)
+    <div class="order-pair {{ $pairIndex ? 'page-break' : '' }}">
+        @foreach($pair as $order)
                 <div class="order-column">
                     <!-- LABEL SECTION (Top Half) -->
                     <div class="label-section">
@@ -160,7 +162,17 @@
 
                         <!-- AWB Barcode -->
                         <div class="barcode-container">
-                            {!! $barcodeGenerator->getBarcode($order->awb_number, $barcodeGenerator::TYPE_CODE_128, 1.5, 40) !!}
+                            <?php
+                                $barcodeBase64 = base64_encode(
+                                    $pngGenerator->getBarcode(
+                                        $order->awb_number,
+                                        $pngGenerator::TYPE_CODE_128,
+                                        2,
+                                        50
+                                    )
+                                );
+                            ?>
+                            <img src="data:image/png;base64,{{ $barcodeBase64 }}" alt="Barcode">
                             <p class="text-xs" style="color: #666; margin-top: 1mm;">AWB: {{ $order->awb_number }}</p>
                         </div>
 
@@ -182,9 +194,11 @@
                                 <p>{{ $order->shipping_address['address_line_2'] }}</p>
                             @endif
                             <p class="font-bold">{{ $order->shipping_address['city'] ?? '' }},
-                                {{ $order->shipping_address['state'] ?? '' }}</p>
+                                {{ $order->shipping_address['state'] ?? '' }}
+                            </p>
                             <p style="font-size: 0.85rem; font-weight: bold;">PIN:
-                                {{ $order->shipping_address['postal_code'] ?? '' }}</p>
+                                {{ $order->shipping_address['postal_code'] ?? '' }}
+                            </p>
                             <p>Phone: {{ $order->shipping_address['phone'] ?? '' }}</p>
                         </div>
 
@@ -218,7 +232,8 @@
                             <tr>
                                 <td style="width: 50%;">
                                     <p class="font-bold" style="margin: 0;">
-                                        {{ \App\Models\Setting::get('company_name', 'IPDC') }}</p>
+                                        {{ \App\Models\Setting::get('company_name', 'IPDC') }}
+                                    </p>
                                     <p style="margin: 0;">{{ \App\Models\Setting::get('company_place', '') }}</p>
                                 </td>
                                 <td class="text-right">
@@ -235,7 +250,8 @@
                             <p class="text-sm font-bold" style="margin: 0;">{{ $order->user->name }}</p>
                             <p class="text-xs" style="margin: 0;">{{ $order->shipping_address['city'] ?? '' }},
                                 {{ $order->shipping_address['state'] ?? '' }} -
-                                {{ $order->shipping_address['postal_code'] ?? '' }}</p>
+                                {{ $order->shipping_address['postal_code'] ?? '' }}
+                            </p>
                         </div>
 
                         <!-- Items Table -->
