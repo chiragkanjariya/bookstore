@@ -12,26 +12,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('books', function (Blueprint $table) {
-            // Add a temporary column
-            $table->enum('stock_temp', ['in_stock', 'limited_stock', 'out_of_stock'])->default('in_stock');
-        });
-        
-        // Update the temporary column based on existing stock values
-        DB::statement("UPDATE books SET stock_temp = CASE 
-            WHEN stock > 10 THEN 'in_stock'
-            WHEN stock > 0 AND stock <= 10 THEN 'limited_stock'
-            ELSE 'out_of_stock'
-        END");
-        
-        Schema::table('books', function (Blueprint $table) {
-            // Drop the old column and rename the temp column
-            $table->dropColumn('stock');
-        });
-        
-        Schema::table('books', function (Blueprint $table) {
-            $table->renameColumn('stock_temp', 'stock');
-        });
+        if (Schema::hasColumn('books', 'stock') && !Schema::hasColumn('books', 'stock_temp')) {
+            Schema::table('books', function (Blueprint $table) {
+                $table->enum('stock_temp', ['in_stock', 'limited_stock', 'out_of_stock'])->default('in_stock');
+            });
+            
+            DB::statement("UPDATE books SET stock_temp = CASE 
+                WHEN stock > 10 THEN 'in_stock'
+                WHEN stock > 0 AND stock <= 10 THEN 'limited_stock'
+                ELSE 'out_of_stock'
+            END");
+            
+            Schema::table('books', function (Blueprint $table) {
+                $table->dropColumn('stock');
+            });
+
+            DB::statement("ALTER TABLE books CHANGE stock_temp stock ENUM('in_stock', 'limited_stock', 'out_of_stock') NOT NULL DEFAULT 'in_stock'");
+        } elseif (!Schema::hasColumn('books', 'stock') && Schema::hasColumn('books', 'stock_temp')) {
+            DB::statement("ALTER TABLE books CHANGE stock_temp stock ENUM('in_stock', 'limited_stock', 'out_of_stock') NOT NULL DEFAULT 'in_stock'");
+        }
     }
 
     /**
