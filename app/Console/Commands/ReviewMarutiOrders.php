@@ -70,7 +70,7 @@ class ReviewMarutiOrders extends Command
                 $this->info("Reviewing pincode {$pincode} for order #{$order->order_number}...");
 
                 // Get pickup pincode from settings or use default
-                $pickupPincode = \App\Models\Setting::get('shree_maruti_pickup_pincode', '390007'); 
+                $pickupPincode = \App\Models\Setting::get('shree_maruti_pickup_pincode', '390012'); 
                 $weight = 0.5; // Default small weight for validation
 
                 // Call Maruti API to check if it's serviceable
@@ -108,7 +108,7 @@ class ReviewMarutiOrders extends Command
                             $order->update([
                                 'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
                                 'shipping_partner_error' => $errorMessage,
-                                'requires_manual_shipping' => true
+                                'requires_manual_shipping' => true  
                             ]);
 
                             // Update the ServiceableZipcode table to NO
