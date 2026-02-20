@@ -122,6 +122,17 @@
                 </div>
 
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Status</label>
+                    <select name="shipping_partner_status"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Shipping Status</option>
+                        <option value="pending" {{ request('shipping_partner_status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="approved" {{ request('shipping_partner_status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                        <option value="rejected" {{ request('shipping_partner_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                    </select>
+                </div>
+
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Date From</label>
                     <input type="date" name="date_from" value="{{ request('date_from') }}"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -232,36 +243,58 @@
                                                 <div class="text-xs text-blue-600">Tracking:
                                                     {{ $order->tracking_number ?? $order->courier_awb_number }}</div>
                                             @endif
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div>
-                                            <div class="text-sm font-medium text-gray-900">{{ $order->user->name }}</div>
-                                            <div class="text-sm text-gray-500">{{ $order->user->email }}</div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $order->status_badge_color }}-100 text-{{ $order->status_badge_color }}-800">
-                                            {{ ucfirst($order->status) }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $order->payment_status_badge_color }}-100 text-{{ $order->payment_status_badge_color }}-800">
-                                            {{ ucfirst($order->payment_status) }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                                        ₹{{ number_format($order->total_amount, 2) }}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">
-                                        {{ $order->created_at->format('M d, Y') }}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm font-medium space-x-2">
-                                        <a href="{{ route('admin.orders.show', $order) }}"
-                                            class="text-blue-600 hover:text-blue-900">View</a>
-                                    </td>
+
+                                        @if($order->shipping_partner_status)
+                                            <div class="mt-1">
+                                                <span class="text-xs font-bold {{ $order->shipping_partner_status == 'approved' ? 'text-green-600' : ($order->shipping_partner_status == 'rejected' ? 'text-red-600' : 'text-gray-600') }}">
+                                                    Partner: {{ ucfirst($order->shipping_partner_status) }}
+                                                </span>
+                                            </div>
+                                            @if($order->shipping_partner_status == 'rejected' && $order->shipping_partner_error)
+                                                <div class="text-xs text-red-600 mt-1 max-w-xs break-words" title="{{ $order->shipping_partner_error }}">
+                                                    Error: {{ $order->shipping_partner_error }}
+                                                </div>
+                                            @endif
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $order->user->name }}</div>
+                                        <div class="text-sm text-gray-500">{{ $order->user->email }}</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $order->status_badge_color }}-100 text-{{ $order->status_badge_color }}-800">
+                                        {{ ucfirst($order->status) }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $order->payment_status_badge_color }}-100 text-{{ $order->payment_status_badge_color }}-800">
+                                        {{ ucfirst($order->payment_status) }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                    ₹{{ number_format($order->total_amount, 2) }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500">
+                                    {{ $order->created_at->format('M d, Y') }}
+                                </td>
+                                <td class="px-6 py-4 text-sm font-medium space-x-2">
+                                    <a href="{{ route('admin.orders.show', $order) }}"
+                                        class="text-blue-600 hover:text-blue-900">View</a>
+                                    
+                                    @if(!$order->requires_manual_shipping && (in_array($order->status, ['pending', 'pending_to_be_prepared']) || $order->shipping_partner_status == 'rejected'))
+                                        <button type="button" 
+                                            onclick="moveToManualShipping({{ $order->id }}, '{{ $order->order_number }}')"
+                                            class="text-orange-600 hover:text-orange-900 ml-2"
+                                            title="Move to Manual Shipping">
+                                            Manual
+                                        </button>
+                                    @endif
+                                </td>
                                 </tr>
                             @empty
                                 <tr>
@@ -368,5 +401,31 @@
                 bulkForm.action = originalAction;
             });
         });
+
+        function moveToManualShipping(orderId, orderNumber) {
+            if (confirm(`Are you sure you want to move order #${orderNumber} to manual shipping?`)) {
+                fetch(`/admin/orders/${orderId}/move-to-manual-shipping`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while moving the order to manual shipping.');
+                });
+            }
+        }
     </script>
 @endsection

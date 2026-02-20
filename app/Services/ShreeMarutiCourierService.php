@@ -191,6 +191,8 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                         ]
                     ]);
 
+            Log::info('Shree Maruti Rate Calculation Response: ' . $response->body());
+
             if ($response->successful()) {
                 $data = $response->json();
 
@@ -201,12 +203,17 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                         'weight_grams' => $weightInGrams,
                         'rates_count' => count($data['data'] ?? [])
                     ]);
-
-                    return $data;
+                } else {
+                    Log::warning('ShreeMaruti: Rate calculation failed with message', [
+                        'success' => $data['success'] ?? null,
+                        'message' => $data['message'] ?? 'Unknown error'
+                    ]);
                 }
+
+                return $data;
             }
 
-            Log::error('ShreeMaruti: Rate calculation failed', [
+            Log::error('ShreeMaruti: Rate calculation HTTP request failed', [
                 'status' => $response->status(),
                 'response' => $response->body()
             ]);
@@ -253,6 +260,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                         ]
                     ]);
 
+            Log::info('Shree Maruti Create Order Response: ' . $response->body());
             if ($response->successful()) {
                 $data = $response->json();
 
@@ -281,7 +289,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                     'order_id' => $order->id,
                     'response' => $data
                 ]);
-                return ['success' => false, 'message' => $errorMessage . json_encode($orderData)];
+                return ['success' => false, 'message' => $errorMessage];
             }
 
             Log::error('ShreeMaruti: Order creation request failed', [
@@ -338,7 +346,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
             'IsDP' => 1,
             'DocumentNoRef' => 'IWB2500001', // Fixed value as per requirements
             'OrderNo' => $order->razorpay_order_id ?? $order->order_number, // Use Razorpay order ID
-            'PickupPincode' => '390007', // Fixed value as per requirements
+            'PickupPincode' => '390012', // Fixed value as per requirements
             'ToPincode' => $order->shipping_address['postal_code'],
             'CodBooking' => $codBooking,
             'TypeID' => $typeId,
