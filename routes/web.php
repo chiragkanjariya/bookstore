@@ -10,6 +10,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\MarutiSeriesController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\Api\LocationController;
@@ -123,6 +124,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Settings Routes
     Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
     Route::put('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+
+    // Maruti Settings / Series Routes
+    Route::get('maruti-series', [MarutiSeriesController::class, 'index'])->name('maruti-series.index');
+    Route::post('maruti-series', [MarutiSeriesController::class, 'store'])->name('maruti-series.store');
+    Route::delete('maruti-series', [MarutiSeriesController::class, 'destroySeries'])->name('maruti-series.destroy');
+    Route::put('maruti-series/settings', [MarutiSeriesController::class, 'updateSettings'])->name('maruti-series.settings');
 });
 
 // Checkout Routes (Authenticated Users)

@@ -17,7 +17,7 @@ class AWBNumberGenerator
         if (Setting::get('shree_maruti_enabled', false)) {
             try {
                 $marutiService = new \App\Services\ShreeMarutiCourierService();
-                $series = $marutiService->getNextSeriesNumber();
+                $series = $marutiService->getNextSeriesNumber($order->id);
                 if ($series) {
                     return $series;
                 }
