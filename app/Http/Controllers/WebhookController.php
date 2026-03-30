@@ -327,7 +327,11 @@ class WebhookController extends Controller
 
             $response = $courierManager->createOrder($order);
 
-            if ($response) {
+            if ($response && isset($response['success']) && $response['success']) {
+                $order->update([
+                    'shipping_partner_status' => Order::SHIPPING_PARTNER_APPROVED,
+                    'shipping_partner_error' => null
+                ]);
                 Log::info('Courier order created successfully via webhook', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
@@ -335,10 +339,20 @@ class WebhookController extends Controller
                     'response' => $response
                 ]);
             } else {
+                $errorMessage = is_array($response) && isset($response['message'])
+                    ? $response['message']
+                    : "Failed to create courier order";
+
+                $order->update([
+                    'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
+                    'shipping_partner_error' => $errorMessage
+                ]);
+
                 Log::error('Failed to create courier order via webhook', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
-                    'courier_provider' => $providerName
+                    'courier_provider' => $providerName,
+                    'error' => $errorMessage
                 ]);
             }
         } catch (\Exception $e) {

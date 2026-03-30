@@ -82,6 +82,10 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                     // Cache the token until expiry
                     Cache::put('shree_maruti_token', $this->token, $this->tokenExpiry);
                     Cache::put('shree_maruti_token_expiry', $this->tokenExpiry, $this->tokenExpiry);
+                    
+                    if (isset($data['data']['UserID'])) {
+                        Cache::put('shree_maruti_user_id', $data['data']['UserID'], $this->tokenExpiry);
+                    }
 
                     Log::info('ShreeMaruti: Authentication successful', [
                         'token_expires_at' => $this->tokenExpiry,
@@ -164,7 +168,6 @@ class ShreeMarutiCourierService implements CourierServiceInterface
 
             // Get ClientRefID and IsDP from login response or config
             $clientRefId = $this->clientCode;
-            $isDP = 1; // Default to 1 as per BAPS VISION client
 
             // Convert weight from kg to grams
             $weightInGrams = $weight * 1000;
@@ -180,16 +183,18 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                         'Data' => [
                             [
                                 'data' => [
-                                    'ClientRefID' => $clientRefId,
-                                    'IsDP' => $isDP,
-                                    'FromPincode' => $pickupPostcode,
-                                    'ToPincode' => $deliveryPostcode,
-                                    'DocType' => $docType,
-                                    'Weight' => max(50, $weightInGrams) // Minimum 50 grams
+                                    'ClientRefID' => (string) $clientRefId,
+                                    'IsDP' => "0",
+                                    'FromPincode' => (string) $pickupPostcode,
+                                    'ToPincode' => (string) $deliveryPostcode,
+                                    'DocType' => (string) $docType,
+                                    'Weight' => (string) max(50, $weightInGrams) // Minimum 50 grams
                                 ]
                             ]
                         ]
                     ]);
+
+            Log::info('Shree Maruti Rate Calculation Response: ' . $response->body());
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -201,12 +206,17 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                         'weight_grams' => $weightInGrams,
                         'rates_count' => count($data['data'] ?? [])
                     ]);
-
-                    return $data;
+                } else {
+                    Log::warning('ShreeMaruti: Rate calculation failed with message', [
+                        'success' => $data['success'] ?? null,
+                        'message' => $data['message'] ?? 'Unknown error'
+                    ]);
                 }
+
+                return $data;
             }
 
-            Log::error('ShreeMaruti: Rate calculation failed', [
+            Log::error('ShreeMaruti: Rate calculation HTTP request failed', [
                 'status' => $response->status(),
                 'response' => $response->body()
             ]);
@@ -253,6 +263,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                         ]
                     ]);
 
+            Log::info('Shree Maruti Create Order Response: ' . $response->body());
             if ($response->successful()) {
                 $data = $response->json();
 
@@ -281,7 +292,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                     'order_id' => $order->id,
                     'response' => $data
                 ]);
-                return ['success' => false, 'message' => $errorMessage . json_encode($orderData)];
+                return ['success' => false, 'message' => $errorMessage];
             }
 
             Log::error('ShreeMaruti: Order creation request failed', [
@@ -333,46 +344,81 @@ class ShreeMarutiCourierService implements CourierServiceInterface
         // Get state ID from state name (you may need to implement state mapping)
         $stateId = $this->getStateId($order->shipping_address['state']);
 
-        return [
-            'ClientRefID' => $this->clientCode,
-            'IsDP' => 1,
-            'DocumentNoRef' => 'IWB2500001', // Fixed value as per requirements
-            'OrderNo' => $order->razorpay_order_id ?? $order->order_number, // Use Razorpay order ID
-            'PickupPincode' => '390007', // Fixed value as per requirements
-            'ToPincode' => $order->shipping_address['postal_code'],
-            'CodBooking' => $codBooking,
-            'TypeID' => $typeId,
-            'ServiceTypeID' => $serviceTypeId,
-            'TravelBy' => $travelBy,
-            'Weight' => $weightInGrams,
-            'Length' => $maxLength,
-            'Width' => $maxWidth,
-            'Height' => $maxHeight,
-            'ValueRs' => $order->total_amount,
-            'ReceiverName' => $order->shipping_address['name'],
-            'ReceiverAddress' => $order->shipping_address['address_line_1'],
-            'ReceiverCity' => $order->shipping_address['city'],
-            'ReceiverState' => $stateId,
-            'Area' => $order->shipping_address['city'], // Using city as area
-            'ReceiverMobile' => $order->shipping_address['phone'],
-            'ReceiverEmail' => $order->user->email,
-            'Remarks' => 'Pickup from center', // Fixed value as per requirements
-            'UserID' => config('services.shree_maruti.user_id', '12345') // Get from login response
+        $data = [
+            'ClientRefID' => (string) $this->clientCode,
+            'IsDP' => "0",
+            'DocumentNoRef' => 'BK' . $this->clientCode . $order->id, 
+            'OrderNo' => (string) ($order->razorpay_order_id ?? $order->order_number),
+            'PickupPincode' => (string) \App\Models\Setting::get('shree_maruti_pickup_pincode', '390012'),
+            'ToPincode' => (string) ($order->shipping_address['postal_code'] ?? ''),
+            'CodBooking' => "0",
+            'TypeID' => "1",
+            'ServiceTypeID' => "1",
+            'TravelBy' => "1",
+            'Weight' => (string) round($weightInGrams),
+            'Length' => (string) round($maxLength),
+            'Width' => (string) round($maxWidth),
+            'Height' => (string) round($maxHeight),
+            'ValueRs' => (string) round($order->total_amount),
+            'ReceiverName' => (string) ($order->shipping_address['name'] ?? ''),
+            'ReceiverAddress' => (string) ($order->shipping_address['address_line_1'] ?? ''),
+            'ReceiverCity' => (string) ($order->shipping_address['city'] ?? ''),
+            'ReceiverState' => (string) $stateId,
+            'Area' => (string) ($order->shipping_address['city'] ?? ''),
+            'ReceiverMobile' => (string) ($order->shipping_address['phone'] ?? ''),
+            'ReceiverEmail' => (string) ($order->user->email ?? ''),
+            'Remarks' => 'Pickup from center',
+            'UserID' => (string) Cache::get('shree_maruti_user_id', config('services.shree_maruti.user_id', '12345'))
         ];
+
+        Log::info('Shree Maruti Request Data: ', $data);
+
+        return $data;
     }
 
     /**
      * Get state ID from state name
-     * This is a basic implementation - you may want to cache state data
      */
     private function getStateId($stateName)
     {
-        // Common state mappings - you should fetch this from getStateMaster API
+        // State mapping as per Shree Maruti API Master Data
         $stateMap = [
             'GUJARAT' => '1',
             'MAHARASHTRA' => '2',
-            'DELHI' => '3',
-            // Add more states as needed
+            'GOA' => '3',
+            'RAJASTHAN' => '4',
+            'MADHYA PRADESH' => '5',
+            'CHHATTISGARH' => '6',
+            'UTTAR PRADESH' => '7',
+            'JAMMU & KASHMIR' => '8',
+            'DELHI' => '9',
+            'HARYANA' => '10',
+            'PUNJAB' => '11',
+            'UTTARAKHAND' => '12',
+            'KARNATAKA' => '13',
+            'KERALA' => '14',
+            'TAMILNADU' => '15',
+            'PONDICHERRY' => '16',
+            'ANDHRA PRADESH' => '17',
+            'ASSAM' => '18',
+            'JHARKHAND' => '19',
+            'ORISSA' => '20',
+            'BIHAR' => '21',
+            'WEST BENGAL' => '22',
+            'MANIPUR' => '23',
+            'HIMACHAL PRADESH' => '24',
+            'CHANDIGARH' => '25',
+            'SIKKIM' => '26',
+            'ARUNACHAL PRADESH' => '27',
+            'NAGALAND' => '28',
+            'MIZORAM' => '29',
+            'TRIPURA' => '30',
+            'MEGHALAYA' => '31',
+            'DAMAN AND DIU' => '32',
+            'DADRA AND NAGAR HAVELI' => '33',
+            'LAKSHADWEEP' => '34',
+            'ANDAMAN AND NICOBAR' => '35',
+            'TELANGANA' => '36',
         ];
 
         return $stateMap[strtoupper($stateName)] ?? '1';

@@ -58,6 +58,11 @@ class OrderController extends Controller
             $query->where('is_bulk_purchased', $request->is_bulk_purchased === '1');
         }
 
+        // Filter by shipping partner status
+        if ($request->filled('shipping_partner_status')) {
+            $query->where('shipping_partner_status', $request->shipping_partner_status);
+        }
+
         $orders = $query->paginate(20)->withQueryString();
 
         // Get statistics
@@ -223,7 +228,11 @@ class OrderController extends Controller
 
                 if ($response && isset($response['success']) && $response['success']) {
                     // Mark as ready to ship
-                    $order->markAsReadyToShip();
+                    $order->update([
+                        'status' => Order::STATUS_READY_TO_SHIP,
+                        'shipping_partner_status' => Order::SHIPPING_PARTNER_APPROVED,
+                        'shipping_partner_error' => null
+                    ]);
 
                     // Send email notification
                     $emailService->sendOrderReadyToShipEmail($order);
@@ -234,6 +243,12 @@ class OrderController extends Controller
                     $errorMessage = is_array($response) && isset($response['message'])
                         ? $response['message']
                         : "Failed to create courier order";
+                    
+                    $order->update([
+                        'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
+                        'shipping_partner_error' => $errorMessage
+                    ]);
+
                     $errors[] = "Order #{$order->order_number}: {$errorMessage}";
                 }
             } catch (\Exception $e) {
@@ -354,7 +369,11 @@ class OrderController extends Controller
             $courierManager = app(CourierManager::class);
             $response = $courierManager->createOrder($order);
 
-            if ($response) {
+            if ($response && isset($response['success']) && $response['success']) {
+                $order->update([
+                    'shipping_partner_status' => Order::SHIPPING_PARTNER_APPROVED,
+                    'shipping_partner_error' => null
+                ]);
                 return response()->json([
                     'success' => true,
                     'message' => 'Courier order created successfully.',
@@ -362,9 +381,18 @@ class OrderController extends Controller
                 ]);
             }
 
+            $errorMessage = is_array($response) && isset($response['message'])
+                ? $response['message']
+                : "Failed to create courier order";
+
+            $order->update([
+                'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
+                'shipping_partner_error' => $errorMessage
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create courier order. Please check the logs for more details.'
+                'message' => 'Failed to create courier order: ' . $errorMessage
             ], 500);
 
         } catch (\Exception $e) {
@@ -526,6 +554,31 @@ class OrderController extends Controller
                 'error' => $e->getMessage()
             ]);
             return null;
+        }
+    }
+
+    /**
+     * Move order to manual shipping.
+     */
+    public function moveToManualShipping(Order $order)
+    {
+        try {
+            $order->update([
+                'requires_manual_shipping' => true,
+                'status' => Order::STATUS_READY_TO_SHIP,
+                'shipping_partner_status' => null,
+                'shipping_partner_error' => null
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order moved to manual shipping successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error moving order to manual shipping: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

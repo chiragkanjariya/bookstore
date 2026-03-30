@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 // Schedule cron jobs for order status updates
 Schedule::command('orders:update-shipped')->hourly();
 Schedule::command('orders:update-delivered')->hourly();
+Schedule::command('orders:review-maruti-orders')->everyFifteenMinutes();
