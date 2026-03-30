@@ -17,6 +17,11 @@ class Order extends Model
     const STATUS_DELIVERED = 'delivered';
     const STATUS_CANCELLED = 'cancelled';
 
+    // Shipping Partner Status
+    const SHIPPING_PARTNER_PENDING = 'pending';
+    const SHIPPING_PARTNER_APPROVED = 'approved';
+    const SHIPPING_PARTNER_REJECTED = 'rejected';
+
     protected $fillable = [
         'order_number',
         'user_id',
@@ -35,6 +40,8 @@ class Order extends Model
         'courier_awb_number',
         'awb_number',
         'requires_manual_shipping',
+        'shipping_partner_status',
+        'shipping_partner_error',
         'manual_shipping_marked_at',
         'subtotal',
         'shipping_cost',
@@ -72,6 +79,10 @@ class Order extends Model
         static::creating(function ($order) {
             if (empty($order->order_number)) {
                 $order->order_number = 'ORD-' . strtoupper(uniqid());
+            }
+
+            if (empty($order->shipping_partner_status)) {
+                $order->shipping_partner_status = self::SHIPPING_PARTNER_PENDING;
             }
         });
     }

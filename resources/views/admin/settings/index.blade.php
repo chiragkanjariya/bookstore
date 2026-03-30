@@ -223,16 +223,65 @@
                         </select>
                         <p class="text-xs text-gray-600 mt-1">Note: Production requires IP whitelisting</p>
                     </div>
+
+                    <div class="md:col-span-2">
+                        <label for="awb_number_prefix" class="block text-sm font-medium text-gray-700 mb-1">AWB Number Prefix</label>
+                        <input type="text" id="awb_number_prefix" name="awb_number_prefix"
+                            value="{{ old('awb_number_prefix', $settings['courier']['awb_number_prefix']) }}"
+                            placeholder="e.g., IPDC"
+                            maxlength="10"
+                            class="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                        <p class="text-xs text-gray-600 mt-1">Prefix for auto-generated AWB numbers for manual shipping (e.g., IPDC251226000001)</p>
+                    </div>
                 </div>
 
-                <div class="mt-4">
-                    <label for="awb_number_prefix" class="block text-sm font-medium text-gray-700 mb-1">AWB Number Prefix</label>
-                    <input type="text" id="awb_number_prefix" name="awb_number_prefix"
-                        value="{{ old('awb_number_prefix', $settings['courier']['awb_number_prefix']) }}"
-                        placeholder="e.g., IPDC"
-                        maxlength="10"
-                        class="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
-                    <p class="text-xs text-gray-600 mt-1">Prefix for auto-generated AWB numbers for manual shipping (e.g., IPDC251226000001)</p>
+                <!-- Maruti Series Tracking Section -->
+                <div class="mt-8 border-t pt-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h5 class="text-lg font-medium text-[#00BDE0]">Maruti Series Tracking</h5>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="shree_maruti_series_start" class="block text-sm font-medium text-gray-700 mb-1">Maruti Series Start</label>
+                            <input type="text" id="shree_maruti_series_start" name="shree_maruti_series_start"
+                                value="{{ old('shree_maruti_series_start', $settings['courier']['shree_maruti_series_start']) }}"
+                                placeholder=""
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                        </div>
+
+                        <div>
+                            <label for="shree_maruti_series_end" class="block text-sm font-medium text-gray-700 mb-1">Maruti Series End</label>
+                            <input type="text" id="shree_maruti_series_end" name="shree_maruti_series_end"
+                                value="{{ old('shree_maruti_series_end', $settings['courier']['shree_maruti_series_end']) }}"
+                                placeholder=""
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                        </div>
+
+                        <div>
+                            <label for="shree_maruti_series_current" class="block text-sm font-medium text-gray-700 mb-1">Current Series Number</label>
+                            <input type="text" id="shree_maruti_series_current" name="shree_maruti_series_current"
+                                value="{{ old('shree_maruti_series_current', $settings['courier']['shree_maruti_series_current']) }}"
+                                placeholder="Current active number"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                            <p class="text-xs text-gray-500 mt-1">This will automatically increment when a label is generated.</p>
+                        </div>
+
+                        <div>
+                            <label for="shree_maruti_notify_threshold" class="block text-sm font-medium text-gray-700 mb-1">Notify when goes below</label>
+                            <input type="text" id="shree_maruti_notify_threshold" name="shree_maruti_notify_threshold"
+                                value="{{ old('shree_maruti_notify_threshold', $settings['courier']['shree_maruti_notify_threshold']) }}"
+                                placeholder=""
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label for="shree_maruti_notification_email" class="block text-sm font-medium text-gray-700 mb-1">Notification Email</label>
+                            <input type="email" id="shree_maruti_notification_email" name="shree_maruti_notification_email"
+                                value="{{ old('shree_maruti_notification_email', $settings['courier']['shree_maruti_notification_email']) }}"
+                                placeholder=""
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -269,3 +318,4 @@
 </div>
 
 @endsection
+
