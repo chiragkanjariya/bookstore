@@ -45,6 +45,11 @@ class SettingsController extends Controller
                 'shree_maruti_api_secret_key' => Setting::get('shree_maruti_api_secret_key', ''),
                 'shree_maruti_environment' => Setting::get('shree_maruti_environment', 'beta'),
                 'awb_number_prefix' => Setting::get('awb_number_prefix', 'IPDC'),
+                'shree_maruti_series_start' => Setting::get('shree_maruti_series_start', ''),
+                'shree_maruti_series_end' => Setting::get('shree_maruti_series_end', ''),
+                'shree_maruti_series_current' => Setting::get('shree_maruti_series_current', ''),
+                'shree_maruti_notification_email' => Setting::get('shree_maruti_notification_email', ''),
+                'shree_maruti_notify_threshold' => Setting::get('shree_maruti_notify_threshold', ''),
             ],
             'bulk' => [
                 'min_bulk_purchase' => Setting::get('min_bulk_purchase', 10),
@@ -79,6 +84,11 @@ class SettingsController extends Controller
             'shree_maruti_api_secret_key' => 'nullable|string|max:255',
             'shree_maruti_environment' => 'nullable|in:beta,production',
             'awb_number_prefix' => 'nullable|string|max:10',
+            'shree_maruti_series_start' => 'nullable|string|max:255',
+            'shree_maruti_series_end' => 'nullable|string|max:255',
+            'shree_maruti_series_current' => 'nullable|string|max:255',
+            'shree_maruti_notification_email' => 'nullable|email|max:255',
+            'shree_maruti_notify_threshold' => 'nullable|string|max:255',
             'min_bulk_purchase' => 'required|integer|min:1',
         ]);
 
@@ -108,10 +118,37 @@ class SettingsController extends Controller
         Setting::set('shree_maruti_api_secret_key', $request->shree_maruti_api_secret_key, 'string', 'courier', 'Shree Maruti API Secret Key');
         Setting::set('shree_maruti_environment', $request->shree_maruti_environment, 'string', 'courier', 'Shree Maruti Environment');
         Setting::set('awb_number_prefix', $request->awb_number_prefix, 'string', 'courier', 'AWB Number Prefix');
+        Setting::set('shree_maruti_series_start', $request->shree_maruti_series_start, 'string', 'courier', 'Shree Maruti Series Start');
+        Setting::set('shree_maruti_series_end', $request->shree_maruti_series_end, 'string', 'courier', 'Shree Maruti Series End');
+        Setting::set('shree_maruti_series_current', $request->shree_maruti_series_current, 'string', 'courier', 'Shree Maruti Series Current');
+        Setting::set('shree_maruti_notification_email', $request->shree_maruti_notification_email, 'string', 'courier', 'Shree Maruti Notification Email');
+        Setting::set('shree_maruti_notify_threshold', $request->shree_maruti_notify_threshold, 'string', 'courier', 'Shree Maruti Notify Threshold');
 
         // Update bulk purchase settings
         Setting::set('min_bulk_purchase', $request->min_bulk_purchase, 'integer', 'bulk', 'Minimum Bulk Purchase Quantity');
 
         return redirect()->route('admin.settings.index')->with('success', 'Settings updated successfully!');
+    }
+
+    /**
+     * Test Maruti series increment and notification
+     */
+    public function testSeriesIncrement(Request $request)
+    {
+        try {
+            $marutiService = new \App\Services\ShreeMarutiCourierService();
+            $current = $marutiService->getNextSeriesNumber();
+            
+            return response()->json([
+                'success' => true, 
+                'current' => $current,
+                'message' => 'Series incremented and checked for notification. Check laravel.log for details.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
     }
 }

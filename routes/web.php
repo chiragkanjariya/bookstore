@@ -123,6 +123,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Settings Routes
     Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
     Route::put('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+    Route::post('settings/test-maruti-series', [\App\Http\Controllers\Admin\SettingsController::class, 'testSeriesIncrement'])->name('settings.test-maruti-series');
 });
 
 // Checkout Routes (Authenticated Users)

@@ -653,4 +653,92 @@ class ShreeMarutiCourierService implements CourierServiceInterface
             return false;
         }
     }
+
+    /**
+     * Get and increment the next series number for Shree Maruti.
+     * This can be used for auto-generating labels or for tracking series usage.
+     */
+    public function getNextSeriesNumber()
+    {
+        $current = Setting::get('shree_maruti_series_current');
+        $start = Setting::get('shree_maruti_series_start');
+        $end = Setting::get('shree_maruti_series_end');
+        $threshold = Setting::get('shree_maruti_notify_threshold');
+        $email = Setting::get('shree_maruti_notification_email');
+
+        // If current is empty, initialize with start
+        if (empty($current)) {
+            $current = $start;
+        }
+
+        if (empty($current)) {
+            Log::info('ShreeMaruti: Series current and start are both empty.');
+            return null;
+        }
+
+        // Increment for next use (handling potentially large numbers)
+        // Note: Using BCMath if available for large strings, otherwise standard increment.
+        if (function_exists('bcadd')) {
+            $next = bcadd($current, '1');
+        } else {
+            $next = (string) ($current + 1);
+        }
+        
+        // Update the setting for next call
+        Setting::set('shree_maruti_series_current', $next, 'string', 'courier', 'Shree Maruti Series Current');
+
+        Log::info('ShreeMaruti: Series number updated in storage', [
+            'previous' => $current,
+            'next' => $next
+        ]);
+
+        if (!empty($threshold) && !empty($email)) {
+            $isNotified = Cache::get('shree_maruti_series_notified_' . $threshold, false);
+            
+            // Compare large number strings safely
+            $shouldNotify = false;
+            if (function_exists('bccomp')) {
+                $shouldNotify = bccomp($current, $threshold) <= 0;
+            } else {
+                // Simple string comparison for same length numbers or use numeric comparison
+                // Since these are 14-15 digits, they should fit into PHP's float comparison but might lose precision.
+                // Better to use string comparison after padding if lengths differ.
+                if (strlen($current) === strlen($threshold)) {
+                    $shouldNotify = ($current <= $threshold);
+                } else {
+                    $shouldNotify = strlen($current) < strlen($threshold) || ($current <= $threshold);
+                }
+            }
+
+            if ($shouldNotify && !$isNotified) {
+                $this->sendSeriesExpirationNotification($current, $threshold, $email);
+                Cache::put('shree_maruti_series_notified_' . $threshold, true, now()->addDays(7));
+            }
+        }
+
+        return $current;
+    }
+
+    private function sendSeriesExpirationNotification($current, $threshold, $email)
+    {
+        try {
+            $subject = 'URGENT: Shree Maruti Courier Series Expiration Warning';
+            $body = "Hello Admin,\n\n" .
+                   "Your Shree Maruti Courier series number is approaching its limit.\n" .
+                   "Current Series: $current\n" .
+                   "Threshold Level: $threshold\n\n" .
+                   "Please obtain a new series range to ensure uninterrupted label generation.\n\n" .
+                   "Regards,\nIPDC System";
+
+            $emailService = new \App\Services\EmailService();
+            $emailService->sendEmail([$email => 'Admin'], $subject, nl2br($body));
+
+            Log::warning("ShreeMaruti: Expiration email sent to $email", [
+                'current' => $current,
+                'threshold' => $threshold
+            ]);
+        } catch (\Exception $e) {
+            Log::error('ShreeMaruti: Failed to send expiration email: ' . $e->getMessage());
+        }
+    }
 }
