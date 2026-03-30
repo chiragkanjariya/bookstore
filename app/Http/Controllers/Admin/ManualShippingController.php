@@ -229,11 +229,9 @@ class ManualShippingController extends Controller
             abort(404, 'This order does not require manual shipping');
         }
 
-        // Generate AWB number if not exists
-        if (!$order->awb_number) {
-            AWBNumberGenerator::assignToOrder($order);
-            $order->refresh();
-        }
+        // Ensure AWB number exists and is in the correct format
+        AWBNumberGenerator::assignToOrder($order);
+        $order->refresh();
 
         return view('admin.manual-shipping.print-label', compact('order'));
     }
@@ -253,15 +251,15 @@ class ManualShippingController extends Controller
             ->requiresManualShipping()
             ->get();
 
-        // Generate AWB numbers for orders that don't have them
+        // Ensure AWB numbers are generated and in the correct format
         foreach ($orders as $order) {
-            if (!$order->awb_number) {
-                AWBNumberGenerator::assignToOrder($order);
-            }
+            AWBNumberGenerator::assignToOrder($order);
         }
 
-        // Refresh to get updated AWB numbers
-        $orders = $orders->fresh(['user', 'orderItems.book']);
+        // Re-load to get updated AWB numbers
+        $orders = Order::with(['user', 'orderItems.book'])
+            ->whereIn('id', $request->order_ids)
+            ->get();
 
         $pdf = Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
             ->setPaper('a4', 'landscape');

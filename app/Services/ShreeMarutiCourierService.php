@@ -673,7 +673,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
         }
 
         if (empty($current)) {
-            Log::info('ShreeMaruti: Series current and start are both empty.');
+            Log::warning('ShreeMaruti: Series tracking active but start/current numbers are empty.');
             return null;
         }
 
@@ -696,14 +696,10 @@ class ShreeMarutiCourierService implements CourierServiceInterface
         if (!empty($threshold) && !empty($email)) {
             $isNotified = Cache::get('shree_maruti_series_notified_' . $threshold, false);
             
-            // Compare large number strings safely
             $shouldNotify = false;
             if (function_exists('bccomp')) {
                 $shouldNotify = bccomp($current, $threshold) <= 0;
             } else {
-                // Simple string comparison for same length numbers or use numeric comparison
-                // Since these are 14-15 digits, they should fit into PHP's float comparison but might lose precision.
-                // Better to use string comparison after padding if lengths differ.
                 if (strlen($current) === strlen($threshold)) {
                     $shouldNotify = ($current <= $threshold);
                 } else {
