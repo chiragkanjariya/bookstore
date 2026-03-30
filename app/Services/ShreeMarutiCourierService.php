@@ -347,7 +347,8 @@ class ShreeMarutiCourierService implements CourierServiceInterface
         $data = [
             'ClientRefID' => (string) $this->clientCode,
             'IsDP' => "0",
-            'DocumentNoRef' => 'BK' . $this->clientCode . $order->id, 
+            // 'DocumentNoRef' => 'BK' . $this->clientCode . $order->id,
+            'DocumentNoRef' => (string) $this->getNextSeriesNumber(),
             'OrderNo' => (string) ($order->razorpay_order_id ?? $order->order_number),
             'PickupPincode' => (string) \App\Models\Setting::get('shree_maruti_pickup_pincode', '390012'),
             'ToPincode' => (string) ($order->shipping_address['postal_code'] ?? ''),

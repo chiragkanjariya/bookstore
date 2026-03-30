@@ -129,26 +129,4 @@ class SettingsController extends Controller
 
         return redirect()->route('admin.settings.index')->with('success', 'Settings updated successfully!');
     }
-
-    /**
-     * Test Maruti series increment and notification
-     */
-    public function testSeriesIncrement(Request $request)
-    {
-        try {
-            $marutiService = new \App\Services\ShreeMarutiCourierService();
-            $current = $marutiService->getNextSeriesNumber();
-            
-            return response()->json([
-                'success' => true, 
-                'current' => $current,
-                'message' => 'Series incremented and checked for notification. Check laravel.log for details.'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
-            ]);
-        }
-    }
 }

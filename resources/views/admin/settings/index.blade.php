@@ -239,9 +239,6 @@
                 <div class="mt-8 border-t pt-6">
                     <div class="flex justify-between items-center mb-4">
                         <h5 class="text-lg font-medium text-[#00BDE0]">Maruti Series Tracking</h5>
-                        <button type="button" id="test-increment" class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded inline-flex items-center gap-1 transition-colors">
-                            <i class="fas fa-plus"></i> Test Increment
-                        </button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -322,51 +319,3 @@
 
 @endsection
 
-@push('scripts')
-<script>
-    document.getElementById('test-increment').addEventListener('click', function() {
-        if (!confirm('This will increment the series number in the database and check for notifications. Continue?')) {
-            return;
-        }
-
-        const currentInput = document.getElementById('shree_maruti_series_current');
-        const btn = this;
-        
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-
-        fetch('{{ route('admin.settings.test-maruti-series') }}', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                currentInput.value = data.current;
-                btn.innerHTML = '<i class="fas fa-check"></i> Updated & Logged!';
-                btn.classList.replace('bg-gray-200', 'bg-green-100');
-                
-                setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-plus"></i> Test Increment';
-                    btn.classList.replace('bg-green-100', 'bg-gray-200');
-                    btn.disabled = false;
-                }, 3000);
-            } else {
-                alert('Error: ' + data.message);
-                btn.innerHTML = '<i class="fas fa-plus"></i> Test Increment';
-                btn.disabled = false;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while communicating with the server.');
-            btn.innerHTML = '<i class="fas fa-plus"></i> Test Increment';
-            btn.disabled = false;
-        });
-    });
-</script>
-@endpush
