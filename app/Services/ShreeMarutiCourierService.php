@@ -250,6 +250,13 @@ class ShreeMarutiCourierService implements CourierServiceInterface
 
             // Prepare order data
             $orderData = $this->prepareOrderData($order);
+            
+            if (!$orderData) {
+                return [
+                    'success' => false,
+                    'message' => 'Maruti Series is exhausted or not properly configured. Please update series in settings.'
+                ];
+            }
 
             $response = Http::withHeaders([
                 'token' => $this->token,
@@ -344,11 +351,19 @@ class ShreeMarutiCourierService implements CourierServiceInterface
         // Get state ID from state name (you may need to implement state mapping)
         $stateId = $this->getStateId($order->shipping_address['state']);
 
+        $documentNoRef = $this->getNextSeriesNumber();
+        if (!$documentNoRef) {
+            $order->update([
+                'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
+                'shipping_partner_error' => 'Maruti Series is exhausted or not properly configured.'
+            ]);
+            return false;
+        }
+
         $data = [
             'ClientRefID' => (string) $this->clientCode,
             'IsDP' => "0",
-            // 'DocumentNoRef' => 'BK' . $this->clientCode . $order->id,
-            'DocumentNoRef' => (string) $this->getNextSeriesNumber(),
+            'DocumentNoRef' => (string) $documentNoRef,
             'OrderNo' => (string) ($order->razorpay_order_id ?? $order->order_number),
             'PickupPincode' => (string) \App\Models\Setting::get('shree_maruti_pickup_pincode', '390012'),
             'ToPincode' => (string) ($order->shipping_address['postal_code'] ?? ''),
@@ -667,7 +682,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
         $threshold = Setting::get('shree_maruti_notify_threshold');
         $email = Setting::get('shree_maruti_notification_email');
 
-        // If current is empty, initialize with start
+        // Check if current is empty or has reached the end limit
         if (empty($current)) {
             $current = $start;
         }
@@ -675,6 +690,21 @@ class ShreeMarutiCourierService implements CourierServiceInterface
         if (empty($current)) {
             Log::warning('ShreeMaruti: Series tracking active but start/current numbers are empty.');
             return null;
+        }
+
+        // Check if current has reached the end limit
+        if (!empty($end)) {
+            $isOverLimit = false;
+            if (function_exists('bccomp')) {
+                $isOverLimit = bccomp($current, $end) > 0;
+            } else {
+                $isOverLimit = (strlen($current) > strlen($end)) || (strlen($current) === strlen($end) && $current > $end);
+            }
+            
+            if ($isOverLimit) {
+                Log::error('ShreeMaruti: Series exhausted. Current: ' . $current . ', End: ' . $end);
+                return null;
+            }
         }
 
         // Increment for next use (handling potentially large numbers)
