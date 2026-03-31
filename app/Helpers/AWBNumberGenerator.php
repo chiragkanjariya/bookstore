@@ -17,19 +17,11 @@ class AWBNumberGenerator
         if (Setting::get('shree_maruti_enabled', false)) {
             try {
                 $marutiService = new \App\Services\ShreeMarutiCourierService();
-                $series = $marutiService->getNextSeriesNumber();
-                
+                $series = $marutiService->getNextSeriesNumber($order->id);
                 if ($series) {
                     return $series;
                 }
-                
-                // If Maruti is enabled but we couldn't get a series (exhausted or not configured)
-                throw new \Exception('Shree Maruti courier series is exhausted or not properly configured. Please update series settings in Admin Panels.');
             } catch (\Exception $e) {
-                // If it's our series exhausted exception, re-throw it to stop the fallback
-                if (strpos($e->getMessage(), 'Shree Maruti courier series') !== false) {
-                    throw $e;
-                }
                 Log::error('AWBGenerator: Failed to generate Maruti series: ' . $e->getMessage());
             }
         }

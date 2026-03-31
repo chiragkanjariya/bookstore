@@ -250,13 +250,6 @@ class ShreeMarutiCourierService implements CourierServiceInterface
 
             // Prepare order data
             $orderData = $this->prepareOrderData($order);
-            
-            if (!$orderData) {
-                return [
-                    'success' => false,
-                    'message' => 'Maruti Series is exhausted or not properly configured. Please update series in settings.'
-                ];
-            }
 
             $response = Http::withHeaders([
                 'token' => $this->token,
@@ -351,19 +344,11 @@ class ShreeMarutiCourierService implements CourierServiceInterface
         // Get state ID from state name (you may need to implement state mapping)
         $stateId = $this->getStateId($order->shipping_address['state']);
 
-        $documentNoRef = $this->getNextSeriesNumber();
-        if (!$documentNoRef) {
-            $order->update([
-                'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
-                'shipping_partner_error' => 'Maruti Series is exhausted or not properly configured.'
-            ]);
-            return false;
-        }
-
         $data = [
             'ClientRefID' => (string) $this->clientCode,
             'IsDP' => "0",
-            'DocumentNoRef' => (string) $documentNoRef,
+            // 'DocumentNoRef' => 'BK' . $this->clientCode . $order->id,
+            'DocumentNoRef' => (string) $this->getNextSeriesNumber($order->id),
             'OrderNo' => (string) ($order->razorpay_order_id ?? $order->order_number),
             'PickupPincode' => (string) \App\Models\Setting::get('shree_maruti_pickup_pincode', '390012'),
             'ToPincode' => (string) ($order->shipping_address['postal_code'] ?? ''),
@@ -375,7 +360,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
             'Length' => (string) round($maxLength),
             'Width' => (string) round($maxWidth),
             'Height' => (string) round($maxHeight),
-            'ValueRs' => (string) round($order->total_amount),
+            'ValueRs' => (string) round((float) $order->total_amount),
             'ReceiverName' => (string) ($order->shipping_address['name'] ?? ''),
             'ReceiverAddress' => (string) ($order->shipping_address['address_line_1'] ?? ''),
             'ReceiverCity' => (string) ($order->shipping_address['city'] ?? ''),
@@ -674,76 +659,48 @@ class ShreeMarutiCourierService implements CourierServiceInterface
      * Get and increment the next series number for Shree Maruti.
      * This can be used for auto-generating labels or for tracking series usage.
      */
-    public function getNextSeriesNumber()
+    public function getNextSeriesNumber($orderId = null)
     {
-        $current = Setting::get('shree_maruti_series_current');
-        $start = Setting::get('shree_maruti_series_start');
-        $end = Setting::get('shree_maruti_series_end');
-        $threshold = Setting::get('shree_maruti_notify_threshold');
-        $email = Setting::get('shree_maruti_notification_email');
+        $nextAvailable = \App\Models\ShreeMarutiSeries::where('is_used', false)
+            ->orderBy('id', 'asc')
+            ->first();
 
-        // Check if current is empty or has reached the end limit
-        if (empty($current)) {
-            $current = $start;
-        }
-
-        if (empty($current)) {
-            Log::warning('ShreeMaruti: Series tracking active but start/current numbers are empty.');
+        if (!$nextAvailable) {
+            Log::warning('ShreeMaruti: Series tracking active but no available numbers left.');
             return null;
         }
 
-        // Check if current has reached the end limit
-        if (!empty($end)) {
-            $isOverLimit = false;
-            if (function_exists('bccomp')) {
-                $isOverLimit = bccomp($current, $end) > 0;
-            } else {
-                $isOverLimit = (strlen($current) > strlen($end)) || (strlen($current) === strlen($end) && $current > $end);
-            }
-            
-            if ($isOverLimit) {
-                Log::error('ShreeMaruti: Series exhausted. Current: ' . $current . ', End: ' . $end);
-                return null;
-            }
+        // Mark as used and associate with order
+        $nextAvailable->is_used = true;
+        if ($orderId) {
+            $nextAvailable->order_id = $orderId;
         }
+        $nextAvailable->save();
 
-        // Increment for next use (handling potentially large numbers)
-        // Note: Using BCMath if available for large strings, otherwise standard increment.
-        if (function_exists('bcadd')) {
-            $next = bcadd($current, '1');
-        } else {
-            $next = (string) ($current + 1);
-        }
-        
-        // Update the setting for next call
-        Setting::set('shree_maruti_series_current', $next, 'string', 'courier', 'Shree Maruti Series Current');
-
-        Log::info('ShreeMaruti: Series number updated in storage', [
-            'previous' => $current,
-            'next' => $next
+        Log::info('ShreeMaruti: Series number assigned to order', [
+            'awb_number' => $nextAvailable->awb_number,
+            'order_id' => $orderId
         ]);
 
-        if (!empty($threshold) && !empty($email)) {
-            $isNotified = Cache::get('shree_maruti_series_notified_' . $threshold, false);
-            
-            $shouldNotify = false;
-            if (function_exists('bccomp')) {
-                $shouldNotify = bccomp($current, $threshold) <= 0;
-            } else {
-                if (strlen($current) === strlen($threshold)) {
-                    $shouldNotify = ($current <= $threshold);
-                } else {
-                    $shouldNotify = strlen($current) < strlen($threshold) || ($current <= $threshold);
-                }
-            }
+        $threshold = Setting::get('shree_maruti_notify_threshold');
+        $email = Setting::get('shree_maruti_notification_email');
 
-            if ($shouldNotify && !$isNotified) {
-                $this->sendSeriesExpirationNotification($current, $threshold, $email);
-                Cache::put('shree_maruti_series_notified_' . $threshold, true, now()->addDays(7));
+        if (!empty($threshold) && !empty($email)) {
+            $availableCount = \App\Models\ShreeMarutiSeries::where('is_used', false)->count();
+            
+            $isNotified = Cache::get('shree_maruti_series_notified_' . $threshold, false);
+
+            if ($availableCount <= $threshold) {
+                if (!$isNotified) {
+                    $this->sendSeriesExpirationNotification($nextAvailable->awb_number, $threshold, $email);
+                    Cache::put('shree_maruti_series_notified_' . $threshold, true, now()->addDays(7));
+                }
+            } elseif ($availableCount > $threshold && $isNotified) {
+                Cache::forget('shree_maruti_series_notified_' . $threshold);
             }
         }
 
-        return $current;
+        return $nextAvailable->awb_number;
     }
 
     private function sendSeriesExpirationNotification($current, $threshold, $email)
