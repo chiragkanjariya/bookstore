@@ -230,8 +230,12 @@ class ManualShippingController extends Controller
         }
 
         // Ensure AWB number exists and is in the correct format
-        AWBNumberGenerator::assignToOrder($order);
-        $order->refresh();
+        try {
+            AWBNumberGenerator::assignToOrder($order);
+            $order->refresh();
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return view('admin.manual-shipping.print-label', compact('order'));
     }
@@ -252,8 +256,12 @@ class ManualShippingController extends Controller
             ->get();
 
         // Ensure AWB numbers are generated and in the correct format
-        foreach ($orders as $order) {
-            AWBNumberGenerator::assignToOrder($order);
+        try {
+            foreach ($orders as $order) {
+                AWBNumberGenerator::assignToOrder($order);
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', 'One or more labels could not be generated: ' . $e->getMessage());
         }
 
         // Re-load to get updated AWB numbers
