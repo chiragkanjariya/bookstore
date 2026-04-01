@@ -41,7 +41,14 @@ class MarutiSeriesController extends Controller
         $start = $request->start_number;
         $end = $request->end_number;
 
-        if (bccomp($start, $end) > 0) {
+        $isGreater = false;
+        if (function_exists('bccomp')) {
+            $isGreater = bccomp($start, $end) > 0;
+        } else {
+            $isGreater = (strlen($start) > strlen($end)) || (strlen($start) === strlen($end) && $start > $end);
+        }
+
+        if ($isGreater) {
             return back()->with('error', 'Start number must be less than or equal to end number.');
         }
 
@@ -52,7 +59,20 @@ class MarutiSeriesController extends Controller
 
         DB::beginTransaction();
         try {
-            while (bccomp($current, $end) <= 0) {
+            $isLessOrEqual = true;
+            if (function_exists('bccomp')) {
+                $isLessOrEqual = bccomp($current, $end) <= 0;
+            } else {
+                if (strlen($current) < strlen($end)) {
+                    $isLessOrEqual = true;
+                } elseif (strlen($current) > strlen($end)) {
+                    $isLessOrEqual = false;
+                } else {
+                    $isLessOrEqual = $current <= $end;
+                }
+            }
+
+            while ($isLessOrEqual) {
                 // Keep leading zeros if any
                 $awb = str_pad($current, strlen($start), '0', STR_PAD_LEFT);
                 
@@ -68,7 +88,24 @@ class MarutiSeriesController extends Controller
                     $addedCount++;
                 }
 
-                $current = bcadd($current, '1');
+                if (function_exists('bcadd')) {
+                    $current = bcadd($current, '1');
+                } else {
+                    $current = (string) ($current + 1);
+                }
+
+                // Update condition for next iteration
+                if (function_exists('bccomp')) {
+                    $isLessOrEqual = bccomp($current, $end) <= 0;
+                } else {
+                    if (strlen($current) < strlen($end)) {
+                        $isLessOrEqual = true;
+                    } elseif (strlen($current) > strlen($end)) {
+                        $isLessOrEqual = false;
+                    } else {
+                        $isLessOrEqual = $current <= $end;
+                    }
+                }
 
                 if (count($records) >= 500) {
                     ShreeMarutiSeries::insert($records);

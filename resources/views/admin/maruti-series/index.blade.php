@@ -1,5 +1,8 @@
 @extends('layouts.admin')
 
+@section('title', 'Maruti Shipping Series')
+@section('breadcrumb', 'Maruti Series')
+
 @section('content')
     <div class="bg-white rounded-lg shadow-sm p-6 max-w-7xl mx-auto">
         <div class="flex justify-between items-center mb-6">
@@ -128,40 +131,47 @@
         <!-- Data Table -->
         <div class="overflow-x-auto rounded-lg border border-gray-200">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50 text-gray-700">
+                <thead class="bg-gray-50 text-gray-700 uppercase">
                     <tr>
-                        <th class="px-4 py-3 border-b border-gray-200 text-sm font-medium">ID</th>
-                        <th class="px-4 py-3 border-b border-gray-200 text-sm font-medium">Series ID</th>
-                        <th class="px-4 py-3 border-b border-gray-200 text-sm font-medium">AWB Number</th>
-                        <th class="px-4 py-3 border-b border-gray-200 text-sm font-medium">Status</th>
-                        <th class="px-4 py-3 border-b border-gray-200 text-sm font-medium">Order ID</th>
-                        <th class="px-4 py-3 border-b border-gray-200 text-sm font-medium">Generated At</th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold tracking-wider">ID</th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold tracking-wider">Series ID</th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold tracking-wider">AWB Number</th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold tracking-wider">Status</th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold tracking-wider">Order ID</th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold tracking-wider">Generated At</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
                     @forelse($seriesRecords as $record)
                         <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3 text-sm text-gray-900">{{ $record->id }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-600">{{ $record->series_id }}</td>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ $record->awb_number }}</td>
-                            <td class="px-4 py-3 text-sm">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $record->id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="px-2 py-1 bg-gray-100 rounded text-xs font-mono">{{ $record->series_id }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{{ $record->awb_number }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
                                 @if($record->is_used)
-                                    <span
-                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Used</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <i class="fas fa-check-circle mr-1 text-xs"></i> Used
+                                    </span>
                                 @else
-                                    <span
-                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#00BDE0] bg-opacity-10 text-[#00A5C7]">Available</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <i class="fas fa-dot-circle mr-1 text-xs"></i> Available
+                                    </span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-600">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 @if($record->order_id)
                                     <a href="{{ route('admin.orders.show', $record->order_id) }}"
-                                        class="text-[#00BDE0] hover:text-[#00A5C7] hover:underline">#{{ $record->order_id }}</a>
+                                        class="text-[#00BDE0] font-medium hover:underline">#{{ $record->order_id }}</a>
                                 @else
-                                    -
+                                    <span class="text-gray-400">-</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-500">{{ $record->created_at->format('M d, Y H:i') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ $record->created_at->format('M d, Y') }}
+                                <div class="text-xs text-gray-400">{{ $record->created_at->format('h:i A') }}</div>
+                            </td>
                         </tr>
                     @empty
                         <tr>
