@@ -223,6 +223,7 @@
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4">
                                         <input type="checkbox" name="order_ids[]" value="{{ $order->id }}"
+                                            data-status="{{ $order->status }}"
                                             class="order-checkbox rounded">
                                     </td>
                                     <td class="px-6 py-4">
@@ -390,6 +391,16 @@
                 const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
                 if (checkedBoxes.length === 0) {
                     alert('Please select at least one order.');
+                    return;
+                }
+
+                // Check for non-shipped orders
+                const pendingOrders = Array.from(checkedBoxes).filter(cb => 
+                    cb.getAttribute('data-status') === 'pending_to_be_prepared'
+                );
+
+                if (pendingOrders.length > 0) {
+                    alert('Some selected orders are not yet shipped (Pending to be prepared). You must "Ship Now" first before printing labels.');
                     return;
                 }
 

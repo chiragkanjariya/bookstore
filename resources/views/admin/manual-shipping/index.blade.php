@@ -153,6 +153,7 @@
                                 <td class="px-6 py-4">
                                     @if(!$order->isManuallyShipped())
                                         <input type="checkbox" name="order_ids[]" value="{{ $order->id }}"
+                                            data-shipped="{{ $order->isManuallyShipped() ? 'true' : 'false' }}"
                                             class="order-checkbox rounded">
                                     @endif
                                 </td>
@@ -221,7 +222,9 @@
                                             <i class="fas fa-eye mr-1"></i>View Details
                                         </a>
                                         <a href="{{ route('admin.manual-shipping.print-label', $order) }}"
-                                            class="text-purple-600 hover:text-purple-900" target="_blank">
+                                            class="text-purple-600 hover:text-purple-900 print-label-link" 
+                                            data-shipped="{{ $order->isManuallyShipped() ? 'true' : 'false' }}"
+                                            target="_blank">
                                             <i class="fas fa-print mr-1"></i>Print Label & Invoice
                                         </a>
                                         @if(!$order->isManuallyShipped())
@@ -290,6 +293,16 @@
                     return;
                 }
 
+                // Check for non-shipped orders
+                const unshippedOrders = Array.from(checkedBoxes).filter(cb => 
+                    cb.getAttribute('data-shipped') === 'false'
+                );
+
+                if (unshippedOrders.length > 0) {
+                    alert('Some selected orders are not yet marked as shipped. You must mark them as shipped first before printing labels.');
+                    return;
+                }
+
                 const orderIds = Array.from(checkedBoxes).map(cb => cb.value);
 
                 // Create a form and submit it to download PDF
@@ -317,6 +330,16 @@
                 document.body.appendChild(form);
                 form.submit();
                 document.body.removeChild(form);
+            });
+
+            // Individual print label link validation
+            document.querySelectorAll('.print-label-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (this.getAttribute('data-shipped') === 'false') {
+                        e.preventDefault();
+                        alert('This order is not yet marked as shipped. You must mark it as shipped first before printing labels.');
+                    }
+                });
             });
 
             // Bulk mark as shipped
