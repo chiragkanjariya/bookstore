@@ -169,6 +169,7 @@
                                 <td class="px-6 py-4">
                                     @if(!$order->isManuallyShipped())
                                         <input type="checkbox" name="order_ids[]" value="{{ $order->id }}"
+                                            data-shipped="{{ $order->isManuallyShipped() ? 'true' : 'false' }}"
                                             class="order-checkbox rounded">
                                     @endif
                                 </td>
@@ -253,7 +254,8 @@
                                             <i class="fas fa-eye mr-1"></i>View Details
                                         </a>
                                         <a href="{{ route('admin.manual-shipping.print-label', $order) }}"
-                                            class="text-purple-600 hover:text-purple-900" target="_blank">
+                                            class="text-purple-600 hover:text-purple-900 print-label-link"
+                                            data-shipped="{{ $order->isManuallyShipped() ? 'true' : 'false' }}" target="_blank">
                                             <i class="fas fa-print mr-1"></i>Print Label & Invoice
                                         </a>
                                         @if(!$order->isManuallyShipped() && $order->status !== 'delivered')
@@ -294,14 +296,13 @@
                 <h3 class="text-lg font-semibold text-gray-900">Mark as Shipped</h3>
                 <button onclick="closeShipModal()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
-            <p class="text-sm text-gray-600 mb-4">Order: <span id="ship-modal-order-number"
-                    class="font-semibold"></span></p>
+            <p class="text-sm text-gray-600 mb-4">Order: <span id="ship-modal-order-number" class="font-semibold"></span>
+            </p>
 
             <div class="space-y-4">
                 <div>
@@ -428,6 +429,16 @@
                     return;
                 }
 
+                // Check for non-shipped orders
+                const unshippedOrders = Array.from(checkedBoxes).filter(cb =>
+                    cb.getAttribute('data-shipped') === 'false'
+                );
+
+                if (unshippedOrders.length > 0) {
+                    alert('Some selected orders are not yet marked as shipped. You must mark them as shipped first before printing labels.');
+                    return;
+                }
+
                 const orderIds = Array.from(checkedBoxes).map(cb => cb.value);
 
                 const form = document.createElement('form');
@@ -454,7 +465,17 @@
                 document.body.removeChild(form);
             });
 
-            // Bulk mark as shipped — opens modal flow
+            // Individual print label link validation
+            document.querySelectorAll('.print-label-link').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    if (this.getAttribute('data-shipped') === 'false') {
+                        e.preventDefault();
+                        alert('This order is not yet marked as shipped. You must mark it as shipped first before printing labels.');
+                    }
+                });
+            });
+
+            // Bulk mark as shipped
             bulkMarkShipped.addEventListener('click', function () {
                 const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
                 if (checkedBoxes.length === 0) {
