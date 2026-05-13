@@ -131,7 +131,7 @@ class WebhookController extends Controller
             $order->update([
                 'payment_status' => 'paid',
                 'razorpay_payment_id' => $paymentId,
-                'status' => 'processing'
+                'status' => 'pending_to_be_prepared'
             ]);
 
             Log::info('Order payment status updated via webhook', [
@@ -140,8 +140,8 @@ class WebhookController extends Controller
                 'payment_status' => 'paid'
             ]);
 
-            // Create courier order automatically
-            $this->createCourierOrderIfNeeded($order);
+            // Do NOT auto-create courier order here.
+            // Maruti API is called only when admin marks the order as Shipped.
 
             // Send order confirmation email if not already sent
             $this->sendOrderConfirmationIfNeeded($order);
@@ -270,7 +270,7 @@ class WebhookController extends Controller
         if ($amountPaid >= $amount) {
             $dbOrder->update([
                 'payment_status' => 'paid',
-                'status' => 'processing'
+                'status' => 'pending_to_be_prepared'
             ]);
 
             Log::info('Order marked as paid via webhook', [
@@ -278,8 +278,8 @@ class WebhookController extends Controller
                 'order_number' => $dbOrder->order_number
             ]);
 
-            // Create courier order automatically
-            $this->createCourierOrderIfNeeded($dbOrder);
+            // Do NOT auto-create courier order here.
+            // Maruti API is called only when admin marks the order as Shipped.
 
             // Send order confirmation email if not already sent
             $this->sendOrderConfirmationIfNeeded($dbOrder);

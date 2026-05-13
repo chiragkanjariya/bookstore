@@ -897,6 +897,163 @@ class EmailService
     }
 
     /**
+     * Send manual/bulk order shipping notification email (with tracking info)
+     */
+    public function sendManualShippingEmail($order)
+    {
+        try {
+            if (!$this->accessToken) {
+                $this->getAccessToken();
+            }
+
+            if (!$this->accessToken) {
+                throw new Exception('Unable to get email access token');
+            }
+
+            $customerEmail = $order->user->email;
+            $customerName  = $order->user->name;
+            $orderNumber   = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+
+            $subject = "Your Order Has Been Shipped - {$orderNumber}";
+            $message = $this->getManualShippingEmailTemplate($order);
+
+            $to = [
+                $customerEmail => $customerName
+            ];
+
+            $result = $this->sendEmailViaAPI($to, $subject, $message);
+
+            if ($result) {
+                Log::info('Manual shipping email sent successfully', [
+                    'order_id'       => $order->id,
+                    'customer_email' => $customerEmail,
+                    'courier'        => $order->manual_courier_name,
+                    'tracking_id'    => $order->manual_tracking_id,
+                ]);
+            }
+
+            return $result;
+
+        } catch (Exception $e) {
+            Log::error('Manual shipping email error: ' . $e->getMessage(), [
+                'order_id' => $order->id ?? null
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Get manual/bulk order shipped email template
+     */
+    private function getManualShippingEmailTemplate($order)
+    {
+        $orderNumber  = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+        $courierName  = $order->manual_courier_name ?? 'Manual Courier';
+        $trackingId   = $order->manual_tracking_id ?? 'N/A';
+
+        // Build tracking URL (courier tracking page + tracking ID shown separately)
+        $trackingUrl  = null;
+        if ($order->manual_courier_id && $order->manualCourier && $order->manualCourier->tracking_url) {
+            $trackingUrl = $order->manualCourier->tracking_url;
+        }
+
+        $trackingSection = '';
+        if ($trackingUrl) {
+            $trackingSection = '
+                <div style="text-align:center; margin: 20px 0;">
+                    <a href="' . htmlspecialchars($trackingUrl) . '" target="_blank"
+                        style="display:inline-block; background-color:#00BDE0; color:#ffffff; text-decoration:none;
+                               padding:12px 30px; border-radius:5px; font-weight:bold; font-size:15px;">
+                        Track Your Order
+                    </a>
+                </div>';
+        }
+
+        $isBulk = $order->is_bulk_purchased
+            ? '<span style="background:#ede9fe;color:#6d28d9;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:bold;">Bulk Purchase</span>'
+            : '';
+
+        return '
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+            <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #00BDE0; padding-bottom: 20px;">
+                    <h1 style="color: #00BDE0; font-size: 28px; margin: 0;">' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '</h1>
+                    <p style="color: #666; font-size: 16px; margin: 5px 0 0 0;">Your Order Has Been Shipped!</p>
+                </div>
+
+                <!-- Greeting -->
+                <div style="margin-bottom: 25px;">
+                    <h2 style="color: #333; font-size: 22px; margin-bottom: 10px;">Hello ' . $order->user->name . ',</h2>
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                        Great news! Your order <strong>' . $orderNumber . '</strong> ' . $isBulk . ' has been shipped
+                        and is on its way to you.
+                    </p>
+                </div>
+
+                <!-- Tracking Information -->
+                <div style="background-color: #f0f9ff; border: 1px solid #bae6fd; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #0369a1; font-size: 18px; margin-top: 0; margin-bottom: 15px;">
+                        <span style="margin-right:6px;">📦</span> Shipping Details
+                    </h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold; width: 45%;">Courier Service:</td>
+                            <td style="padding: 8px 0; color: #333; font-weight: bold;">' . htmlspecialchars($courierName) . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Tracking Number:</td>
+                            <td style="padding: 8px 0; color: #00BDE0; font-weight: bold; font-size: 18px;">' . htmlspecialchars($trackingId) . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Shipped Date:</td>
+                            <td style="padding: 8px 0; color: #333;">' . ($order->shipped_at ? $order->shipped_at->format('F d, Y') : now()->format('F d, Y')) . '</td>
+                        </tr>
+                    </table>
+                    ' . $trackingSection . '
+                </div>
+
+                <!-- Order Details -->
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #333; font-size: 18px; margin-top: 0; margin-bottom: 15px;">Order Details</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Number:</td>
+                            <td style="padding: 8px 0; color: #333;">' . $orderNumber . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
+                            <td style="padding: 8px 0; color: #333;">' . $order->created_at->format('F d, Y') . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; font-weight: bold;">Total Amount:</td>
+                            <td style="padding: 8px 0; color: #333; font-weight: bold;">₹' . number_format($order->total_amount, 2) . '</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Delivery Info -->
+                <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #1976d2; font-size: 18px; margin-top: 0; margin-bottom: 15px;">What\'s Next?</h3>
+                    <ul style="color: #666; line-height: 1.6; margin: 0; padding-left: 20px;">
+                        <li>Use your tracking number <strong>' . htmlspecialchars($trackingId) . '</strong> to track your shipment on the courier website</li>
+                        <li>Expected delivery: 3–7 business days</li>
+                        <li>You\'ll receive a notification when your order is delivered</li>
+                    </ul>
+                </div>
+
+                <!-- Footer -->
+                <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <p style="color: #999; font-size: 12px; margin: 0;">
+                        &copy; ' . date('Y') . ' ' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>';
+    }
+
+    /**
      * Send password reset email
      */
     public function sendPasswordResetEmail($user, $token)

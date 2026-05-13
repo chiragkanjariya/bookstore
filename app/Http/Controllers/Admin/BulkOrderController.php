@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 
-class ManualShippingController extends Controller
+class BulkOrderController extends Controller
 {
     public function __construct()
     {
@@ -19,12 +19,12 @@ class ManualShippingController extends Controller
     }
 
     /**
-     * Display manual orders (non-serviceable, non-bulk)
+     * Display bulk orders.
      */
     public function index(Request $request)
     {
         $query = Order::with(['user', 'orderItems.book'])
-            ->manualOrders()
+            ->bulkOrders()
             ->orderBy('created_at', 'desc');
 
         // Filter by status
@@ -32,7 +32,7 @@ class ManualShippingController extends Controller
             if ($request->status === 'pending') {
                 $query->whereNull('manual_shipping_marked_at');
             } elseif ($request->status === 'shipped') {
-                $query->whereNotNull('manual_shipping_marked_at')->where('status', '!=', 'delivered');
+                $query->whereNotNull('manual_shipping_marked_at');
             } elseif ($request->status === 'delivered') {
                 $query->where('status', 'delivered');
             }
@@ -62,19 +62,19 @@ class ManualShippingController extends Controller
 
         // Get statistics
         $stats = [
-            'total' => Order::manualOrders()->count(),
-            'pending' => Order::manualOrders()->whereNull('manual_shipping_marked_at')->where('status', '!=', 'delivered')->count(),
-            'shipped' => Order::manualOrders()->whereNotNull('manual_shipping_marked_at')->where('status', '!=', 'delivered')->count(),
-            'delivered' => Order::manualOrders()->where('status', 'delivered')->count(),
+            'total' => Order::bulkOrders()->count(),
+            'pending' => Order::bulkOrders()->whereNull('manual_shipping_marked_at')->where('status', '!=', 'delivered')->count(),
+            'shipped' => Order::bulkOrders()->whereNotNull('manual_shipping_marked_at')->where('status', '!=', 'delivered')->count(),
+            'delivered' => Order::bulkOrders()->where('status', 'delivered')->count(),
         ];
 
         $manualCouriers = ManualCourier::active()->orderBy('name')->get();
 
-        return view('admin.manual-shipping.index', compact('orders', 'stats', 'request', 'manualCouriers'));
+        return view('admin.bulk-orders.index', compact('orders', 'stats', 'request', 'manualCouriers'));
     }
 
     /**
-     * Mark single order as manually shipped with tracking data
+     * Mark single bulk order as shipped with tracking data.
      */
     public function markAsShipped(Request $request, Order $order)
     {
@@ -83,17 +83,17 @@ class ManualShippingController extends Controller
             'manual_tracking_id' => 'required|string|max:255',
         ]);
 
-        if (!$order->requires_manual_shipping) {
+        if (!$order->is_bulk_purchased) {
             return response()->json([
                 'success' => false,
-                'message' => 'This order does not require manual shipping'
+                'message' => 'This is not a bulk order'
             ], 400);
         }
 
-        if ($order->isManuallyShipped()) {
+        if ($order->status === 'shipped' || $order->status === 'delivered') {
             return response()->json([
                 'success' => false,
-                'message' => 'Order already marked as shipped'
+                'message' => 'Order is already shipped or delivered'
             ], 400);
         }
 
@@ -108,13 +108,13 @@ class ManualShippingController extends Controller
             $emailService = new EmailService();
             $emailService->sendManualShippingEmail($order);
         } catch (\Exception $e) {
-            Log::error('Failed to send manual shipping email', [
+            Log::error('Failed to send bulk order shipping email', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage()
             ]);
         }
 
-        Log::info('Order marked as manually shipped', [
+        Log::info('Bulk order marked as shipped', [
             'order_id' => $order->id,
             'order_number' => $order->order_number,
             'courier_id' => $request->manual_courier_id,
@@ -124,12 +124,12 @@ class ManualShippingController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Order marked as shipped successfully'
+            'message' => 'Bulk order marked as shipped successfully'
         ]);
     }
 
     /**
-     * Bulk mark orders as manually shipped
+     * Bulk mark orders as shipped.
      */
     public function bulkMarkAsShipped(Request $request)
     {
@@ -141,7 +141,7 @@ class ManualShippingController extends Controller
         ]);
 
         $orders = Order::whereIn('id', $request->order_ids)
-            ->manualOrders()
+            ->bulkOrders()
             ->whereNull('manual_shipping_marked_at')
             ->get();
 
@@ -163,7 +163,7 @@ class ManualShippingController extends Controller
                     $order->load(['user', 'orderItems.book']);
                     $emailService->sendManualShippingEmail($order);
                 } catch (\Exception $e) {
-                    Log::error('Failed to send manual shipping email', [
+                    Log::error('Failed to send bulk order shipping email', [
                         'order_id' => $order->id,
                         'error' => $e->getMessage()
                     ]);
@@ -171,26 +171,77 @@ class ManualShippingController extends Controller
             }
         }
 
-        Log::info('Bulk mark as manually shipped', [
+        Log::info('Bulk mark bulk orders as shipped', [
             'count' => $count,
             'marked_by' => auth()->user()->id
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => "{$count} orders marked as shipped successfully"
+            'message' => "{$count} bulk orders marked as shipped successfully"
         ]);
     }
 
     /**
-     * Export manual shipping orders to CSV
+     * Print invoice and shipping label for bulk order.
+     */
+    public function printLabel(Order $order)
+    {
+        if (!$order->is_bulk_purchased) {
+            abort(404, 'This is not a bulk order');
+        }
+
+        try {
+            AWBNumberGenerator::assignToOrder($order);
+            $order->refresh();
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return view('admin.manual-shipping.print-label', compact('order'));
+    }
+
+    /**
+     * Bulk print labels as PDF.
+     */
+    public function bulkPrintPdf(Request $request)
+    {
+        $request->validate([
+            'order_ids' => 'required|array',
+            'order_ids.*' => 'exists:orders,id'
+        ]);
+
+        $orders = Order::with(['user', 'orderItems.book'])
+            ->whereIn('id', $request->order_ids)
+            ->bulkOrders()
+            ->get();
+
+        try {
+            foreach ($orders as $order) {
+                AWBNumberGenerator::assignToOrder($order);
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', 'Label generation error: ' . $e->getMessage());
+        }
+
+        $orders = Order::with(['user', 'orderItems.book'])
+            ->whereIn('id', $request->order_ids)
+            ->get();
+
+        $pdf = Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('bulk_order_labels_' . date('Y-m-d_H-i-s') . '.pdf');
+    }
+
+    /**
+     * Export bulk orders to CSV.
      */
     public function export(Request $request)
     {
         $query = Order::with(['user', 'orderItems.book'])
-            ->manualOrders();
+            ->bulkOrders();
 
-        // Apply same filters as index
         if ($request->filled('status')) {
             if ($request->status === 'pending') {
                 $query->whereNull('manual_shipping_marked_at');
@@ -219,7 +270,7 @@ class ManualShippingController extends Controller
 
         $orders = $query->get();
 
-        $filename = 'manual_orders_' . date('Y-m-d_H-i-s') . '.csv';
+        $filename = 'bulk_orders_' . date('Y-m-d_H-i-s') . '.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -229,7 +280,6 @@ class ManualShippingController extends Controller
         $callback = function () use ($orders) {
             $file = fopen('php://output', 'w');
 
-            // CSV headers
             fputcsv($file, [
                 'Order Number',
                 'Customer',
@@ -240,11 +290,12 @@ class ManualShippingController extends Controller
                 'City',
                 'State',
                 'Total Amount',
+                'Items Count',
                 'Order Date',
                 'Shipping Status',
                 'Courier',
                 'Tracking ID',
-                'Marked Shipped At'
+                'Shipped At'
             ]);
 
             foreach ($orders as $order) {
@@ -260,6 +311,7 @@ class ManualShippingController extends Controller
                     $shippingAddress['city'] ?? '',
                     $shippingAddress['state'] ?? '',
                     '₹' . number_format($order->total_amount, 2),
+                    $order->orderItems->count(),
                     $order->created_at->format('Y-m-d H:i:s'),
                     $order->status === 'delivered' ? 'Delivered' : ($order->isManuallyShipped() ? 'Shipped' : 'Pending'),
                     $order->manual_courier_name ?? '',
@@ -272,60 +324,5 @@ class ManualShippingController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
-    }
-
-    /**
-     * Print invoice and shipping label for manual shipping order
-     */
-    public function printLabel(Order $order)
-    {
-        if (!$order->requires_manual_shipping) {
-            abort(404, 'This order does not require manual shipping');
-        }
-
-        // Ensure AWB number exists and is in the correct format
-        try {
-            AWBNumberGenerator::assignToOrder($order);
-            $order->refresh();
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
-        }
-
-        return view('admin.manual-shipping.print-label', compact('order'));
-    }
-
-    /**
-     * Bulk print labels and invoices as PDF
-     */
-    public function bulkPrintPdf(Request $request)
-    {
-        $request->validate([
-            'order_ids' => 'required|array',
-            'order_ids.*' => 'exists:orders,id'
-        ]);
-
-        $orders = Order::with(['user', 'orderItems.book'])
-            ->whereIn('id', $request->order_ids)
-            ->manualOrders()
-            ->get();
-
-        // Ensure AWB numbers are generated and in the correct format
-        try {
-            foreach ($orders as $order) {
-                AWBNumberGenerator::assignToOrder($order);
-            }
-        } catch (\Exception $e) {
-            return back()->with('error', 'One or more labels could not be generated: ' . $e->getMessage());
-        }
-
-        // Re-load to get updated AWB numbers
-        $orders = Order::with(['user', 'orderItems.book'])
-            ->whereIn('id', $request->order_ids)
-            ->get();
-
-        $pdf = Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
-            ->setPaper('a4', 'landscape');
-
-        return $pdf->download('manual_shipping_labels_' . date('Y-m-d_H-i-s') . '.pdf');
     }
 }

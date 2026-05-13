@@ -155,16 +155,27 @@
                         <span
                             class="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">{{ \App\Models\Order::count() }}</span>
                     </a>
-                    <!-- Manual Shipping -->
+                    <!-- Manual Orders -->
                     <a href="{{ route('admin.manual-shipping.index') }}"
                         class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.manual-shipping.*') ? 'bg-[#00BDE0] text-white' : 'text-gray-700 hover:bg-gray-100' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                         </svg>
-                        Manual Shipping
+                        Manual Orders
                         <span
-                            class="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">{{ \App\Models\Order::where('requires_manual_shipping', '1')->count() }}</span>
+                            class="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">{{ \App\Models\Order::manualOrders()->count() }}</span>
+                    </a>
+                    <!-- Bulk Orders -->
+                    <a href="{{ route('admin.bulk-orders.index') }}"
+                        class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.bulk-orders.*') ? 'bg-[#00BDE0] text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        Bulk Orders
+                        <span
+                            class="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">{{ \App\Models\Order::bulkOrders()->count() }}</span>
                     </a>
                 </div>
 
@@ -207,6 +218,16 @@
                                 d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                         </svg>
                         Maruti Series
+                    </a>
+
+                    <!-- Manual Courier -->
+                    <a href="{{ route('admin.manual-couriers.index') }}"
+                        class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.manual-couriers.*') ? 'bg-[#00BDE0] text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        Manual Courier
                     </a>
                 </div>
             </nav>

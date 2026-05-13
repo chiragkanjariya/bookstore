@@ -8,7 +8,7 @@
         <div class="flex items-center justify-between mb-8">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Orders Management</h1>
-                <p class="text-gray-600 mt-2">Manage all customer orders and track deliveries</p>
+                <p class="text-gray-600 mt-2">Maruti automatic orders — manual and bulk orders are managed separately</p>
             </div>
             <div class="flex space-x-3">
                 <a href="{{ route('admin.orders.export', request()->query()) }}"
@@ -26,7 +26,7 @@
                         <i class="fas fa-shopping-cart text-xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Orders</p>
+                        <p class="text-sm font-medium text-gray-600">Total Maruti Orders</p>
                         <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['total_orders']) }}</p>
                     </div>
                 </div>
@@ -35,11 +35,11 @@
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                        <i class="fas fa-clock text-xl"></i>
+                        <i class="fas fa-box text-xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Pending Orders</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['pending_orders']) }}</p>
+                        <p class="text-sm font-medium text-gray-600">Order Placed</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['order_placed']) }}</p>
                     </div>
                 </div>
             </div>
@@ -50,7 +50,7 @@
                         <i class="fas fa-truck text-xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Shipped Orders</p>
+                        <p class="text-sm font-medium text-gray-600">Shipped</p>
                         <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['shipped_orders']) }}</p>
                     </div>
                 </div>
@@ -84,15 +84,9 @@
                     <select name="status"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">All Statuses</option>
-                        <option value="pending_to_be_prepared" {{ request('status') == 'pending_to_be_prepared' ? 'selected' : '' }}>Pending to be Prepared</option>
-                        <option value="ready_to_ship" {{ request('status') == 'ready_to_ship' ? 'selected' : '' }}>Ready to
-                            Ship</option>
-                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="processing" {{ request('status') == 'processing' ? 'selected' : '' }}>Processing
-                        </option>
+                        <option value="order_placed" {{ request('status') == 'order_placed' ? 'selected' : '' }}>Order Placed</option>
                         <option value="shipped" {{ request('status') == 'shipped' ? 'selected' : '' }}>Shipped</option>
                         <option value="delivered" {{ request('status') == 'delivered' ? 'selected' : '' }}>Delivered</option>
-                        <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                     </select>
                 </div>
 
@@ -110,16 +104,7 @@
                     </select>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Bulk Purchase</label>
-                    <select name="is_bulk_purchased"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Orders</option>
-                        <option value="1" {{ request('is_bulk_purchased') == '1' ? 'selected' : '' }}>Bulk Purchase</option>
-                        <option value="0" {{ request('is_bulk_purchased') == '0' ? 'selected' : '' }}>Regular Purchase
-                        </option>
-                    </select>
-                </div>
+
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Status</label>
@@ -179,12 +164,9 @@
                             <select id="bulk-status" name="status"
                                 class="px-3 py-2 border border-gray-300 rounded-md text-sm">
                                 <option value="">Bulk Update Status</option>
-                                <option value="pending_to_be_prepared">Mark as Pending to be Prepared</option>
-                                <option value="ready_to_ship">Mark as Ready to Ship</option>
-                                <option value="processing">Mark as Processing</option>
+                                <option value="pending_to_be_prepared">Mark as Order Placed</option>
                                 <option value="shipped">Mark as Shipped</option>
                                 <option value="delivered">Mark as Delivered</option>
-                                <option value="cancelled">Mark as Cancelled</option>
                             </select>
                             <button type="button" id="bulk-submit"
                                 class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm transition duration-200"
@@ -229,33 +211,37 @@
                                         <div>
                                             <div class="text-sm font-medium text-gray-900">#{{ $order->order_number }}</div>
                                             <div class="text-sm text-gray-500">{{ $order->orderItems->count() }} item(s)</div>
-                                            @if($order->is_bulk_purchased)
-                                                <div class="text-xs">
-                                                    <span
-                                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                                        Bulk Purchase
+
+                                            @if($order->courier_provider == 'shree_maruti' && $order->courier_document_ref)
+                                                <div class="mt-1">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">
+                                                        <i class="fas fa-barcode mr-1"></i>Maruti: {{ $order->courier_document_ref }}
                                                     </span>
                                                 </div>
-                                            @endif
-                                            @if($order->courier_provider == 'shree_maruti' && $order->courier_document_ref)
-                                                <div class="text-xs text-blue-600">Maruti: {{ $order->courier_document_ref }}</div>
                                             @elseif($order->tracking_number || $order->courier_awb_number)
-                                                <div class="text-xs text-blue-600">Tracking:
-                                                    {{ $order->tracking_number ?? $order->courier_awb_number }}</div>
-                                            @endif
-
-                                        @if($order->shipping_partner_status)
-                                            <div class="mt-1">
-                                                <span class="text-xs font-bold {{ $order->shipping_partner_status == 'approved' ? 'text-green-600' : ($order->shipping_partner_status == 'rejected' ? 'text-red-600' : 'text-gray-600') }}">
-                                                    Partner: {{ ucfirst($order->shipping_partner_status) }}
-                                                </span>
-                                            </div>
-                                            @if($order->shipping_partner_status == 'rejected' && $order->shipping_partner_error)
-                                                <div class="text-xs text-red-600 mt-1 max-w-xs break-words" title="{{ $order->shipping_partner_error }}">
-                                                    Error: {{ $order->shipping_partner_error }}
+                                                <div class="mt-1">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">
+                                                        <i class="fas fa-barcode mr-1"></i>{{ $order->tracking_number ?? $order->courier_awb_number }}
+                                                    </span>
+                                                </div>
+                                            @elseif($order->status === 'shipped')
+                                                <div class="mt-1 text-xs text-yellow-600">
+                                                    <i class="fas fa-clock mr-1"></i>Maruti ID pending
                                                 </div>
                                             @endif
-                                        @endif
+
+                                            @if($order->shipping_partner_status)
+                                                <div class="mt-1">
+                                                    <span class="text-xs font-bold {{ $order->shipping_partner_status == 'approved' ? 'text-green-600' : ($order->shipping_partner_status == 'rejected' ? 'text-red-600' : 'text-gray-500') }}">
+                                                        <i class="fas fa-{{ $order->shipping_partner_status == 'approved' ? 'check' : 'times' }} mr-1"></i>{{ ucfirst($order->shipping_partner_status) }}
+                                                    </span>
+                                                </div>
+                                                @if($order->shipping_partner_status == 'rejected' && $order->shipping_partner_error)
+                                                    <div class="text-xs text-red-600 mt-0.5 max-w-xs truncate" title="{{ $order->shipping_partner_error }}">
+                                                        {{ Str::limit($order->shipping_partner_error, 45) }}
+                                                    </div>
+                                                @endif
+                                            @endif
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
@@ -267,7 +253,7 @@
                                 <td class="px-6 py-4">
                                     <span
                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $order->status_badge_color }}-100 text-{{ $order->status_badge_color }}-800">
-                                        {{ ucfirst($order->status) }}
+                                        {{ $order->maruti_status_label }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
