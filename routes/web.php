@@ -84,7 +84,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
     Route::patch('users/bulk-status', [UserController::class, 'bulkUpdateStatus'])->name('users.bulk-status');
 
-    // Order Management Routes
+    // Order Management Routes (Maruti/Automatic orders only)
     Route::get('orders', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [\App\Http\Controllers\Admin\OrderController::class, 'show'])->name('orders.show');
     Route::patch('orders/{order}/status', [\App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('orders.update-status');
@@ -111,7 +111,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('accounts/order-details', [\App\Http\Controllers\Admin\AccountReportController::class, 'getOrderDetails'])->name('accounts.order-details');
     });
 
-    // Manual Shipping Routes
+    // Manual Shipping Routes (Manual Orders — non-serviceable, non-bulk)
     Route::prefix('manual-shipping')->name('manual-shipping.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ManualShippingController::class, 'index'])->name('index');
         Route::get('/{order}/print-label', [\App\Http\Controllers\Admin\ManualShippingController::class, 'printLabel'])->name('print-label');
@@ -119,6 +119,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/bulk-mark-shipped', [\App\Http\Controllers\Admin\ManualShippingController::class, 'bulkMarkAsShipped'])->name('bulk-mark-shipped');
         Route::post('/bulk-print-pdf', [\App\Http\Controllers\Admin\ManualShippingController::class, 'bulkPrintPdf'])->name('bulk-print-pdf');
         Route::get('/export', [\App\Http\Controllers\Admin\ManualShippingController::class, 'export'])->name('export');
+    });
+
+    // Bulk Orders Routes
+    Route::prefix('bulk-orders')->name('bulk-orders.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\BulkOrderController::class, 'index'])->name('index');
+        Route::post('/{order}/mark-shipped', [\App\Http\Controllers\Admin\BulkOrderController::class, 'markAsShipped'])->name('mark-shipped');
+        Route::post('/bulk-mark-shipped', [\App\Http\Controllers\Admin\BulkOrderController::class, 'bulkMarkAsShipped'])->name('bulk-mark-shipped');
+        Route::get('/{order}/print-label', [\App\Http\Controllers\Admin\BulkOrderController::class, 'printLabel'])->name('print-label');
+        Route::post('/bulk-print-pdf', [\App\Http\Controllers\Admin\BulkOrderController::class, 'bulkPrintPdf'])->name('bulk-print-pdf');
+        Route::get('/export', [\App\Http\Controllers\Admin\BulkOrderController::class, 'export'])->name('export');
     });
 
     // Settings Routes
@@ -130,6 +140,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('maruti-series', [MarutiSeriesController::class, 'store'])->name('maruti-series.store');
     Route::delete('maruti-series', [MarutiSeriesController::class, 'destroySeries'])->name('maruti-series.destroy');
     Route::put('maruti-series/settings', [MarutiSeriesController::class, 'updateSettings'])->name('maruti-series.settings');
+
+    // Manual Courier CRUD Routes
+    Route::prefix('manual-couriers')->name('manual-couriers.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ManualCourierController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Admin\ManualCourierController::class, 'store'])->name('store');
+        Route::put('/{manual_courier}', [\App\Http\Controllers\Admin\ManualCourierController::class, 'update'])->name('update');
+        Route::delete('/{manual_courier}', [\App\Http\Controllers\Admin\ManualCourierController::class, 'destroy'])->name('destroy');
+        Route::patch('/{manual_courier}/toggle-status', [\App\Http\Controllers\Admin\ManualCourierController::class, 'toggleStatus'])->name('toggle-status');
+        Route::get('/active', [\App\Http\Controllers\Admin\ManualCourierController::class, 'getActive'])->name('active');
+    });
 });
 
 // Checkout Routes (Authenticated Users)

@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Services\CourierManager;
 use App\Services\EmailService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -16,16 +17,21 @@ class OrderController extends Controller
     }
 
     /**
-     * Display a listing of all orders.
+     * Display a listing of all orders (Maruti/automatic orders only).
      */
     public function index(Request $request)
     {
         $query = Order::with(['user', 'orderItems.book'])
+            ->marutiOrders()
             ->orderBy('created_at', 'desc');
 
         // Filter by status
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            if ($request->status === 'order_placed') {
+                $query->whereIn('status', ['pending_to_be_prepared', 'ready_to_ship', 'pending', 'processing']);
+            } else {
+                $query->where('status', $request->status);
+            }
         }
 
         // Filter by payment status
@@ -53,11 +59,6 @@ class OrderController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        // Filter by bulk purchase
-        if ($request->filled('is_bulk_purchased')) {
-            $query->where('is_bulk_purchased', $request->is_bulk_purchased === '1');
-        }
-
         // Filter by shipping partner status
         if ($request->filled('shipping_partner_status')) {
             $query->where('shipping_partner_status', $request->shipping_partner_status);
@@ -65,15 +66,13 @@ class OrderController extends Controller
 
         $orders = $query->paginate(20)->withQueryString();
 
-        // Get statistics
+        // Get statistics (Maruti orders only)
         $stats = [
-            'total_orders' => Order::count(),
-            'pending_orders' => Order::where('status', 'pending')->count(),
-            'processing_orders' => Order::where('status', 'processing')->count(),
-            'shipped_orders' => Order::where('status', 'shipped')->count(),
-            'delivered_orders' => Order::where('status', 'delivered')->count(),
-            'cancelled_orders' => Order::where('status', 'cancelled')->count(),
-            'total_revenue' => Order::where('payment_status', 'paid')->sum('total_amount'),
+            'total_orders' => Order::marutiOrders()->count(),
+            'order_placed' => Order::marutiOrders()->whereIn('status', ['pending_to_be_prepared', 'ready_to_ship', 'pending', 'processing'])->count(),
+            'shipped_orders' => Order::marutiOrders()->where('status', 'shipped')->count(),
+            'delivered_orders' => Order::marutiOrders()->where('status', 'delivered')->count(),
+            'total_revenue' => Order::marutiOrders()->where('payment_status', 'paid')->sum('total_amount'),
         ];
 
         return view('admin.orders.index', compact('orders', 'stats', 'request'));
@@ -90,25 +89,27 @@ class OrderController extends Controller
 
     /**
      * Update the order status.
+     * When marking as Shipped, calls the Maruti API to create the courier order.
      */
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled'
+            'status' => 'required|in:pending_to_be_prepared,shipped,delivered'
         ]);
 
         $oldStatus = $order->status;
-        $order->update([
-            'status' => $request->status,
-            'shipped_at' => $request->status === 'shipped' ? now() : $order->shipped_at,
-            'delivered_at' => $request->status === 'delivered' ? now() : $order->delivered_at,
-        ]);
 
-        // If order is cancelled, restore stock
-        if ($request->status === 'cancelled' && $oldStatus !== 'cancelled') {
-            foreach ($order->orderItems as $orderItem) {
-                $orderItem->book->increment('stock', $orderItem->quantity);
-            }
+        $updateData = [
+            'status'       => $request->status,
+            'shipped_at'   => $request->status === 'shipped' ? now() : $order->shipped_at,
+            'delivered_at' => $request->status === 'delivered' ? now() : $order->delivered_at,
+        ];
+
+        $order->update($updateData);
+
+        // When marking a Maruti order as Shipped → call Maruti API
+        if ($request->status === 'shipped' && !$order->requires_manual_shipping && !$order->is_bulk_purchased) {
+            $this->submitToMarutiApi($order);
         }
 
         return redirect()->back()->with('success', 'Order status updated successfully.');
@@ -130,34 +131,75 @@ class OrderController extends Controller
 
     /**
      * Bulk update order statuses.
+     * When marking as Shipped, calls Maruti API for each eligible Maruti order.
      */
     public function bulkUpdateStatus(Request $request)
     {
         $request->validate([
             'order_ids' => 'required|array',
             'order_ids.*' => 'exists:orders,id',
-            'status' => 'required|in:pending_to_be_prepared,ready_to_ship,pending,processing,shipped,delivered,cancelled'
+            'status' => 'required|in:pending_to_be_prepared,shipped,delivered'
         ]);
 
-        $orders = Order::whereIn('id', $request->order_ids)->get();
+        $orders = Order::whereIn('id', $request->order_ids)->marutiOrders()->get();
 
         foreach ($orders as $order) {
-            $oldStatus = $order->status;
             $order->update([
-                'status' => $request->status,
-                'shipped_at' => $request->status === 'shipped' ? now() : $order->shipped_at,
+                'status'       => $request->status,
+                'shipped_at'   => $request->status === 'shipped' ? now() : $order->shipped_at,
                 'delivered_at' => $request->status === 'delivered' ? now() : $order->delivered_at,
             ]);
 
-            // If order is cancelled, restore stock
-            if ($request->status === 'cancelled' && $oldStatus !== 'cancelled') {
-                foreach ($order->orderItems as $orderItem) {
-                    $orderItem->book->increment('stock', $orderItem->quantity);
-                }
+            // When marking as Shipped → call Maruti API
+            if ($request->status === 'shipped') {
+                $this->submitToMarutiApi($order);
             }
         }
 
         return redirect()->back()->with('success', count($request->order_ids) . ' orders updated successfully.');
+    }
+
+    /**
+     * Submit a Maruti order to the courier API (called on ship).
+     */
+    private function submitToMarutiApi(Order $order): void
+    {
+        try {
+            $order->load(['orderItems.book', 'user']);
+            $courierManager = app(CourierManager::class);
+
+            $response = $courierManager->createOrder($order);
+
+            if ($response && isset($response['success']) && $response['success']) {
+                $order->update([
+                    'shipping_partner_status' => Order::SHIPPING_PARTNER_APPROVED,
+                    'shipping_partner_error'  => null,
+                ]);
+                Log::info('Maruti courier order created on ship', [
+                    'order_id'     => $order->id,
+                    'order_number' => $order->order_number,
+                ]);
+            } else {
+                $errorMessage = is_array($response) && isset($response['message'])
+                    ? $response['message']
+                    : 'Failed to create courier order';
+
+                $order->update([
+                    'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
+                    'shipping_partner_error'  => $errorMessage,
+                ]);
+                Log::error('Maruti courier order failed on ship', [
+                    'order_id'     => $order->id,
+                    'order_number' => $order->order_number,
+                    'error'        => $errorMessage,
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception submitting order to Maruti on ship', [
+                'order_id' => $order->id,
+                'error'    => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

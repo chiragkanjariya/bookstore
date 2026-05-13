@@ -40,6 +40,9 @@ class Order extends Model
         'courier_awb_number',
         'awb_number',
         'requires_manual_shipping',
+        'manual_courier_id',
+        'manual_tracking_id',
+        'manual_courier_name',
         'shipping_partner_status',
         'shipping_partner_error',
         'manual_shipping_marked_at',
@@ -104,13 +107,21 @@ class Order extends Model
     }
 
     /**
+     * Get the manual courier for the order.
+     */
+    public function manualCourier(): BelongsTo
+    {
+        return $this->belongsTo(ManualCourier::class);
+    }
+
+    /**
      * Get the status badge color.
      */
     public function getStatusBadgeColorAttribute(): string
     {
         return match ($this->status) {
-            'pending_to_be_prepared' => 'info',
-            'ready_to_ship' => 'primary',
+            'pending_to_be_prepared' => 'warning',
+            'ready_to_ship' => 'info',
             'pending' => 'warning',
             'processing' => 'info',
             'shipped' => 'primary',
@@ -118,6 +129,17 @@ class Order extends Model
             'cancelled' => 'danger',
             default => 'secondary'
         };
+    }
+
+    /**
+     * Get display-friendly status label for Maruti orders.
+     */
+    public function getMarutiStatusLabelAttribute(): string
+    {
+        if (in_array($this->status, ['pending_to_be_prepared', 'ready_to_ship', 'pending', 'processing'])) {
+            return 'Order Placed';
+        }
+        return ucfirst($this->status);
     }
 
     /**
@@ -197,23 +219,37 @@ class Order extends Model
     }
 
     /**
-     * Check if order is marked as manually shipped.
+     * Check if order is marked as manually shipped (works for both manual and bulk orders).
      */
     public function isManuallyShipped(): bool
     {
-        return $this->requires_manual_shipping && !is_null($this->manual_shipping_marked_at);
+        return !is_null($this->manual_shipping_marked_at);
     }
 
     /**
-     * Mark order as manually shipped.
+     * Mark order as manually shipped with tracking data.
      */
-    public function markAsManuallyShipped(): bool
+    public function markAsManuallyShipped($courierData = []): bool
     {
-        return $this->update([
+        $updateData = [
             'manual_shipping_marked_at' => now(),
             'status' => 'shipped',
             'shipped_at' => now(),
-        ]);
+        ];
+
+        if (!empty($courierData['manual_courier_id'])) {
+            $updateData['manual_courier_id'] = $courierData['manual_courier_id'];
+            $courier = ManualCourier::find($courierData['manual_courier_id']);
+            if ($courier) {
+                $updateData['manual_courier_name'] = $courier->name;
+            }
+        }
+
+        if (!empty($courierData['manual_tracking_id'])) {
+            $updateData['manual_tracking_id'] = $courierData['manual_tracking_id'];
+        }
+
+        return $this->update($updateData);
     }
 
     /**
@@ -230,6 +266,49 @@ class Order extends Model
     public function scopeReadyToShip($query)
     {
         return $query->where('status', self::STATUS_READY_TO_SHIP);
+    }
+
+    /**
+     * Scope for Maruti (automatic) orders — non-manual, non-bulk.
+     */
+    public function scopeMarutiOrders($query)
+    {
+        return $query->where('requires_manual_shipping', false)
+            ->where('is_bulk_purchased', false);
+    }
+
+    /**
+     * Scope for bulk orders.
+     */
+    public function scopeBulkOrders($query)
+    {
+        return $query->where('is_bulk_purchased', true);
+    }
+
+    /**
+     * Scope for manual orders (non-serviceable, non-bulk).
+     */
+    public function scopeManualOrders($query)
+    {
+        return $query->where('requires_manual_shipping', true)
+            ->where('is_bulk_purchased', false);
+    }
+
+    /**
+     * Get tracking URL for manual/bulk shipped order.
+     */
+    public function getManualTrackingUrlAttribute(): ?string
+    {
+        if (!$this->manual_tracking_id || !$this->manual_courier_id) {
+            return null;
+        }
+
+        $courier = $this->manualCourier;
+        if ($courier && $courier->tracking_url) {
+            return $courier->tracking_url;
+        }
+
+        return null;
     }
 
     /**
