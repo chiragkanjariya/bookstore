@@ -153,7 +153,7 @@
                         </svg>
                         Orders
                         <span
-                            class="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">{{ \App\Models\Order::count() }}</span>
+                            class="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">{{ \App\Models\Order::marutiOrders()->count() }}</span>
                     </a>
                     <!-- Manual Orders -->
                     <a href="{{ route('admin.manual-shipping.index') }}"
