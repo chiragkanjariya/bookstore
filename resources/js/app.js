@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (loginFormElement) {
         loginFormElement.addEventListener('submit', function(e) {
             e.preventDefault();
-            submitForm(this, '/login', 'loginSubmitBtn');
+            submitForm(this, '/login', 'loginSubmitBtn', 'login_');
         });
     }
 
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (registerFormElement) {
         registerFormElement.addEventListener('submit', function(e) {
             e.preventDefault();
-            submitForm(this, '/register', 'registerSubmitBtn');
+            submitForm(this, '/register', 'registerSubmitBtn', 'register_');
         });
     }
 
@@ -207,10 +207,10 @@ document.addEventListener('DOMContentLoaded', function() {
         authMessageText.textContent = message;
     }
 
-    function showErrors(errors) {
+    function showErrors(errors, formPrefix = '') {
         Object.keys(errors).forEach(field => {
-            const errorElement = document.getElementById(field + '_error');
-            const inputElement = document.getElementById(field) || document.getElementById('login_' + field) || document.getElementById('register_' + field);
+            const errorElement = document.getElementById(formPrefix + field + '_error');
+            const inputElement = document.getElementById(formPrefix + field);
             
             if (errorElement) {
                 errorElement.textContent = errors[field][0];
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    async function submitForm(form, url, submitButtonId) {
+    async function submitForm(form, url, submitButtonId, formPrefix = '') {
         clearErrors();
         clearMessages();
         setSubmitButtonLoading(submitButtonId, true);
@@ -252,20 +252,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: formData,
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
                 }
             });
 
             const data = await response.json();
 
-            if (data.success) {
-                showMessage(data.message);
+            if (data.success || (response.ok && !data.errors)) {
+                showMessage(data.message || 'Success!');
                 setTimeout(() => {
                     window.location.href = data.redirect || '/';
                 }, 1500);
             } else {
                 if (data.errors) {
-                    showErrors(data.errors);
+                    showErrors(data.errors, formPrefix);
                 } else {
                     showMessage(data.message || 'An error occurred. Please try again.', true);
                 }

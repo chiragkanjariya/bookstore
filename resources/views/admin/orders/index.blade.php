@@ -71,74 +71,73 @@
 
         <!-- Filters -->
         <div class="bg-white rounded-lg shadow p-6 mb-8">
-            <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                    <input type="text" name="search" value="{{ request('search') }}"
-                        placeholder="Order number, customer name..."
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                    <select name="status"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Statuses</option>
-                        <option value="order_placed" {{ request('status') == 'order_placed' ? 'selected' : '' }}>Order Placed</option>
-                        <option value="shipped" {{ request('status') == 'shipped' ? 'selected' : '' }}>Shipped</option>
-                        <option value="delivered" {{ request('status') == 'delivered' ? 'selected' : '' }}>Delivered</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
-                    <select name="payment_status"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Payment Status</option>
-                        <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending
-                        </option>
-                        <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
-                        <option value="failed" {{ request('payment_status') == 'failed' ? 'selected' : '' }}>Failed</option>
-                        <option value="refunded" {{ request('payment_status') == 'refunded' ? 'selected' : '' }}>Refunded
-                        </option>
-                    </select>
-                </div>
-
-
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Status</label>
-                    <select name="shipping_partner_status"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Shipping Status</option>
-                        <option value="pending" {{ request('shipping_partner_status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="approved" {{ request('shipping_partner_status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                        <option value="rejected" {{ request('shipping_partner_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Date From</label>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-
-                <div class="flex items-end">
-                    <div class="w-full">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Date To</label>
-                        <div class="flex space-x-2">
-                            <input type="date" name="date_to" value="{{ request('date_to') }}"
-                                class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <button type="submit"
-                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
-                                Filter
-                            </button>
-                            <a href="{{ route('admin.orders.index') }}"
-                                class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition duration-200">
-                                Clear
-                            </a>
-                        </div>
+            <form method="GET">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <input type="text" name="search" value="{{ request('search') }}"
+                            placeholder="Order number, customer name..."
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select name="status"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Statuses</option>
+                            <option value="order_placed" {{ request('status') == 'order_placed' ? 'selected' : '' }}>Order Placed</option>
+                            <option value="shipped" {{ request('status') == 'shipped' ? 'selected' : '' }}>Shipped</option>
+                            <option value="delivered" {{ request('status') == 'delivered' ? 'selected' : '' }}>Delivered</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
+                        <select name="payment_status"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Payment Status</option>
+                            <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending
+                            </option>
+                            <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
+                            <option value="failed" {{ request('payment_status') == 'failed' ? 'selected' : '' }}>Failed</option>
+                            <option value="refunded" {{ request('payment_status') == 'refunded' ? 'selected' : '' }}>Refunded
+                            </option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Status</label>
+                        <select name="shipping_partner_status"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Shipping Status</option>
+                            <option value="pending" {{ request('shipping_partner_status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="approved" {{ request('shipping_partner_status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                            <option value="rejected" {{ request('shipping_partner_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date From</label>
+                        <input type="date" name="date_from" value="{{ request('date_from') }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date To</label>
+                        <input type="date" name="date_to" value="{{ request('date_to') }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-4">
+                    <button type="submit"
+                        class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition duration-200 font-medium">
+                        Filter
+                    </button>
+                    <a href="{{ route('admin.orders.index') }}"
+                        class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition duration-200 font-medium flex items-center">
+                        Clear
+                    </a>
                 </div>
             </form>
         </div>
