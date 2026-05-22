@@ -35,8 +35,10 @@ class OrderController extends Controller
         }
 
         // Filter by payment status
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
+        $paymentStatus = $request->input('payment_status', 'paid');
+        if (!empty($paymentStatus)) {
+            $query->where('payment_status', $paymentStatus);
+            $request->merge(['payment_status' => $paymentStatus]);
         }
 
         // Search by order number or user name

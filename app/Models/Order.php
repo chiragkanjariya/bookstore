@@ -56,6 +56,7 @@ class Order extends Model
         'billing_address',
         'notes',
         'confirmation_email_sent',
+        'shipped_email_sent',
         'shipped_at',
         'delivered_at',
     ];
@@ -70,6 +71,7 @@ class Order extends Model
         'total_amount' => 'decimal:2',
         'is_bulk_purchased' => 'boolean',
         'confirmation_email_sent' => 'boolean',
+        'shipped_email_sent' => 'boolean',
         'manual_shipping_marked_at' => 'datetime',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
