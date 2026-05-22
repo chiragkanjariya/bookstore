@@ -34,6 +34,13 @@ class ManualShippingController extends Controller
             }
         }
 
+        // Filter by payment status
+        $paymentStatus = $request->input('payment_status', 'paid');
+        if (!empty($paymentStatus)) {
+            $query->where('payment_status', $paymentStatus);
+            $request->merge(['payment_status' => $paymentStatus]);
+        }
+
         // Search by order number or customer name
         if ($request->filled('search')) {
             $search = $request->search;

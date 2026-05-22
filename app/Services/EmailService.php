@@ -651,6 +651,8 @@ class EmailService
             $result = $this->sendEmailViaAPI($to, $subject, $message);
 
             if ($result) {
+                $order->update(['shipped_email_sent' => true]);
+
                 Log::info('Order shipped email sent successfully', [
                     'order_id' => $order->id,
                     'customer_email' => $customerEmail
