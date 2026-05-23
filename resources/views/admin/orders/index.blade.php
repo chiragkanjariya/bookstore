@@ -129,6 +129,7 @@
                         <option value="pending" {{ request('shipping_partner_status') == 'pending' ? 'selected' : '' }}>Pending</option>
                         <option value="approved" {{ request('shipping_partner_status') == 'approved' ? 'selected' : '' }}>Approved</option>
                         <option value="rejected" {{ request('shipping_partner_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                        <option value="not_shipped" {{ request('shipping_partner_status') == 'not_shipped' ? 'selected' : '' }}>Not Shipped</option>
                     </select>
                 </div>
 

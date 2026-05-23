@@ -61,8 +61,17 @@ class OrderController extends Controller
         }
 
         // Filter by shipping partner status
-        if ($request->filled('shipping_partner_status')) {
-            $query->where('shipping_partner_status', $request->shipping_partner_status);
+        $shippingPartnerStatus = $request->input('shipping_partner_status', 'not_shipped');
+        if (!empty($shippingPartnerStatus)) {
+            if ($shippingPartnerStatus === 'not_shipped') {
+                $query->where(function ($q) {
+                    $q->where('shipping_partner_status', '!=', 'approved')
+                      ->orWhereNull('shipping_partner_status');
+                });
+            } else {
+                $query->where('shipping_partner_status', $shippingPartnerStatus);
+            }
+            $request->merge(['shipping_partner_status' => $shippingPartnerStatus]);
         }
 
         $orders = $query->paginate(20)->withQueryString();
@@ -281,9 +290,12 @@ class OrderController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
+        
+        $paymentStatus = $request->input('payment_status', 'paid');
+        if (!empty($paymentStatus)) {
+            $query->where('payment_status', $paymentStatus);
         }
+        
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -293,6 +305,29 @@ class OrderController extends Controller
                             ->orWhere('email', 'like', '%' . $search . '%');
                     });
             });
+        }
+        
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        if ($request->filled('is_bulk_purchased')) {
+            $query->where('is_bulk_purchased', $request->is_bulk_purchased === '1');
+        }
+
+        $shippingPartnerStatus = $request->input('shipping_partner_status', 'not_shipped');
+        if (!empty($shippingPartnerStatus)) {
+            if ($shippingPartnerStatus === 'not_shipped') {
+                $query->where(function ($q) {
+                    $q->where('shipping_partner_status', '!=', 'approved')
+                      ->orWhereNull('shipping_partner_status');
+                });
+            } else {
+                $query->where('shipping_partner_status', $shippingPartnerStatus);
+            }
         }
 
         $orders = $query->get();
