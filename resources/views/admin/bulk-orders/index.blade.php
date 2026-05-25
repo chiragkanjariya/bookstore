@@ -123,18 +123,6 @@
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-gray-900">Bulk Orders</h2>
-                    <div class="flex items-center space-x-3">
-                        <button type="button" id="bulk-print-labels"
-                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm transition duration-200 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-                            disabled>
-                            <i class="fas fa-print mr-2"></i>Print Labels
-                        </button>
-                        <button type="button" id="bulk-mark-shipped"
-                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm transition duration-200 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-                            disabled>
-                            <i class="fas fa-check mr-2"></i>Mark as Shipped
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -142,9 +130,6 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left">
-                                <input type="checkbox" id="select-all" class="rounded">
-                            </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Order</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -166,12 +151,6 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($orders as $order)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4">
-                                    @if(!$order->isManuallyShipped() && $order->status !== 'delivered')
-                                        <input type="checkbox" name="order_ids[]" value="{{ $order->id }}"
-                                            class="order-checkbox rounded">
-                                    @endif
-                                </td>
                                 <td class="px-6 py-4">
                                     <div>
                                         <div class="text-sm font-medium text-gray-900">#{{ $order->order_number }}</div>
@@ -274,7 +253,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                                     <i class="fas fa-boxes text-4xl mb-4 opacity-50"></i>
                                     <p class="text-lg">No bulk orders found</p>
                                     <p class="text-sm">Bulk purchase orders will appear here.</p>
@@ -397,126 +376,5 @@
                     alert('An error occurred while marking the order as shipped.');
                 });
         }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const selectAll = document.getElementById('select-all');
-            const orderCheckboxes = document.querySelectorAll('.order-checkbox');
-            const bulkMarkShipped = document.getElementById('bulk-mark-shipped');
-            const bulkPrintLabels = document.getElementById('bulk-print-labels');
-
-            selectAll.addEventListener('change', function () {
-                orderCheckboxes.forEach(checkbox => {
-                    checkbox.checked = this.checked;
-                });
-                updateBulkButtons();
-            });
-
-            orderCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', updateBulkButtons);
-            });
-
-            function updateBulkButtons() {
-                const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
-                const hasSelection = checkedBoxes.length > 0;
-                bulkMarkShipped.disabled = !hasSelection;
-                bulkPrintLabels.disabled = !hasSelection;
-            }
-
-            bulkPrintLabels.addEventListener('click', function () {
-                const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
-                if (checkedBoxes.length === 0) {
-                    alert('Please select at least one order.');
-                    return;
-                }
-
-                const orderIds = Array.from(checkedBoxes).map(cb => cb.value);
-
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{{ route("admin.bulk-orders.bulk-print-pdf") }}';
-                form.style.display = 'none';
-
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_token';
-                csrfInput.value = '{{ csrf_token() }}';
-                form.appendChild(csrfInput);
-
-                orderIds.forEach(orderId => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'order_ids[]';
-                    input.value = orderId;
-                    form.appendChild(input);
-                });
-
-                document.body.appendChild(form);
-                form.submit();
-                document.body.removeChild(form);
-            });
-
-            // Bulk mark as shipped
-            bulkMarkShipped.addEventListener('click', function () {
-                const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
-                if (checkedBoxes.length === 0) {
-                    alert('Please select at least one order.');
-                    return;
-                }
-                openShipModal('bulk', `${checkedBoxes.length} orders`);
-            });
-        });
-
-        // Override submitShipModal for bulk
-        const originalSubmitShipModal = submitShipModal;
-        submitShipModal = function () {
-            if (currentShipOrderId === 'bulk') {
-                const courierId = document.getElementById('ship-modal-courier').value;
-                const trackingId = document.getElementById('ship-modal-tracking').value;
-
-                if (!courierId) {
-                    alert('Please select a courier service.');
-                    return;
-                }
-                if (!trackingId) {
-                    alert('Please enter a tracking number.');
-                    return;
-                }
-
-                const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
-                const orderIds = Array.from(checkedBoxes).map(cb => cb.value);
-                const trackingIds = {};
-                orderIds.forEach(id => trackingIds[id] = trackingId);
-
-                if (confirm(`Are you sure you want to mark ${orderIds.length} order(s) as shipped?`)) {
-                    fetch('{{ route("admin.bulk-orders.bulk-mark-shipped") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            order_ids: orderIds,
-                            manual_courier_id: courierId,
-                            manual_tracking_ids: trackingIds
-                        })
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                alert(data.message);
-                                window.location.reload();
-                            } else {
-                                alert('Error: ' + data.message);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('An error occurred while marking orders as shipped.');
-                        });
-                }
-            } else {
-                originalSubmitShipModal();
-            }
-        };
     </script>
 @endsection

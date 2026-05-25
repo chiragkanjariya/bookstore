@@ -6,6 +6,11 @@
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
 @section('content')
+    @php
+        $isManualOrBulk = $order->requires_manual_shipping || $order->is_bulk_purchased;
+        $trackingNumber = $isManualOrBulk ? ($order->manual_tracking_id ?: $order->awb_number) : $order->awb_number;
+        $trackingLabel = $isManualOrBulk ? 'Tracking ID' : 'AWB';
+    @endphp
     <style>
         @media print {
 
@@ -118,7 +123,7 @@
                     <!-- AWB Barcode -->
                     <div class="text-center mb-4">
                         <svg id="awb-barcode"></svg>
-                        <p class="text-xs text-gray-600 mt-1">AWB: {{ $order->awb_number }}</p>
+                        <p class="text-xs text-gray-600 mt-1">{{ $trackingLabel }}: {{ $trackingNumber }}</p>
                     </div>
 
                     <!-- From/To Info -->
@@ -181,7 +186,7 @@
                         <div class="text-right compact-text">
                             <p><strong>Invoice #:</strong> {{ $order->order_number }}</p>
                             <p><strong>Date:</strong> {{ $order->created_at->format('d M, Y') }}</p>
-                            <p><strong>AWB:</strong> {{ $order->awb_number }}</p>
+                            <p><strong>{{ $trackingLabel }}:</strong> {{ $trackingNumber }}</p>
                         </div>
                     </div>
 
@@ -260,7 +265,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Generate barcode for AWB number
-            JsBarcode("#awb-barcode", "{{ $order->awb_number }}", {
+            JsBarcode("#awb-barcode", "{{ $trackingNumber }}", {
                 format: "CODE128",
                 width: 1.5,
                 height: 60,
