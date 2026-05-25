@@ -57,6 +57,8 @@ class Order extends Model
         'notes',
         'confirmation_email_sent',
         'shipped_email_sent',
+        'ready_to_ship_email_sent',
+        'delivered_email_sent',
         'shipped_at',
         'delivered_at',
     ];
@@ -72,6 +74,8 @@ class Order extends Model
         'is_bulk_purchased' => 'boolean',
         'confirmation_email_sent' => 'boolean',
         'shipped_email_sent' => 'boolean',
+        'ready_to_ship_email_sent' => 'boolean',
+        'delivered_email_sent' => 'boolean',
         'manual_shipping_marked_at' => 'datetime',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',

@@ -184,6 +184,10 @@ class EmailService
     public function sendOrderConfirmationEmail($order, $pdfPath = null)
     {
         try {
+            if ($order->confirmation_email_sent) {
+                return true;
+            }
+
             // Get access token if not already set
             if (!$this->accessToken) {
                 $this->getAccessToken();
@@ -585,6 +589,10 @@ class EmailService
     public function sendOrderReadyToShipEmail($order)
     {
         try {
+            if ($order->ready_to_ship_email_sent) {
+                return true;
+            }
+
             if (!$this->accessToken) {
                 $this->getAccessToken();
             }
@@ -607,6 +615,8 @@ class EmailService
             $result = $this->sendEmailViaAPI($to, $subject, $message);
 
             if ($result) {
+                $order->update(['ready_to_ship_email_sent' => true]);
+
                 Log::info('Order ready to ship email sent successfully', [
                     'order_id' => $order->id,
                     'customer_email' => $customerEmail
@@ -629,6 +639,10 @@ class EmailService
     public function sendOrderShippedEmail($order)
     {
         try {
+            if ($order->shipped_email_sent) {
+                return true;
+            }
+
             if (!$this->accessToken) {
                 $this->getAccessToken();
             }
@@ -675,6 +689,10 @@ class EmailService
     public function sendOrderDeliveredEmail($order)
     {
         try {
+            if ($order->delivered_email_sent) {
+                return true;
+            }
+
             if (!$this->accessToken) {
                 $this->getAccessToken();
             }
@@ -697,6 +715,8 @@ class EmailService
             $result = $this->sendEmailViaAPI($to, $subject, $message);
 
             if ($result) {
+                $order->update(['delivered_email_sent' => true]);
+
                 Log::info('Order delivered email sent successfully', [
                     'order_id' => $order->id,
                     'customer_email' => $customerEmail
