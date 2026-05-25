@@ -126,7 +126,7 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
 
-                <div class="col-span-1 md:col-span-2 lg:col-span-6 flex justify-end space-x-3 mt-4">
+                <div class="col-span-full flex justify-end space-x-3 mt-4">
                     <button type="submit"
                         class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition duration-200 font-medium">
                         Filter
@@ -357,7 +357,7 @@
                     return;
                 }
 
-                if (confirm(`Are you sure you want to ship ${checkedBoxes.length} order(s) now?\n\nThis will:\n- Submit orders to Maruti API\n- Mark orders as "Ready to Ship"\n- Send notification emails to customers`)) {
+                if (confirm(`Are you sure you want to ship ${checkedBoxes.length} order(s) now?\n\nThis will:\n- Submit orders to Maruti API\n- Mark orders as "Ready to Ship"\n- Send "Order Shipped" notification emails with Maruti reference number`)) {
                     // Change form action to ship now route
                     const originalAction = bulkForm.action;
                     bulkForm.action = '{{ route("admin.orders.bulk-ship-now") }}';

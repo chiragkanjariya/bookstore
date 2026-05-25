@@ -190,6 +190,12 @@ class OrderController extends Controller
                     'order_id'     => $order->id,
                     'order_number' => $order->order_number,
                 ]);
+
+                // Send shipped email notification since status is changed to shipped manually
+                $emailService = new EmailService();
+                if (!$order->shipped_email_sent) {
+                    $emailService->sendOrderShippedEmail($order);
+                }
             } else {
                 $errorMessage = is_array($response) && isset($response['message'])
                     ? $response['message']
@@ -288,7 +294,11 @@ class OrderController extends Controller
                     ]);
 
                     // Send email notification
-                    $emailService->sendOrderReadyToShipEmail($order);
+                    if ($order->courier_provider === 'shree_maruti') {
+                        $emailService->sendOrderShippedEmail($order);
+                    } else {
+                        $emailService->sendOrderReadyToShipEmail($order);
+                    }
 
                     $successCount++;
                 } else {

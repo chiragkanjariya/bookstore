@@ -27,15 +27,17 @@ class BulkOrderController extends Controller
             ->bulkOrders()
             ->orderBy('created_at', 'desc');
 
-        // Filter by status
-        if ($request->filled('status')) {
-            if ($request->status === 'pending') {
+        // Filter by status (default to pending / not shipped)
+        $status = $request->input('status', 'pending');
+        if (!empty($status)) {
+            if ($status === 'pending') {
                 $query->whereNull('manual_shipping_marked_at');
-            } elseif ($request->status === 'shipped') {
+            } elseif ($status === 'shipped') {
                 $query->whereNotNull('manual_shipping_marked_at');
-            } elseif ($request->status === 'delivered') {
+            } elseif ($status === 'delivered') {
                 $query->where('status', 'delivered');
             }
+            $request->merge(['status' => $status]);
         }
 
         // Search by order number or customer name
@@ -242,11 +244,14 @@ class BulkOrderController extends Controller
         $query = Order::with(['user', 'orderItems.book'])
             ->bulkOrders();
 
-        if ($request->filled('status')) {
-            if ($request->status === 'pending') {
+        $status = $request->input('status', 'pending');
+        if (!empty($status)) {
+            if ($status === 'pending') {
                 $query->whereNull('manual_shipping_marked_at');
-            } elseif ($request->status === 'shipped') {
+            } elseif ($status === 'shipped') {
                 $query->whereNotNull('manual_shipping_marked_at');
+            } elseif ($status === 'delivered') {
+                $query->where('status', 'delivered');
             }
         }
 

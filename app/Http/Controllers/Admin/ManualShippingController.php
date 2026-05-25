@@ -27,15 +27,17 @@ class ManualShippingController extends Controller
             ->manualOrders()
             ->orderBy('created_at', 'desc');
 
-        // Filter by status
-        if ($request->filled('status')) {
-            if ($request->status === 'pending') {
+        // Filter by status (default to pending / not shipped)
+        $status = $request->input('status', 'pending');
+        if (!empty($status)) {
+            if ($status === 'pending') {
                 $query->whereNull('manual_shipping_marked_at');
-            } elseif ($request->status === 'shipped') {
+            } elseif ($status === 'shipped') {
                 $query->whereNotNull('manual_shipping_marked_at')->where('status', '!=', 'delivered');
-            } elseif ($request->status === 'delivered') {
+            } elseif ($status === 'delivered') {
                 $query->where('status', 'delivered');
             }
+            $request->merge(['status' => $status]);
         }
 
         // Filter by payment status
@@ -198,11 +200,14 @@ class ManualShippingController extends Controller
             ->manualOrders();
 
         // Apply same filters as index
-        if ($request->filled('status')) {
-            if ($request->status === 'pending') {
+        $status = $request->input('status', 'pending');
+        if (!empty($status)) {
+            if ($status === 'pending') {
                 $query->whereNull('manual_shipping_marked_at');
-            } elseif ($request->status === 'shipped') {
-                $query->whereNotNull('manual_shipping_marked_at');
+            } elseif ($status === 'shipped') {
+                $query->whereNotNull('manual_shipping_marked_at')->where('status', '!=', 'delivered');
+            } elseif ($status === 'delivered') {
+                $query->where('status', 'delivered');
             }
         }
 
