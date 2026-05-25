@@ -27,11 +27,13 @@ class BulkOrderController extends Controller
             ->bulkOrders()
             ->orderBy('created_at', 'desc');
 
-        // Filter by status (default to pending / not shipped)
-        $status = $request->input('status', 'pending');
+        // Filter by status (default to not_shipped / not shipped)
+        $status = $request->input('status', 'not_shipped');
         if (!empty($status)) {
-            if ($status === 'pending') {
-                $query->whereNull('manual_shipping_marked_at');
+            if ($status === 'not_shipped') {
+                $query->whereNull('manual_shipping_marked_at')->where('status', '!=', 'delivered');
+            } elseif ($status === 'pending') {
+                $query->whereNull('manual_shipping_marked_at')->whereIn('status', ['pending', 'pending_to_be_prepared']);
             } elseif ($status === 'shipped') {
                 $query->whereNotNull('manual_shipping_marked_at');
             } elseif ($status === 'delivered') {
@@ -244,10 +246,12 @@ class BulkOrderController extends Controller
         $query = Order::with(['user', 'orderItems.book'])
             ->bulkOrders();
 
-        $status = $request->input('status', 'pending');
+        $status = $request->input('status', 'not_shipped');
         if (!empty($status)) {
-            if ($status === 'pending') {
-                $query->whereNull('manual_shipping_marked_at');
+            if ($status === 'not_shipped') {
+                $query->whereNull('manual_shipping_marked_at')->where('status', '!=', 'delivered');
+            } elseif ($status === 'pending') {
+                $query->whereNull('manual_shipping_marked_at')->whereIn('status', ['pending', 'pending_to_be_prepared']);
             } elseif ($status === 'shipped') {
                 $query->whereNotNull('manual_shipping_marked_at');
             } elseif ($status === 'delivered') {
