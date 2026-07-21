@@ -340,9 +340,10 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Tab 2: State-Wise Shipping Rates -->
-                <div id="tab-content-shipping" class="book-tab-content hidden">
+            <!-- Tab 2: State-Wise Shipping Rates -->
+            <div id="tab-content-shipping" class="book-tab-content hidden">
                     <div class="bg-gray-50 rounded-lg p-6 mb-6 border border-gray-200">
                         <h3 class="text-base font-semibold text-gray-900 mb-1">State-Wise Shipping Rates</h3>
                         <p class="text-sm text-gray-600 mb-4">
@@ -399,12 +400,15 @@
         </div>
 
 <script>
-function switchBookTab(tabName) {
+window.switchBookTab = function(tabName) {
     // Hide all tab contents
-    document.querySelectorAll('.book-tab-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.book-tab-content').forEach(function(el) {
+        el.classList.add('hidden');
+        el.style.display = 'none';
+    });
     
     // Reset all tab button styles
-    document.querySelectorAll('.book-tab-btn').forEach(btn => {
+    document.querySelectorAll('.book-tab-btn').forEach(function(btn) {
         btn.classList.remove('border-[#00BDE0]', 'text-[#00BDE0]');
         btn.classList.add('border-transparent', 'text-gray-500');
     });
@@ -413,6 +417,7 @@ function switchBookTab(tabName) {
     const selectedContent = document.getElementById('tab-content-' + tabName);
     if (selectedContent) {
         selectedContent.classList.remove('hidden');
+        selectedContent.style.display = 'block';
     }
 
     // Highlight selected tab button
@@ -421,7 +426,26 @@ function switchBookTab(tabName) {
         selectedBtn.classList.remove('border-transparent', 'text-gray-500');
         selectedBtn.classList.add('border-[#00BDE0]', 'text-[#00BDE0]');
     }
-}
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const detailsBtn = document.getElementById('tab-btn-details');
+    const shippingBtn = document.getElementById('tab-btn-shipping');
+
+    if (detailsBtn) {
+        detailsBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.switchBookTab('details');
+        });
+    }
+
+    if (shippingBtn) {
+        shippingBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.switchBookTab('shipping');
+        });
+    }
+});
 // Image upload preview
 document.getElementById('cover_image').addEventListener('change', function(e) {
     const file = e.target.files[0];
