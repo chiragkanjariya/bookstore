@@ -206,7 +206,7 @@
                             <!-- Shipping Price -->
                             <div>
                                 <label for="shipping_price" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Shipping Price (₹)
+                                    Default Shipping Price (₹)
                                 </label>
                                 <input type="number" name="shipping_price" id="shipping_price" value="{{ old('shipping_price', 0) }}" min="0" step="0.01"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('shipping_price') border-red-300 @enderror"
@@ -214,6 +214,7 @@
                                 @error('shipping_price')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
+                                <p class="mt-1 text-xs text-gray-500">Fallback price if state-wise price is not configured</p>
                             </div>
                         </div>
 

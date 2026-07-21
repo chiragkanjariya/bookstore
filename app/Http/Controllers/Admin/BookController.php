@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\BookImage;
+use App\Models\BookStateShippingPrice;
 use App\Models\Category;
+use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -46,7 +48,8 @@ class BookController extends Controller
     public function create()
     {
         $categories = Category::active()->ordered()->get();
-        return view('admin.books.create', compact('categories'));
+        $states = State::active()->ordered()->get();
+        return view('admin.books.create', compact('categories', 'states'));
     }
 
     /**
@@ -61,6 +64,8 @@ class BookController extends Controller
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'shipping_price' => ['nullable', 'numeric', 'min:0'],
+            'state_shipping_prices' => ['nullable', 'array'],
+            'state_shipping_prices.*' => ['nullable', 'numeric', 'min:0'],
             'height' => ['nullable', 'numeric', 'min:0'],
             'width' => ['nullable', 'numeric', 'min:0'],
             'depth' => ['nullable', 'numeric', 'min:0'],
@@ -89,6 +94,19 @@ class BookController extends Controller
 
         $book = Book::create($data);
 
+        // Save state shipping prices if provided
+        if ($request->has('state_shipping_prices') && is_array($request->state_shipping_prices)) {
+            foreach ($request->state_shipping_prices as $stateId => $price) {
+                if ($price !== null && $price !== '' && is_numeric($price)) {
+                    BookStateShippingPrice::create([
+                        'book_id' => $book->id,
+                        'state_id' => $stateId,
+                        'shipping_price' => $price,
+                    ]);
+                }
+            }
+        }
+
         // Handle multiple image uploads
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $index => $image) {
@@ -111,7 +129,7 @@ class BookController extends Controller
      */
     public function show(Book $book)
     {
-        $book->load('category');
+        $book->load(['category', 'stateShippingPrices.state']);
         return view('admin.books.show', compact('book'));
     }
 
@@ -120,9 +138,10 @@ class BookController extends Controller
      */
     public function edit(Book $book)
     {
-        $book->load('images');
+        $book->load(['images', 'stateShippingPrices']);
         $categories = Category::active()->ordered()->get();
-        return view('admin.books.edit', compact('book', 'categories'));
+        $states = State::active()->ordered()->get();
+        return view('admin.books.edit', compact('book', 'categories', 'states'));
     }
 
     /**
@@ -137,6 +156,8 @@ class BookController extends Controller
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'shipping_price' => ['nullable', 'numeric', 'min:0'],
+            'state_shipping_prices' => ['nullable', 'array'],
+            'state_shipping_prices.*' => ['nullable', 'numeric', 'min:0'],
             'height' => ['nullable', 'numeric', 'min:0'],
             'width' => ['nullable', 'numeric', 'min:0'],
             'depth' => ['nullable', 'numeric', 'min:0'],
@@ -168,6 +189,22 @@ class BookController extends Controller
         }
 
         $book->update($data);
+
+        // Handle state shipping prices
+        if ($request->has('state_shipping_prices') && is_array($request->state_shipping_prices)) {
+            foreach ($request->state_shipping_prices as $stateId => $price) {
+                if ($price !== null && $price !== '' && is_numeric($price)) {
+                    BookStateShippingPrice::updateOrCreate(
+                        ['book_id' => $book->id, 'state_id' => $stateId],
+                        ['shipping_price' => $price]
+                    );
+                } else {
+                    BookStateShippingPrice::where('book_id', $book->id)
+                        ->where('state_id', $stateId)
+                        ->delete();
+                }
+            }
+        }
 
         // Handle multiple image uploads
         if ($request->hasFile('images')) {

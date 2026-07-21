@@ -31,6 +31,9 @@ class CheckoutController extends Controller
     /**
      * Show checkout page for cart items
      */
+    /**
+     * Show checkout page for cart items
+     */
     public function index()
     {
         $user = Auth::user();
@@ -48,8 +51,9 @@ class CheckoutController extends Controller
         $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
         $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
 
-        $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) {
-            return $item->book->shipping_price * $item->quantity;
+        $stateId = $user->state_id;
+        $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) use ($stateId) {
+            return $item->book->getShippingPriceForState($stateId) * $item->quantity;
         });
 
         $tax = 0; // GST removed as per requirements
@@ -86,7 +90,10 @@ class CheckoutController extends Controller
         $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
         $isBulkPurchase = $quantity >= $minBulkPurchase;
 
-        $shipping = $isBulkPurchase ? 0 : ($book->shipping_price * $quantity);
+        $user = Auth::user();
+        $stateId = $user->state_id;
+        $itemShippingPrice = $book->getShippingPriceForState($stateId);
+        $shipping = $isBulkPurchase ? 0 : ($itemShippingPrice * $quantity);
         $tax = 0; // GST removed as per requirements
         $total = $subtotal + $shipping;
 
@@ -99,6 +106,53 @@ class CheckoutController extends Controller
         ];
 
         return view('checkout.buy-now', compact('buyNowItem', 'subtotal', 'shipping', 'tax', 'total'));
+    }
+
+    /**
+     * Dynamically calculate shipping cost when state changes on checkout page
+     */
+    public function calculateShipping(Request $request)
+    {
+        $request->validate([
+            'state_id' => 'nullable|integer|exists:states,id',
+            'buy_now_book_id' => 'nullable|exists:books,id',
+            'buy_now_quantity' => 'nullable|integer|min:1|max:10',
+        ]);
+
+        $stateId = $request->state_id;
+        $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
+
+        if ($request->filled('buy_now_book_id')) {
+            $book = Book::findOrFail($request->buy_now_book_id);
+            $quantity = (int) $request->get('buy_now_quantity', 1);
+
+            $subtotal = $book->price * $quantity;
+            $isBulkPurchase = $quantity >= $minBulkPurchase;
+            $shipping = $isBulkPurchase ? 0 : ($book->getShippingPriceForState($stateId) * $quantity);
+        } else {
+            $user = Auth::user();
+            $cartItems = $user->cartItems()->with('book')->get();
+
+            $subtotal = $cartItems->sum('total_price');
+            $totalQuantity = $cartItems->sum('quantity');
+            $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
+            $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) use ($stateId) {
+                return $item->book->getShippingPriceForState($stateId) * $item->quantity;
+            });
+        }
+
+        $total = $subtotal + $shipping;
+
+        return response()->json([
+            'success' => true,
+            'subtotal' => $subtotal,
+            'shipping' => $shipping,
+            'total' => $total,
+            'is_bulk_purchase' => $isBulkPurchase,
+            'formatted_subtotal' => '₹' . number_format($subtotal, 2),
+            'formatted_shipping' => $shipping == 0 ? 'FREE' : '₹' . number_format($shipping, 2),
+            'formatted_total' => '₹' . number_format($total, 2),
+        ]);
     }
 
     /**
@@ -136,6 +190,7 @@ class CheckoutController extends Controller
         ]);
 
         $user = Auth::user();
+        $stateId = $request->shipping_address['state_id'];
 
         DB::beginTransaction();
         try {
@@ -156,7 +211,8 @@ class CheckoutController extends Controller
                 // Check if order qualifies for bulk purchase (free shipping)
                 $isBulkPurchase = $quantity >= $minBulkPurchase;
 
-                $shipping = $isBulkPurchase ? 0 : ($book->shipping_price * $quantity);
+                $itemShippingPrice = $book->getShippingPriceForState($stateId);
+                $shipping = $isBulkPurchase ? 0 : ($itemShippingPrice * $quantity);
                 $tax = 0; // GST removed
                 $total = $subtotal + $shipping;
 
@@ -165,7 +221,7 @@ class CheckoutController extends Controller
                         'book_id' => $book->id,
                         'quantity' => $quantity,
                         'price' => $book->price,
-                        'shipping_price' => $book->shipping_price,
+                        'shipping_price' => $itemShippingPrice,
                         'total_price' => $subtotal
                     ]
                 ];
@@ -190,8 +246,8 @@ class CheckoutController extends Controller
                 $totalQuantity = $cartItems->sum('quantity');
                 $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
 
-                $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) {
-                    return $item->book->shipping_price * $item->quantity;
+                $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) use ($stateId) {
+                    return $item->book->getShippingPriceForState($stateId) * $item->quantity;
                 });
                 $tax = 0; // GST removed
                 $total = $subtotal + $shipping;
@@ -208,25 +264,6 @@ class CheckoutController extends Controller
             $shippingAddress['state'] = $state->name;
             $shippingAddress['district'] = $district->name;
             $shippingAddress['taluka'] = $taluka->name;
-
-            // Verify payment signature
-            // NOTE: This block seems to be misplaced here. Payment signature verification typically happens
-            // in the payment success callback, not during the initial order creation.
-            // The variables $razorpayOrderId, $razorpayPaymentId, $razorpaySignature are not defined at this point.
-            // I am inserting it as per instruction, but it will likely cause errors or incorrect logic.
-            // For a correct implementation, this logic should be in the paymentSuccess method.
-            // $generatedSignature = hash_hmac('sha256',
-            //     $razorpayOrderId . '|' . $razorpayPaymentId,
-            //     config('services.razorpay.key_secret')
-            // );
-
-            // if ($generatedSignature !== $razorpaySignature) {
-            //     Log::error('Payment signature verification failed', [
-            //         'order_id' => $razorpayOrderId,
-            //         'payment_id' => $razorpayPaymentId
-            //     ]);
-            //     return redirect()->route('cart.index')->with('error', 'Payment verification failed');
-            // }
 
             // Check if zipcode is serviceable
             $postalCode = $shippingAddress['postal_code']; // Use postal code from validated shipping address
@@ -262,12 +299,14 @@ class CheckoutController extends Controller
 
             // Create order items
             foreach ($orderItems as $item) {
+                $book = $item->book ?? Book::find($item->book_id);
+                $itemShippingPrice = $book ? $book->getShippingPriceForState($stateId) : ($item->shipping_price ?? 0);
                 OrderItem::create([
                     'order_id' => $order->id,
                     'book_id' => $item->book_id ?? $item->book->id,
                     'quantity' => $item->quantity,
                     'price' => $item->price ?? $item->book->price,
-                    'shipping_price' => $item->shipping_price ?? $item->book->shipping_price,
+                    'shipping_price' => $itemShippingPrice,
                     'total_price' => $item->total_price,
                 ]);
             }

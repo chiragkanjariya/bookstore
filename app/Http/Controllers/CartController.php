@@ -19,14 +19,16 @@ class CartController extends Controller
      */
     public function index()
     {
-        $cartItems = Auth::user()->cartItems()
+        $user = Auth::user();
+        $cartItems = $user->cartItems()
             ->with(['book.category'])
             ->orderBy('created_at', 'desc')
             ->get();
 
         $subtotal = $cartItems->sum('total_price');
-        $shipping = $cartItems->sum(function ($item) {
-            return $item->book->shipping_price * $item->quantity;
+        $stateId = $user->state_id;
+        $shipping = $cartItems->sum(function ($item) use ($stateId) {
+            return $item->book->getShippingPriceForState($stateId) * $item->quantity;
         });
         $total = $subtotal + $shipping;
 
@@ -123,9 +125,10 @@ class CartController extends Controller
             $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
             $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
             
+            $stateId = $user->state_id;
             // Apply bulk purchase free shipping logic
-            $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) {
-                return $item->book->shipping_price * $item->quantity;
+            $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) use ($stateId) {
+                return $item->book->getShippingPriceForState($stateId) * $item->quantity;
             });
             
             $total = $subtotal + $shipping;

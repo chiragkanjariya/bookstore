@@ -185,7 +185,7 @@
                             </div>
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600">Shipping</span>
-                                <span class="text-gray-900">
+                                <span id="shipping-display" class="text-gray-900">
                                     @if($shipping == 0)
                                         <span class="text-green-600 font-medium">FREE</span>
                                     @else
@@ -210,7 +210,7 @@
                             <div class="border-t pt-2">
                                 <div class="flex justify-between text-lg font-semibold">
                                     <span class="text-gray-900">Total</span>
-                                    <span class="text-gray-900">₹{{ number_format($total, 2) }}</span>
+                                    <span id="total-display" class="text-gray-900">₹{{ number_format($total, 2) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -433,7 +433,41 @@
                     districtSelect.innerHTML = '<option value="">Select District</option>';
                     talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
                 }
+
+                // Recalculate shipping price dynamically
+                recalculateShipping(stateId);
             });
+
+            function recalculateShipping(stateId) {
+                fetch('{{ route("checkout.calculate-shipping") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ state_id: stateId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const shippingDisplay = document.getElementById('shipping-display');
+                        const totalDisplay = document.getElementById('total-display');
+
+                        if (shippingDisplay) {
+                            if (data.shipping === 0) {
+                                shippingDisplay.innerHTML = '<span class="text-green-600 font-medium">FREE</span>';
+                            } else {
+                                shippingDisplay.textContent = data.formatted_shipping;
+                            }
+                        }
+
+                        if (totalDisplay) {
+                            totalDisplay.textContent = data.formatted_total;
+                        }
+                    }
+                })
+                .catch(error => console.error('Error recalculating shipping:', error));
+            }
 
             // District change handler
             districtSelect.addEventListener('change', function () {

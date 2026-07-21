@@ -38,9 +38,28 @@
                     </div>
                 @endif
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Left Column -->
-                    <div class="space-y-6">
+                <!-- Tabs Navigation -->
+                <div class="border-b border-gray-200 mb-6">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button type="button" id="tab-btn-details" onclick="switchBookTab('details')" 
+                                class="book-tab-btn border-[#00BDE0] text-[#00BDE0] whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none">
+                            Book Details
+                        </button>
+                        <button type="button" id="tab-btn-shipping" onclick="switchBookTab('shipping')" 
+                                class="book-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none flex items-center">
+                            <span>State-Wise Shipping Rates</span>
+                            @if(count($book->stateShippingPrices) > 0)
+                                <span class="ml-2 bg-[#00BDE0] text-white text-xs px-2 py-0.5 rounded-full">{{ count($book->stateShippingPrices) }}</span>
+                            @endif
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Tab 1: Book Details -->
+                <div id="tab-content-details" class="book-tab-content">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Left Column -->
+                        <div class="space-y-6">
                         <!-- Title -->
                         <div>
                             <label for="title" class="block text-sm font-medium text-gray-700 mb-1">
@@ -284,7 +303,7 @@
                             <!-- Shipping Price -->
                             <div>
                                 <label for="shipping_price" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Shipping Price (₹)
+                                    Default Shipping Price (₹)
                                 </label>
                                 <input type="number" name="shipping_price" id="shipping_price" value="{{ old('shipping_price', $book->shipping_price) }}" min="0" step="0.01"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('shipping_price') border-red-300 @enderror"
@@ -292,6 +311,7 @@
                                 @error('shipping_price')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
+                                <p class="mt-1 text-xs text-gray-500">Fallback price if state-wise price is not configured</p>
                             </div>
                         </div>
 
@@ -422,6 +442,52 @@
                     </div>
                 </div>
 
+                <!-- Tab 2: State-Wise Shipping Rates -->
+                <div id="tab-content-shipping" class="book-tab-content hidden">
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6 border border-gray-200">
+                        <h3 class="text-base font-semibold text-gray-900 mb-1">State-Wise Shipping Rates</h3>
+                        <p class="text-sm text-gray-600 mb-4">
+                            Configure custom shipping prices per state for <span class="font-semibold">{{ $book->title }}</span>. If a state field is left blank, the product's <strong>Default Shipping Price (₹{{ number_format($book->shipping_price, 2) }})</strong> will be used during order checkout.
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            @foreach($states as $state)
+                                @php
+                                    $existingRate = $book->stateShippingPrices->firstWhere('state_id', $state->id);
+                                    $val = $existingRate ? $existingRate->shipping_price : '';
+                                @endphp
+                                <div class="bg-white p-3.5 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-between">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <label for="state_price_{{ $state->id }}" class="text-sm font-medium text-gray-800">
+                                            {{ $state->name }}
+                                            @if($state->code)
+                                                <span class="text-xs text-gray-400 font-mono">({{ $state->code }})</span>
+                                            @endif
+                                        </label>
+                                        @if($existingRate && $existingRate->shipping_price !== null)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Custom</span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">Default</span>
+                                        @endif
+                                    </div>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span class="text-gray-500 sm:text-sm">₹</span>
+                                        </div>
+                                        <input type="number" 
+                                               name="state_shipping_prices[{{ $state->id }}]" 
+                                               id="state_price_{{ $state->id }}" 
+                                               value="{{ old('state_shipping_prices.'.$state->id, $val) }}" 
+                                               min="0" step="0.01"
+                                               placeholder="Default (₹{{ number_format($book->shipping_price, 2) }})"
+                                               class="w-full pl-7 pr-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] text-sm">
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Form Actions -->
                 <div class="mt-8 flex items-center justify-between pt-6 border-t border-gray-200">
                     <div>
@@ -445,6 +511,30 @@
         </div>
 
 <script>
+function switchBookTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.book-tab-content').forEach(el => el.classList.add('hidden'));
+    
+    // Reset all tab button styles
+    document.querySelectorAll('.book-tab-btn').forEach(btn => {
+        btn.classList.remove('border-[#00BDE0]', 'text-[#00BDE0]');
+        btn.classList.add('border-transparent', 'text-gray-500');
+    });
+
+    // Show selected tab content
+    const selectedContent = document.getElementById('tab-content-' + tabName);
+    if (selectedContent) {
+        selectedContent.classList.remove('hidden');
+    }
+
+    // Highlight selected tab button
+    const selectedBtn = document.getElementById('tab-btn-' + tabName);
+    if (selectedBtn) {
+        selectedBtn.classList.remove('border-transparent', 'text-gray-500');
+        selectedBtn.classList.add('border-[#00BDE0]', 'text-[#00BDE0]');
+    }
+}
+
 // Image upload preview
 document.getElementById('cover_image').addEventListener('change', function(e) {
     const file = e.target.files[0];

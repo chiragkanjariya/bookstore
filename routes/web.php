@@ -156,6 +156,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 Route::middleware(['auth'])->group(function () {
     Route::get('/checkout', [\App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout.index');
     Route::get('/checkout/buy-now/{book}', [\App\Http\Controllers\CheckoutController::class, 'buyNow'])->name('checkout.buy-now');
+    Route::post('/checkout/calculate-shipping', [\App\Http\Controllers\CheckoutController::class, 'calculateShipping'])->name('checkout.calculate-shipping');
     Route::post('/checkout/process', [\App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
     Route::post('/checkout/payment/success', [\App\Http\Controllers\CheckoutController::class, 'paymentSuccess'])->name('checkout.payment.success');
     Route::post('/checkout/payment/failed', [\App\Http\Controllers\CheckoutController::class, 'paymentFailed'])->name('checkout.payment.failed');

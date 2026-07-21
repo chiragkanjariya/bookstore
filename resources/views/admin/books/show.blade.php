@@ -137,9 +137,23 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Shipping Price</label>
+                                <label class="block text-sm font-medium text-gray-700">Default Shipping Price</label>
                                 <p class="mt-1 text-lg text-gray-900">{{ $book->formatted_shipping_price }}</p>
                             </div>
+
+                            @if(count($book->stateShippingPrices) > 0)
+                                <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                    <label class="block text-xs font-semibold text-blue-900 uppercase tracking-wider mb-2">State-Wise Shipping Rates</label>
+                                    <div class="space-y-1 text-xs">
+                                        @foreach($book->stateShippingPrices as $statePrice)
+                                            <div class="flex justify-between items-center text-gray-700">
+                                                <span>{{ $statePrice->state->name ?? 'State #'.$statePrice->state_id }}:</span>
+                                                <span class="font-semibold text-gray-900">₹{{ number_format($statePrice->shipping_price, 2) }}</span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Total Price</label>

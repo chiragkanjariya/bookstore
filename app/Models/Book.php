@@ -88,6 +88,32 @@ class Book extends Model
     }
 
     /**
+     * Get the state-wise shipping prices for the book.
+     */
+    public function stateShippingPrices()
+    {
+        return $this->hasMany(BookStateShippingPrice::class);
+    }
+
+    /**
+     * Get shipping price for a given state ID (falls back to default shipping_price if not set).
+     */
+    public function getShippingPriceForState($stateId = null)
+    {
+        if ($stateId) {
+            $statePrice = $this->relationLoaded('stateShippingPrices')
+                ? $this->stateShippingPrices->firstWhere('state_id', $stateId)
+                : $this->stateShippingPrices()->where('state_id', $stateId)->first();
+
+            if ($statePrice && $statePrice->shipping_price !== null) {
+                return (float) $statePrice->shipping_price;
+            }
+        }
+
+        return (float) $this->shipping_price;
+    }
+
+    /**
      * Scope a query to only include active books.
      */
     public function scopeActive($query)
