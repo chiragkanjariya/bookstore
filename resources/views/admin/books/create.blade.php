@@ -37,7 +37,23 @@
                     </div>
                 @endif
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Tabs Navigation -->
+                <div class="border-b border-gray-200 mb-6">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button type="button" id="tab-btn-details" onclick="switchBookTab('details')" 
+                                class="book-tab-btn border-[#00BDE0] text-[#00BDE0] whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none">
+                            Book Details
+                        </button>
+                        <button type="button" id="tab-btn-shipping" onclick="switchBookTab('shipping')" 
+                                class="book-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none flex items-center">
+                            <span>State-Wise Shipping Rates</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Tab 1: Book Details -->
+                <div id="tab-content-details" class="book-tab-content">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <!-- Left Column -->
                     <div class="space-y-6">
                         <!-- Title -->
@@ -325,6 +341,49 @@
                     </div>
                 </div>
 
+                <!-- Tab 2: State-Wise Shipping Rates -->
+                <div id="tab-content-shipping" class="book-tab-content hidden">
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6 border border-gray-200">
+                        <h3 class="text-base font-semibold text-gray-900 mb-1">State-Wise Shipping Rates</h3>
+                        <p class="text-sm text-gray-600 mb-4">
+                            Optionally configure custom shipping prices per state. If a state field is left blank, the product's <strong>Default Shipping Price</strong> will be applied during order checkout.
+                        </p>
+
+                        @if(count($states) > 0)
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                @foreach($states as $state)
+                                    <div class="bg-white p-3.5 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-between">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <label for="state_price_{{ $state->id }}" class="text-sm font-medium text-gray-800">
+                                                {{ $state->name }}
+                                                @if($state->code)
+                                                    <span class="text-xs text-gray-400 font-mono">({{ $state->code }})</span>
+                                                @endif
+                                            </label>
+                                        </div>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">₹</span>
+                                            </div>
+                                            <input type="number" 
+                                                   name="state_shipping_prices[{{ $state->id }}]" 
+                                                   id="state_price_{{ $state->id }}" 
+                                                   value="{{ old('state_shipping_prices.'.$state->id) }}" 
+                                                   min="0" step="0.01"
+                                                   placeholder="Default"
+                                                   class="w-full pl-7 pr-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] text-sm">
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 text-center">
+                                <p class="text-sm text-yellow-800">No states found in the system. Default shipping price will apply to all orders.</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
                 <!-- Form Actions -->
                 <div class="mt-8 flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
                     <a href="{{ route('admin.books.index') }}" 
@@ -340,6 +399,29 @@
         </div>
 
 <script>
+function switchBookTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.book-tab-content').forEach(el => el.classList.add('hidden'));
+    
+    // Reset all tab button styles
+    document.querySelectorAll('.book-tab-btn').forEach(btn => {
+        btn.classList.remove('border-[#00BDE0]', 'text-[#00BDE0]');
+        btn.classList.add('border-transparent', 'text-gray-500');
+    });
+
+    // Show selected tab content
+    const selectedContent = document.getElementById('tab-content-' + tabName);
+    if (selectedContent) {
+        selectedContent.classList.remove('hidden');
+    }
+
+    // Highlight selected tab button
+    const selectedBtn = document.getElementById('tab-btn-' + tabName);
+    if (selectedBtn) {
+        selectedBtn.classList.remove('border-transparent', 'text-gray-500');
+        selectedBtn.classList.add('border-[#00BDE0]', 'text-[#00BDE0]');
+    }
+}
 // Image upload preview
 document.getElementById('cover_image').addEventListener('change', function(e) {
     const file = e.target.files[0];

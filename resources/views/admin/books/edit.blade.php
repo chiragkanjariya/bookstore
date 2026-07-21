@@ -450,41 +450,47 @@
                             Configure custom shipping prices per state for <span class="font-semibold">{{ $book->title }}</span>. If a state field is left blank, the product's <strong>Default Shipping Price (₹{{ number_format($book->shipping_price, 2) }})</strong> will be used during order checkout.
                         </p>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            @foreach($states as $state)
-                                @php
-                                    $existingRate = $book->stateShippingPrices->firstWhere('state_id', $state->id);
-                                    $val = $existingRate ? $existingRate->shipping_price : '';
-                                @endphp
-                                <div class="bg-white p-3.5 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-between">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <label for="state_price_{{ $state->id }}" class="text-sm font-medium text-gray-800">
-                                            {{ $state->name }}
-                                            @if($state->code)
-                                                <span class="text-xs text-gray-400 font-mono">({{ $state->code }})</span>
+                        @if(count($states) > 0)
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                @foreach($states as $state)
+                                    @php
+                                        $existingRate = $book->stateShippingPrices->firstWhere('state_id', $state->id);
+                                        $val = $existingRate ? $existingRate->shipping_price : '';
+                                    @endphp
+                                    <div class="bg-white p-3.5 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-between">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <label for="state_price_{{ $state->id }}" class="text-sm font-medium text-gray-800">
+                                                {{ $state->name }}
+                                                @if($state->code)
+                                                    <span class="text-xs text-gray-400 font-mono">({{ $state->code }})</span>
+                                                @endif
+                                            </label>
+                                            @if($existingRate && $existingRate->shipping_price !== null)
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Custom</span>
+                                            @else
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">Default</span>
                                             @endif
-                                        </label>
-                                        @if($existingRate && $existingRate->shipping_price !== null)
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Custom</span>
-                                        @else
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">Default</span>
-                                        @endif
-                                    </div>
-                                    <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <span class="text-gray-500 sm:text-sm">₹</span>
                                         </div>
-                                        <input type="number" 
-                                               name="state_shipping_prices[{{ $state->id }}]" 
-                                               id="state_price_{{ $state->id }}" 
-                                               value="{{ old('state_shipping_prices.'.$state->id, $val) }}" 
-                                               min="0" step="0.01"
-                                               placeholder="Default (₹{{ number_format($book->shipping_price, 2) }})"
-                                               class="w-full pl-7 pr-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] text-sm">
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">₹</span>
+                                            </div>
+                                            <input type="number" 
+                                                   name="state_shipping_prices[{{ $state->id }}]" 
+                                                   id="state_price_{{ $state->id }}" 
+                                                   value="{{ old('state_shipping_prices.'.$state->id, $val) }}" 
+                                                   min="0" step="0.01"
+                                                   placeholder="Default (₹{{ number_format($book->shipping_price, 2) }})"
+                                                   class="w-full pl-7 pr-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] text-sm">
+                                        </div>
                                     </div>
-                                </div>
-                            @endforeach
-                        </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 text-center">
+                                <p class="text-sm text-yellow-800">No states found in the system database. Default shipping price will apply to all orders.</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
 

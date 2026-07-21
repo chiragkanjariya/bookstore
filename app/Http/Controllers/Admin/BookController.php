@@ -49,6 +49,9 @@ class BookController extends Controller
     {
         $categories = Category::active()->ordered()->get();
         $states = State::active()->ordered()->get();
+        if ($states->isEmpty()) {
+            $states = State::ordered()->get();
+        }
         return view('admin.books.create', compact('categories', 'states'));
     }
 
@@ -141,6 +144,9 @@ class BookController extends Controller
         $book->load(['images', 'stateShippingPrices']);
         $categories = Category::active()->ordered()->get();
         $states = State::active()->ordered()->get();
+        if ($states->isEmpty()) {
+            $states = State::ordered()->get();
+        }
         return view('admin.books.edit', compact('book', 'categories', 'states'));
     }
 
