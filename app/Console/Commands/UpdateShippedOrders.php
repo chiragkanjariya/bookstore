@@ -74,7 +74,9 @@ class UpdateShippedOrders extends Command
                         ]);
 
                         // Send notification email to customer
-                        $emailService->sendOrderShippedEmail($order);
+                        if (!$order->shipped_email_sent) {
+                            $emailService->sendOrderShippedEmail($order);
+                        }
 
                         $this->info("✓ Order #{$order->order_number} marked as shipped.");
                         $updatedCount++;

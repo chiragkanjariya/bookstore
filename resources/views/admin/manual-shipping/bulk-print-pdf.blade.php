@@ -155,6 +155,11 @@
     @foreach($orderPairs as $pairIndex => $pair)
     <div class="order-pair {{ $pairIndex ? 'page-break' : '' }}">
         @foreach($pair as $order)
+                @php
+                    $isManualOrBulk = $order->requires_manual_shipping || $order->is_bulk_purchased;
+                    $trackingNumber = $isManualOrBulk ? ($order->manual_tracking_id ?: $order->awb_number) : $order->awb_number;
+                    $trackingLabel = $isManualOrBulk ? 'Tracking ID' : 'AWB';
+                @endphp
                 <div class="order-column">
                     <!-- LABEL SECTION (Top Half) -->
                     <div class="label-section">
@@ -165,7 +170,7 @@
                             <?php
                                 $barcodeBase64 = base64_encode(
                                     $pngGenerator->getBarcode(
-                                        $order->awb_number,
+                                        $trackingNumber,
                                         $pngGenerator::TYPE_CODE_128,
                                         2,
                                         50
@@ -173,7 +178,7 @@
                                 );
                             ?>
                             <img src="data:image/png;base64,{{ $barcodeBase64 }}" alt="Barcode">
-                            <p class="text-xs" style="color: #666; margin-top: 1mm;">AWB: {{ $order->awb_number }}</p>
+                            <p class="text-xs" style="color: #666; margin-top: 1mm;">{{ $trackingLabel }}: {{ $trackingNumber }}</p>
                         </div>
 
                         <!-- FROM Box -->
@@ -239,7 +244,7 @@
                                 <td class="text-right">
                                     <p style="margin: 0;"><strong>Invoice #:</strong> {{ $order->order_number }}</p>
                                     <p style="margin: 0;"><strong>Date:</strong> {{ $order->created_at->format('d M, Y') }}</p>
-                                    <p style="margin: 0;"><strong>AWB:</strong> {{ $order->awb_number }}</p>
+                                    <p style="margin: 0;"><strong>{{ $trackingLabel }}:</strong> {{ $trackingNumber }}</p>
                                 </td>
                             </tr>
                         </table>

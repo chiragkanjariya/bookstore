@@ -347,7 +347,8 @@ class ShreeMarutiCourierService implements CourierServiceInterface
         $data = [
             'ClientRefID' => (string) $this->clientCode,
             'IsDP' => "0",
-            'DocumentNoRef' => 'BK' . $this->clientCode . $order->id, 
+            // 'DocumentNoRef' => 'BK' . $this->clientCode . $order->id,
+            'DocumentNoRef' => (string) $this->getNextSeriesNumber($order->id),
             'OrderNo' => (string) ($order->razorpay_order_id ?? $order->order_number),
             'PickupPincode' => (string) \App\Models\Setting::get('shree_maruti_pickup_pincode', '390012'),
             'ToPincode' => (string) ($order->shipping_address['postal_code'] ?? ''),
@@ -359,7 +360,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
             'Length' => (string) round($maxLength),
             'Width' => (string) round($maxWidth),
             'Height' => (string) round($maxHeight),
-            'ValueRs' => (string) round($order->total_amount),
+            'ValueRs' => (string) round((float) $order->total_amount),
             'ReceiverName' => (string) ($order->shipping_address['name'] ?? ''),
             'ReceiverAddress' => (string) ($order->shipping_address['address_line_1'] ?? ''),
             'ReceiverCity' => (string) ($order->shipping_address['city'] ?? ''),
@@ -651,6 +652,77 @@ class ShreeMarutiCourierService implements CourierServiceInterface
                 'error' => $e->getMessage()
             ]);
             return false;
+        }
+    }
+
+    /**
+     * Get and increment the next series number for Shree Maruti.
+     * This can be used for auto-generating labels or for tracking series usage.
+     */
+    public function getNextSeriesNumber($orderId = null)
+    {
+        $nextAvailable = \App\Models\ShreeMarutiSeries::where('is_used', false)
+            ->orderBy('id', 'asc')
+            ->first();
+
+        if (!$nextAvailable) {
+            Log::warning('ShreeMaruti: Series tracking active but no available numbers left.');
+            return null;
+        }
+
+        // Mark as used and associate with order
+        $nextAvailable->is_used = true;
+        if ($orderId) {
+            $nextAvailable->order_id = $orderId;
+        }
+        $nextAvailable->save();
+
+        Log::info('ShreeMaruti: Series number assigned to order', [
+            'awb_number' => $nextAvailable->awb_number,
+            'order_id' => $orderId
+        ]);
+
+        $threshold = Setting::get('shree_maruti_notify_threshold');
+        $email = Setting::get('shree_maruti_notification_email');
+
+        if (!empty($threshold) && !empty($email)) {
+            $availableCount = \App\Models\ShreeMarutiSeries::where('is_used', false)->count();
+            
+            $isNotified = Cache::get('shree_maruti_series_notified_' . $threshold, false);
+
+            if ($availableCount <= $threshold) {
+                if (!$isNotified) {
+                    $this->sendSeriesExpirationNotification($nextAvailable->awb_number, $threshold, $email);
+                    Cache::put('shree_maruti_series_notified_' . $threshold, true, now()->addDays(7));
+                }
+            } elseif ($availableCount > $threshold && $isNotified) {
+                Cache::forget('shree_maruti_series_notified_' . $threshold);
+            }
+        }
+
+        return $nextAvailable->awb_number;
+    }
+
+    private function sendSeriesExpirationNotification($current, $threshold, $email)
+    {
+        try {
+            $subject = 'URGENT: Shree Maruti Courier Series Expiration Warning';
+            $body = "Hello Admin,\n\n" .
+                   "Your Shree Maruti Courier series number is approaching its limit.\n" .
+                   "Current Series: $current\n" .
+                   "Threshold Level: $threshold\n\n" .
+                   "Please obtain a new series range to ensure uninterrupted label generation.\n\n" .
+                   "Regards,\nIPDC System";
+
+            $emailService = new \App\Services\EmailService();
+            $emailService->sendEmail([$email => 'Admin'], $subject, nl2br($body));
+
+            Log::warning("ShreeMaruti: Expiration email sent to $email", [
+                'current' => $current,
+                'threshold' => $threshold
+            ]);
+        } catch (\Exception $e) {
+            Log::error('ShreeMaruti: Failed to send expiration email: ' . $e->getMessage());
         }
     }
 }

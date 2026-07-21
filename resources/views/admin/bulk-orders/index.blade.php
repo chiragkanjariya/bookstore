@@ -1,17 +1,17 @@
 @extends('layouts.admin')
 
-@section('title', 'Manual Orders')
+@section('title', 'Bulk Orders')
 
 @section('content')
     <div class="container mx-auto px-6 py-8">
         <!-- Header -->
         <div class="flex items-center justify-between mb-8">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Manual Orders</h1>
-                <p class="text-gray-600 mt-2">Manage orders requiring manual shipping (non-serviceable areas)</p>
+                <h1 class="text-3xl font-bold text-gray-900">Bulk Orders</h1>
+                <p class="text-gray-600 mt-2">Manage bulk purchase orders — shipped manually, not via Maruti</p>
             </div>
             <div class="flex space-x-3">
-                <a href="{{ route('admin.manual-shipping.export', request()->query()) }}"
+                <a href="{{ route('admin.bulk-orders.export', request()->query()) }}"
                     class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200 flex items-center">
                     <i class="fas fa-download mr-2"></i>Export CSV
                 </a>
@@ -22,11 +22,11 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-orange-100 text-orange-600">
-                        <i class="fas fa-box text-xl"></i>
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-boxes text-xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Manual Orders</p>
+                        <p class="text-sm font-medium text-gray-600">Total Bulk Orders</p>
                         <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['total']) }}</p>
                     </div>
                 </div>
@@ -71,7 +71,7 @@
 
         <!-- Filters -->
         <div class="bg-white rounded-lg shadow p-6 mb-8">
-            <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                     <input type="text" name="search" value="{{ request('search') }}"
@@ -93,18 +93,6 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
-                    <select name="payment_status"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Payment Status</option>
-                        <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
-                        <option value="failed" {{ request('payment_status') == 'failed' ? 'selected' : '' }}>Failed</option>
-                        <option value="refunded" {{ request('payment_status') == 'refunded' ? 'selected' : '' }}>Refunded</option>
-                    </select>
-                </div>
-
-                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Date From</label>
                     <input type="date" name="date_from" value="{{ request('date_from') }}"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -122,7 +110,7 @@
                             class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
                             Filter
                         </button>
-                        <a href="{{ route('admin.manual-shipping.index') }}"
+                        <a href="{{ route('admin.bulk-orders.index') }}"
                             class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition duration-200">
                             Clear
                         </a>
@@ -135,7 +123,7 @@
         <div class="bg-white rounded-lg shadow overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-900">Manual Orders</h2>
+                    <h2 class="text-lg font-semibold text-gray-900">Bulk Orders</h2>
                 </div>
             </div>
 
@@ -148,9 +136,9 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Customer</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Shipping Address</th>
+                                Items</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Postal Code</th>
+                                Shipping Address</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Total</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -168,7 +156,10 @@
                                     <div>
                                         <div class="text-sm font-medium text-gray-900">#{{ $order->order_number }}</div>
                                         <div class="text-sm text-gray-500">{{ $order->created_at->format('M d, Y') }}</div>
-                                        <div class="text-xs text-gray-500">{{ $order->orderItems->count() }} item(s)</div>
+                                        <span
+                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 mt-1">
+                                            <i class="fas fa-boxes mr-1"></i>Bulk Purchase
+                                        </span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
@@ -183,27 +174,30 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm text-gray-900">
+                                        {{ $order->orderItems->sum('quantity') }} books
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        {{ $order->orderItems->count() }} line item(s)
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900">
                                         {{ $order->shipping_address['address_line_1'] ?? '' }}
                                         @if(isset($order->shipping_address['address_line_2']))
                                             <br>{{ $order->shipping_address['address_line_2'] }}
                                         @endif
                                         <br>{{ $order->shipping_address['city'] ?? '' }},
                                         {{ $order->shipping_address['state'] ?? '' }}
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="text-sm font-medium text-gray-900">
-                                        {{ $order->shipping_address['postal_code'] ?? 'N/A' }}
-                                    </div>
-                                    <div class="text-xs">
-                                        <span
-                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
-                                            <i class="fas fa-exclamation-triangle mr-1"></i>Non-serviceable
-                                        </span>
+                                        {{ $order->shipping_address['postal_code'] ?? '' }}
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900">
                                     ₹{{ number_format($order->total_amount, 2) }}
+                                    @if($order->shipping_cost == 0)
+                                        <div class="text-xs text-green-600">
+                                            <i class="fas fa-tag"></i> Free Shipping
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4">
                                     @if($order->status === 'delivered')
@@ -244,9 +238,8 @@
                                             class="text-blue-600 hover:text-blue-900">
                                             <i class="fas fa-eye mr-1"></i>View Details
                                         </a>
-                                        <a href="{{ route('admin.manual-shipping.print-label', $order) }}"
-                                            class="text-purple-600 hover:text-purple-900 print-label-link"
-                                            data-shipped="{{ $order->isManuallyShipped() ? 'true' : 'false' }}" target="_blank">
+                                        <a href="{{ route('admin.bulk-orders.print-label', $order) }}"
+                                            class="text-purple-600 hover:text-purple-900" target="_blank">
                                             <i class="fas fa-print mr-1"></i>Print Label & Invoice
                                         </a>
                                         @if(!$order->isManuallyShipped() && $order->status !== 'delivered')
@@ -262,9 +255,9 @@
                         @empty
                             <tr>
                                 <td colspan="8" class="px-6 py-12 text-center text-gray-500">
-                                    <i class="fas fa-box text-4xl mb-4 opacity-50"></i>
-                                    <p class="text-lg">No manual orders found</p>
-                                    <p class="text-sm">Orders from non-serviceable areas will appear here.</p>
+                                    <i class="fas fa-boxes text-4xl mb-4 opacity-50"></i>
+                                    <p class="text-lg">No bulk orders found</p>
+                                    <p class="text-sm">Bulk purchase orders will appear here.</p>
                                 </td>
                             </tr>
                         @endforelse
@@ -359,7 +352,7 @@
                 return;
             }
 
-            fetch(`/admin/manual-shipping/${currentShipOrderId}/mark-shipped`, {
+            fetch(`/admin/bulk-orders/${currentShipOrderId}/mark-shipped`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -384,17 +377,5 @@
                     alert('An error occurred while marking the order as shipped.');
                 });
         }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            // Individual print label link validation
-            document.querySelectorAll('.print-label-link').forEach(link => {
-                link.addEventListener('click', function (e) {
-                    if (this.getAttribute('data-shipped') === 'false') {
-                        e.preventDefault();
-                        alert('This order is not yet marked as shipped. You must mark it as shipped first before printing labels.');
-                    }
-                });
-            });
-        });
     </script>
 @endsection
