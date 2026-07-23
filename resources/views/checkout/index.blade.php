@@ -183,13 +183,17 @@
                                 <span class="text-gray-600">Subtotal</span>
                                 <span class="text-gray-900">₹{{ number_format($subtotal, 2) }}</span>
                             </div>
-                            <div class="flex justify-between text-sm">
+                            <div class="flex justify-between text-sm items-center">
                                 <span class="text-gray-600">Shipping</span>
-                                <span id="shipping-display" class="text-gray-900">
-                                    @if($shipping == 0)
-                                        <span class="text-green-600 font-medium">FREE</span>
+                                <span id="shipping-display" class="text-sm font-medium text-gray-900">
+                                    @if(auth()->user()->state_id)
+                                        @if($shipping == 0)
+                                            <span class="text-green-600 font-medium">FREE</span>
+                                        @else
+                                            ₹{{ number_format($shipping, 2) }}
+                                        @endif
                                     @else
-                                        ₹{{ number_format($shipping, 2) }}
+                                        <span class="text-sm font-medium text-gray-500">Calculated based on state selection</span>
                                     @endif
                                 </span>
                             </div>
@@ -210,7 +214,13 @@
                             <div class="border-t pt-2">
                                 <div class="flex justify-between text-lg font-semibold">
                                     <span class="text-gray-900">Total</span>
-                                    <span id="total-display" class="text-gray-900">₹{{ number_format($total, 2) }}</span>
+                                    <span id="total-display" class="text-gray-900">
+                                        @if(auth()->user()->state_id)
+                                            ₹{{ number_format($total, 2) }}
+                                        @else
+                                            ₹{{ number_format($subtotal, 2) }}
+                                        @endif
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -427,15 +437,22 @@
                     districtSelect.disabled = false;
                     talukaSelect.disabled = true;
                     talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
+                    recalculateShipping(stateId);
                 } else {
                     districtSelect.disabled = true;
                     talukaSelect.disabled = true;
                     districtSelect.innerHTML = '<option value="">Select District</option>';
                     talukaSelect.innerHTML = '<option value="">Select Taluka</option>';
-                }
 
-                // Recalculate shipping price dynamically
-                recalculateShipping(stateId);
+                    const shippingDisplay = document.getElementById('shipping-display');
+                    const totalDisplay = document.getElementById('total-display');
+                    if (shippingDisplay) {
+                        shippingDisplay.innerHTML = '<span class="text-sm font-medium text-gray-500">Calculated based on state selection</span>';
+                    }
+                    if (totalDisplay) {
+                        totalDisplay.textContent = '₹{{ number_format($subtotal, 2) }}';
+                    }
+                }
             });
 
             function recalculateShipping(stateId) {
@@ -481,6 +498,13 @@
                 }
             });
 
+            const userStateId = @json(auth()->user()->state_id);
+            const userDistrictId = @json(auth()->user()->district_id);
+            const userTalukaId = @json(auth()->user()->taluka_id);
+
+            // Load states on page load
+            loadStates();
+
             function loadStates() {
                 fetch('/api/locations/states')
                     .then(response => response.json())
@@ -491,8 +515,16 @@
                                 const option = document.createElement('option');
                                 option.value = state.id;
                                 option.textContent = state.name;
+                                if (userStateId && state.id == userStateId) {
+                                    option.selected = true;
+                                }
                                 stateSelect.appendChild(option);
                             });
+
+                            if (userStateId && stateSelect.value == userStateId) {
+                                districtSelect.disabled = false;
+                                loadDistricts(userStateId);
+                            }
                         }
                     })
                     .catch(error => console.error('Error loading states:', error));
@@ -508,8 +540,16 @@
                                 const option = document.createElement('option');
                                 option.value = district.id;
                                 option.textContent = district.name;
+                                if (userDistrictId && district.id == userDistrictId) {
+                                    option.selected = true;
+                                }
                                 districtSelect.appendChild(option);
                             });
+
+                            if (userDistrictId && districtSelect.value == userDistrictId) {
+                                talukaSelect.disabled = false;
+                                loadTalukas(userDistrictId);
+                            }
                         }
                     })
                     .catch(error => console.error('Error loading districts:', error));
@@ -525,6 +565,9 @@
                                 const option = document.createElement('option');
                                 option.value = taluka.id;
                                 option.textContent = taluka.name;
+                                if (userTalukaId && taluka.id == userTalukaId) {
+                                    option.selected = true;
+                                }
                                 talukaSelect.appendChild(option);
                             });
                         }
