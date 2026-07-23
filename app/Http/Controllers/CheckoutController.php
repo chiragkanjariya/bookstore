@@ -52,8 +52,11 @@ class CheckoutController extends Controller
         $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
 
         $stateId = $user->state_id;
-        $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) use ($stateId) {
-            return $item->book->getShippingPriceForState($stateId) * $item->quantity;
+        $shipping = $cartItems->sum(function ($item) use ($stateId, $isBulkPurchase) {
+            $price = $isBulkPurchase
+                ? $item->book->getBulkShippingPriceForState($stateId)
+                : $item->book->getShippingPriceForState($stateId);
+            return $price * $item->quantity;
         });
 
         $tax = 0; // GST removed as per requirements
@@ -92,8 +95,10 @@ class CheckoutController extends Controller
 
         $user = Auth::user();
         $stateId = $user->state_id;
-        $itemShippingPrice = $book->getShippingPriceForState($stateId);
-        $shipping = $isBulkPurchase ? 0 : ($itemShippingPrice * $quantity);
+        $itemShippingPrice = $isBulkPurchase
+            ? $book->getBulkShippingPriceForState($stateId)
+            : $book->getShippingPriceForState($stateId);
+        $shipping = $itemShippingPrice * $quantity;
         $tax = 0; // GST removed as per requirements
         $total = $subtotal + $shipping;
 
@@ -128,7 +133,9 @@ class CheckoutController extends Controller
 
             $subtotal = $book->price * $quantity;
             $isBulkPurchase = $quantity >= $minBulkPurchase;
-            $shipping = $isBulkPurchase ? 0 : ($book->getShippingPriceForState($stateId) * $quantity);
+            $shipping = ($isBulkPurchase
+                ? $book->getBulkShippingPriceForState($stateId)
+                : $book->getShippingPriceForState($stateId)) * $quantity;
         } else {
             $user = Auth::user();
             $cartItems = $user->cartItems()->with('book')->get();
@@ -136,8 +143,11 @@ class CheckoutController extends Controller
             $subtotal = $cartItems->sum('total_price');
             $totalQuantity = $cartItems->sum('quantity');
             $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
-            $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) use ($stateId) {
-                return $item->book->getShippingPriceForState($stateId) * $item->quantity;
+            $shipping = $cartItems->sum(function ($item) use ($stateId, $isBulkPurchase) {
+                $price = $isBulkPurchase
+                    ? $item->book->getBulkShippingPriceForState($stateId)
+                    : $item->book->getShippingPriceForState($stateId);
+                return $price * $item->quantity;
             });
         }
 
@@ -211,8 +221,10 @@ class CheckoutController extends Controller
                 // Check if order qualifies for bulk purchase (free shipping)
                 $isBulkPurchase = $quantity >= $minBulkPurchase;
 
-                $itemShippingPrice = $book->getShippingPriceForState($stateId);
-                $shipping = $isBulkPurchase ? 0 : ($itemShippingPrice * $quantity);
+                $itemShippingPrice = $isBulkPurchase
+                    ? $book->getBulkShippingPriceForState($stateId)
+                    : $book->getShippingPriceForState($stateId);
+                $shipping = $itemShippingPrice * $quantity;
                 $tax = 0; // GST removed
                 $total = $subtotal + $shipping;
 
@@ -246,8 +258,11 @@ class CheckoutController extends Controller
                 $totalQuantity = $cartItems->sum('quantity');
                 $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
 
-                $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) use ($stateId) {
-                    return $item->book->getShippingPriceForState($stateId) * $item->quantity;
+                $shipping = $cartItems->sum(function ($item) use ($stateId, $isBulkPurchase) {
+                    $price = $isBulkPurchase
+                        ? $item->book->getBulkShippingPriceForState($stateId)
+                        : $item->book->getShippingPriceForState($stateId);
+                    return $price * $item->quantity;
                 });
                 $tax = 0; // GST removed
                 $total = $subtotal + $shipping;
@@ -300,7 +315,13 @@ class CheckoutController extends Controller
             // Create order items
             foreach ($orderItems as $item) {
                 $book = $item->book ?? Book::find($item->book_id);
-                $itemShippingPrice = $book ? $book->getShippingPriceForState($stateId) : ($item->shipping_price ?? 0);
+                if ($book) {
+                    $itemShippingPrice = $isBulkPurchase
+                        ? $book->getBulkShippingPriceForState($stateId)
+                        : $book->getShippingPriceForState($stateId);
+                } else {
+                    $itemShippingPrice = $item->shipping_price ?? 0;
+                }
                 OrderItem::create([
                     'order_id' => $order->id,
                     'book_id' => $item->book_id ?? $item->book->id,

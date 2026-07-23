@@ -27,8 +27,17 @@ class CartController extends Controller
 
         $subtotal = $cartItems->sum('total_price');
         $stateId = $user->state_id;
-        $shipping = $cartItems->sum(function ($item) use ($stateId) {
-            return $item->book->getShippingPriceForState($stateId) * $item->quantity;
+
+        // Check if cart qualifies for bulk purchase pricing
+        $totalQuantity = $cartItems->sum('quantity');
+        $minBulkPurchase = \App\Models\Setting::get('min_bulk_purchase', 10);
+        $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
+
+        $shipping = $cartItems->sum(function ($item) use ($stateId, $isBulkPurchase) {
+            $price = $isBulkPurchase
+                ? $item->book->getBulkShippingPriceForState($stateId)
+                : $item->book->getShippingPriceForState($stateId);
+            return $price * $item->quantity;
         });
         $total = $subtotal + $shipping;
 
@@ -126,11 +135,14 @@ class CartController extends Controller
             $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
             
             $stateId = $user->state_id;
-            // Apply bulk purchase free shipping logic
-            $shipping = $isBulkPurchase ? 0 : $cartItems->sum(function ($item) use ($stateId) {
-                return $item->book->getShippingPriceForState($stateId) * $item->quantity;
+            // Apply bulk purchase state-wise shipping logic
+            $shipping = $cartItems->sum(function ($item) use ($stateId, $isBulkPurchase) {
+                $price = $isBulkPurchase
+                    ? $item->book->getBulkShippingPriceForState($stateId)
+                    : $item->book->getShippingPriceForState($stateId);
+                return $price * $item->quantity;
             });
-            
+
             $total = $subtotal + $shipping;
 
             return response()->json([

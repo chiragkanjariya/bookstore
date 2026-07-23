@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\BookImage;
 use App\Models\BookStateShippingPrice;
+use App\Models\BookBulkStateShippingPrice;
 use App\Models\Category;
 use App\Models\State;
 use Illuminate\Http\Request;
@@ -67,8 +68,11 @@ class BookController extends Controller
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'shipping_price' => ['nullable', 'numeric', 'min:0'],
+            'bulk_shipping_price' => ['nullable', 'numeric', 'min:0'],
             'state_shipping_prices' => ['nullable', 'array'],
             'state_shipping_prices.*' => ['nullable', 'numeric', 'min:0'],
+            'bulk_state_shipping_prices' => ['nullable', 'array'],
+            'bulk_state_shipping_prices.*' => ['nullable', 'numeric', 'min:0'],
             'height' => ['nullable', 'numeric', 'min:0'],
             'width' => ['nullable', 'numeric', 'min:0'],
             'depth' => ['nullable', 'numeric', 'min:0'],
@@ -82,13 +86,14 @@ class BookController extends Controller
         ]);
 
         $data = $request->only([
-            'title', 'author', 'isbn', 'description', 'price', 'shipping_price',
+            'title', 'author', 'isbn', 'description', 'price', 'shipping_price', 'bulk_shipping_price',
             'height', 'width', 'depth', 'weight',
             'stock', 'language', 'status', 'category_id'
         ]);
 
-        // Set default shipping price
+        // Set default shipping prices
         $data['shipping_price'] = $request->input('shipping_price', 0);
+        $data['bulk_shipping_price'] = $request->input('bulk_shipping_price', 0);
 
         // Handle cover image upload
         if ($request->hasFile('cover_image')) {
@@ -102,6 +107,19 @@ class BookController extends Controller
             foreach ($request->state_shipping_prices as $stateId => $price) {
                 if ($price !== null && $price !== '' && is_numeric($price)) {
                     BookStateShippingPrice::create([
+                        'book_id' => $book->id,
+                        'state_id' => $stateId,
+                        'shipping_price' => $price,
+                    ]);
+                }
+            }
+        }
+
+        // Save bulk-order state shipping prices if provided
+        if ($request->has('bulk_state_shipping_prices') && is_array($request->bulk_state_shipping_prices)) {
+            foreach ($request->bulk_state_shipping_prices as $stateId => $price) {
+                if ($price !== null && $price !== '' && is_numeric($price)) {
+                    BookBulkStateShippingPrice::create([
                         'book_id' => $book->id,
                         'state_id' => $stateId,
                         'shipping_price' => $price,
@@ -132,7 +150,7 @@ class BookController extends Controller
      */
     public function show(Book $book)
     {
-        $book->load(['category', 'stateShippingPrices.state']);
+        $book->load(['category', 'stateShippingPrices.state', 'bulkStateShippingPrices.state']);
         return view('admin.books.show', compact('book'));
     }
 
@@ -141,7 +159,7 @@ class BookController extends Controller
      */
     public function edit(Book $book)
     {
-        $book->load(['images', 'stateShippingPrices']);
+        $book->load(['images', 'stateShippingPrices', 'bulkStateShippingPrices']);
         $categories = Category::active()->ordered()->get();
         $states = State::active()->ordered()->get();
         if ($states->isEmpty()) {
@@ -162,8 +180,11 @@ class BookController extends Controller
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'shipping_price' => ['nullable', 'numeric', 'min:0'],
+            'bulk_shipping_price' => ['nullable', 'numeric', 'min:0'],
             'state_shipping_prices' => ['nullable', 'array'],
             'state_shipping_prices.*' => ['nullable', 'numeric', 'min:0'],
+            'bulk_state_shipping_prices' => ['nullable', 'array'],
+            'bulk_state_shipping_prices.*' => ['nullable', 'numeric', 'min:0'],
             'height' => ['nullable', 'numeric', 'min:0'],
             'width' => ['nullable', 'numeric', 'min:0'],
             'depth' => ['nullable', 'numeric', 'min:0'],
@@ -177,13 +198,14 @@ class BookController extends Controller
         ]);
 
         $data = $request->only([
-            'title', 'author', 'isbn', 'description', 'price', 'shipping_price',
+            'title', 'author', 'isbn', 'description', 'price', 'shipping_price', 'bulk_shipping_price',
             'height', 'width', 'depth', 'weight',
             'stock', 'language', 'status', 'category_id'
         ]);
 
-        // Set default shipping price
+        // Set default shipping prices
         $data['shipping_price'] = $request->input('shipping_price', 0);
+        $data['bulk_shipping_price'] = $request->input('bulk_shipping_price', 0);
 
         // Handle cover image upload
         if ($request->hasFile('cover_image')) {
@@ -206,6 +228,22 @@ class BookController extends Controller
                     );
                 } else {
                     BookStateShippingPrice::where('book_id', $book->id)
+                        ->where('state_id', $stateId)
+                        ->delete();
+                }
+            }
+        }
+
+        // Handle bulk-order state shipping prices
+        if ($request->has('bulk_state_shipping_prices') && is_array($request->bulk_state_shipping_prices)) {
+            foreach ($request->bulk_state_shipping_prices as $stateId => $price) {
+                if ($price !== null && $price !== '' && is_numeric($price)) {
+                    BookBulkStateShippingPrice::updateOrCreate(
+                        ['book_id' => $book->id, 'state_id' => $stateId],
+                        ['shipping_price' => $price]
+                    );
+                } else {
+                    BookBulkStateShippingPrice::where('book_id', $book->id)
                         ->where('state_id', $stateId)
                         ->delete();
                 }

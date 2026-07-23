@@ -44,9 +44,13 @@
                                 class="book-tab-btn border-[#00BDE0] text-[#00BDE0] whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none">
                             Book Details
                         </button>
-                        <button type="button" id="tab-btn-shipping" onclick="switchBookTab('shipping')" 
+                        <button type="button" id="tab-btn-shipping" onclick="switchBookTab('shipping')"
                                 class="book-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none flex items-center">
                             <span>State-Wise Shipping Rates</span>
+                        </button>
+                        <button type="button" id="tab-btn-bulk-shipping" onclick="switchBookTab('bulk-shipping')"
+                                class="book-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none flex items-center">
+                            <span>Bulk Order Shipping Rates</span>
                         </button>
                     </nav>
                 </div>
@@ -380,6 +384,69 @@
                         @else
                             <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 text-center">
                                 <p class="text-sm text-yellow-800">No states found in the system. Default shipping price will apply to all orders.</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Tab 3: Bulk Order Shipping Rates -->
+                <div id="tab-content-bulk-shipping" class="book-tab-content hidden">
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6 border border-gray-200">
+                        <h3 class="text-base font-semibold text-gray-900 mb-1">Bulk Order Shipping Rates</h3>
+                        <p class="text-sm text-gray-600 mb-4">
+                            Configure state-wise shipping prices applied when an order for this book qualifies as a <span class="font-semibold">bulk purchase</span>. If a state field is left blank, the <strong>Default Bulk Shipping Price</strong> below will be used during bulk order checkout.
+                        </p>
+
+                        <!-- Default Bulk Shipping Price -->
+                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6 max-w-sm">
+                            <label for="bulk_shipping_price" class="block text-sm font-medium text-gray-700 mb-1">
+                                Default Bulk Shipping Price (₹)
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">₹</span>
+                                </div>
+                                <input type="number" name="bulk_shipping_price" id="bulk_shipping_price"
+                                       value="{{ old('bulk_shipping_price', 0) }}" min="0" step="0.01"
+                                       class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('bulk_shipping_price') border-red-300 @enderror"
+                                       placeholder="0.00">
+                            </div>
+                            @error('bulk_shipping_price')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-xs text-gray-500">Fallback bulk price if a state-wise bulk price is not configured</p>
+                        </div>
+
+                        @if(count($states) > 0)
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                @foreach($states as $state)
+                                    <div class="bg-white p-3.5 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-between">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <label for="bulk_state_price_{{ $state->id }}" class="text-sm font-medium text-gray-800">
+                                                {{ $state->name }}
+                                                @if($state->code)
+                                                    <span class="text-xs text-gray-400 font-mono">({{ $state->code }})</span>
+                                                @endif
+                                            </label>
+                                        </div>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">₹</span>
+                                            </div>
+                                            <input type="number"
+                                                   name="bulk_state_shipping_prices[{{ $state->id }}]"
+                                                   id="bulk_state_price_{{ $state->id }}"
+                                                   value="{{ old('bulk_state_shipping_prices.'.$state->id) }}"
+                                                   min="0" step="0.01"
+                                                   placeholder="Default"
+                                                   class="w-full pl-7 pr-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] text-sm">
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 text-center">
+                                <p class="text-sm text-yellow-800">No states found in the system. Default bulk shipping price will apply to all bulk orders.</p>
                             </div>
                         @endif
                     </div>

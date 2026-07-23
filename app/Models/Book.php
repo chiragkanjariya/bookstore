@@ -18,6 +18,7 @@ class Book extends Model
         'description',
         'price',
         'shipping_price',
+        'bulk_shipping_price',
         'height',
         'width',
         'depth',
@@ -32,6 +33,7 @@ class Book extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'shipping_price' => 'decimal:2',
+        'bulk_shipping_price' => 'decimal:2',
         'height' => 'decimal:2',
         'width' => 'decimal:2',
         'depth' => 'decimal:2',
@@ -96,6 +98,14 @@ class Book extends Model
     }
 
     /**
+     * Get the bulk-order state-wise shipping prices for the book.
+     */
+    public function bulkStateShippingPrices()
+    {
+        return $this->hasMany(BookBulkStateShippingPrice::class);
+    }
+
+    /**
      * Get shipping price for a given state ID (falls back to default shipping_price if not set).
      */
     public function getShippingPriceForState($stateId = null)
@@ -111,6 +121,24 @@ class Book extends Model
         }
 
         return (float) $this->shipping_price;
+    }
+
+    /**
+     * Get bulk-order shipping price for a given state ID (falls back to default bulk_shipping_price if not set).
+     */
+    public function getBulkShippingPriceForState($stateId = null)
+    {
+        if ($stateId) {
+            $statePrice = $this->relationLoaded('bulkStateShippingPrices')
+                ? $this->bulkStateShippingPrices->firstWhere('state_id', $stateId)
+                : $this->bulkStateShippingPrices()->where('state_id', $stateId)->first();
+
+            if ($statePrice && $statePrice->shipping_price !== null) {
+                return (float) $statePrice->shipping_price;
+            }
+        }
+
+        return (float) $this->bulk_shipping_price;
     }
 
     /**
