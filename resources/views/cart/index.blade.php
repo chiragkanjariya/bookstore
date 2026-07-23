@@ -186,7 +186,15 @@
                                 <span class="text-gray-600">Shipping</span>
                                 <span class="text-sm font-medium text-gray-500" id="shipping">Calculated at checkout</span>
                             </div>
-                            <p class="text-xs text-gray-500 italic mt-1">Shipping charges will be calculated at checkout.</p>
+                            <p class="text-xs text-gray-500 italic mt-1">Shipping charges will be calculated at checkout based on state selection.</p>
+                            @if($isBulkPurchase)
+                                <div class="bulk-purchase-message bg-green-50 border border-green-200 rounded-md p-3 mt-2">
+                                    <p class="text-xs text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Congratulations! You will be qualified for a special discount on the shipping charges on bulk quantity ({{ $minBulkPurchase }}+ items) purchase!
+                                    </p>
+                                </div>
+                            @endif
                             <div class="border-t border-gray-200 pt-4">
                                 <div class="flex justify-between">
                                     <span class="text-lg font-semibold text-gray-900">Total</span>
@@ -347,17 +355,15 @@
                         // Create the message if it doesn't exist
                         const shippingElement = document.getElementById('shipping').parentElement;
                         bulkMessageContainer = document.createElement('div');
-                        bulkMessageContainer.className = 'bulk-purchase-message bg-green-50 border border-green-200 rounded-md p-2';
+                        bulkMessageContainer.className = 'bulk-purchase-message bg-green-50 border border-green-200 rounded-md p-3 mt-2';
                         bulkMessageContainer.innerHTML = `
-                        <p class="text-xs text-green-800">
-                            <i class="fas fa-check-circle mr-1"></i>
-                            <strong>Bulk Purchase!</strong> You qualify for free shipping (<span class="bulk-qty">${totalQuantity}</span> items ≥ ${minBulkPurchase} items)
-                        </p>
-                    `;
+                            <p class="text-xs text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Congratulations! You will be qualified for a special discount on the shipping charges on bulk quantity (${minBulkPurchase}+ items) purchase!
+                            </p>
+                        `;
                         shippingElement.parentElement.insertBefore(bulkMessageContainer, shippingElement.nextElementSibling);
                     } else {
-                        // Update the quantity in existing message
-                        bulkMessageContainer.querySelector('.bulk-qty').textContent = totalQuantity;
                         bulkMessageContainer.style.display = 'block';
                     }
                 } else {

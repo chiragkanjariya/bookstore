@@ -203,11 +203,10 @@
                                 $isBulkPurchase = $totalQuantity >= $minBulkPurchase;
                             @endphp
                             @if($isBulkPurchase)
-                                <div class="bg-green-50 border border-green-200 rounded-md p-2">
+                                <div class="bg-green-50 border border-green-200 rounded-md p-3">
                                     <p class="text-xs text-green-800">
                                         <i class="fas fa-check-circle mr-1"></i>
-                                        <strong>Bulk Purchase!</strong> You qualify for free shipping ({{ $totalQuantity }}
-                                        items ≥ {{ $minBulkPurchase }} items)
+                                        Congratulations! You are qualified for special discount on the shipping charges on bulk quantity ({{ $minBulkPurchase }}+ items) purchase!
                                     </p>
                                 </div>
                             @endif
