@@ -288,7 +288,8 @@ class Order extends Model
      */
     public function scopeBulkOrders($query)
     {
-        return $query->where('is_bulk_purchased', true);
+        return $query->where('is_bulk_purchased', true)
+            ->where('payment_status', 'paid');
     }
 
     /**
@@ -297,7 +298,8 @@ class Order extends Model
     public function scopeManualOrders($query)
     {
         return $query->where('requires_manual_shipping', true)
-            ->where('is_bulk_purchased', false);
+            ->where('is_bulk_purchased', false)
+            ->where('payment_status', 'paid');
     }
 
     /**

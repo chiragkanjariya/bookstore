@@ -229,6 +229,16 @@
                         </svg>
                         Manual Courier
                     </a>
+
+                    <!-- Application Logs -->
+                    <a href="{{ route('admin.logs.index') }}"
+                        class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.logs.*') ? 'bg-[#00BDE0] text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Application Logs
+                    </a>
                 </div>
             </nav>
 

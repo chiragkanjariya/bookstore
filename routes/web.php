@@ -131,6 +131,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/export', [\App\Http\Controllers\Admin\BulkOrderController::class, 'export'])->name('export');
     });
 
+    // Application Log Routes
+    Route::prefix('logs')->name('logs.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\LogViewerController::class, 'index'])->name('index');
+        Route::get('/download', [\App\Http\Controllers\Admin\LogViewerController::class, 'download'])->name('download');
+        Route::delete('/clear', [\App\Http\Controllers\Admin\LogViewerController::class, 'clear'])->name('clear');
+        Route::delete('/delete', [\App\Http\Controllers\Admin\LogViewerController::class, 'delete'])->name('delete');
+    });
+
     // Settings Routes
     Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
     Route::put('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');

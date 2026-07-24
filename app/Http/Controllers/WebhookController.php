@@ -23,6 +23,13 @@ class WebhookController extends Controller
     public function razorpayWebhook(Request $request)
     {
         try {
+            // Marker: log every time the Razorpay webhook is performed/hit.
+            Log::info('Razorpay Webhook Performed', [
+                'event' => $request->input('event'),
+                'ip' => $request->ip(),
+                'timestamp' => now()->toDateTimeString(),
+            ]);
+
             // Log all incoming webhook data for debugging
             Log::info('Razorpay Webhook Received - Full Request', [
                 'method' => $request->method(),
