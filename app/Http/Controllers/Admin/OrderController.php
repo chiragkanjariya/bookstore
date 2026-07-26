@@ -233,18 +233,20 @@ class OrderController extends Controller
             ->whereIn('id', $request->order_ids)
             ->get();
 
-        // Generate AWB numbers for orders that don't have them
-        foreach ($orders as $order) {
-            if (!$order->awb_number) {
-                \App\Helpers\AWBNumberGenerator::assignToOrder($order);
-            }
-        }
+        $invalidOrders = $orders->filter(function ($order) {
+            return !in_array($order->shipping_partner_status, [Order::SHIPPING_PARTNER_SHIPMENT_CREATED, Order::SHIPPING_PARTNER_READY_TO_SHIP]);
+        });
 
-        // Refresh to get updated AWB numbers
-        $orders = $orders->fresh(['user', 'orderItems.book']);
+        if ($invalidOrders->count() > 0) {
+            return back()->with('error', 'Labels can only be printed for orders with "Shipment Created" or "Ready to Ship" status.');
+        }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
             ->setPaper('a4', 'portrait');
+
+        // Update status to ready_to_ship
+        Order::whereIn('id', $request->order_ids)
+            ->update(['shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP]);
 
         return $pdf->download('shipping_labels_' . date('Y-m-d_H-i-s') . '.pdf');
     }
@@ -460,7 +462,7 @@ class OrderController extends Controller
 
             if ($response && isset($response['success']) && $response['success']) {
                 $order->update([
-                    'shipping_partner_status' => Order::SHIPPING_PARTNER_APPROVED,
+                    'shipping_partner_status' => Order::SHIPPING_PARTNER_SHIPMENT_CREATED,
                     'shipping_partner_error' => null
                 ]);
                 return response()->json([

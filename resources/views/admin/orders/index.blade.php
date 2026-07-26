@@ -80,17 +80,6 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                    <select name="status"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Statuses</option>
-                        <option value="order_placed" {{ request('status') == 'order_placed' ? 'selected' : '' }}>Order Placed</option>
-                        <option value="shipped" {{ request('status') == 'shipped' ? 'selected' : '' }}>Shipped</option>
-                        <option value="delivered" {{ request('status') == 'delivered' ? 'selected' : '' }}>Delivered</option>
-                    </select>
-                </div>
-
-                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
                     <select name="payment_status"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -108,9 +97,8 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">All Shipping Status</option>
                         <option value="pending" {{ request('shipping_partner_status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="approved" {{ request('shipping_partner_status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                        <option value="rejected" {{ request('shipping_partner_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                        <option value="not_shipped" {{ request('shipping_partner_status') == 'not_shipped' ? 'selected' : '' }}>Not Shipped</option>
+                        <option value="shipment_created" {{ request('shipping_partner_status') == 'shipment_created' ? 'selected' : '' }}>Shipment Created</option>
+                        <option value="ready_to_ship" {{ request('shipping_partner_status') == 'ready_to_ship' ? 'selected' : '' }}>Ready to Ship</option>
                     </select>
                 </div>
 
@@ -150,7 +138,7 @@
                             <button type="button" id="ship-now-btn"
                                 class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm transition duration-200"
                                 disabled>
-                                <i class="fas fa-shipping-fast mr-2"></i>Ship Now
+                                <i class="fas fa-shipping-fast mr-2"></i>Create Shipment
                             </button>
                             <button type="button" id="print-labels-btn"
                                 class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm transition duration-200"
@@ -202,6 +190,8 @@
                                     <td class="px-6 py-4">
                                         <input type="checkbox" name="order_ids[]" value="{{ $order->id }}"
                                             data-status="{{ $order->status }}"
+                                            data-shipping-status="{{ $order->shipping_partner_status }}"
+                                            onchange="updateActionButtons()"
                                             class="order-checkbox rounded">
                                     </td>
                                     <td class="px-6 py-4">
@@ -349,7 +339,7 @@
                 }
             });
 
-            // Ship Now button
+            // Create Shipment button
             shipNowBtn.addEventListener('click', function () {
                 const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
                 if (checkedBoxes.length === 0) {
@@ -357,7 +347,7 @@
                     return;
                 }
 
-                if (confirm(`Are you sure you want to ship ${checkedBoxes.length} order(s) now?\n\nThis will:\n- Submit orders to Maruti API\n- Mark orders as "Ready to Ship"\n- Send "Order Shipped" notification emails with Maruti reference number`)) {
+                if (confirm(`Are you sure you want to create shipment for ${checkedBoxes.length} order(s) now?\n\nThis will:\n- Submit orders to Courier API\n- Mark orders as "Shipment Created"\n- Allow you to print labels afterwards`)) {
                     // Change form action to ship now route
                     const originalAction = bulkForm.action;
                     bulkForm.action = '{{ route("admin.orders.bulk-ship-now") }}';
@@ -376,13 +366,13 @@
                     return;
                 }
 
-                // Check for non-shipped orders
+                // Check for valid shipping status
                 const pendingOrders = Array.from(checkedBoxes).filter(cb => 
-                    cb.getAttribute('data-status') === 'pending_to_be_prepared'
+                    !['shipment_created', 'ready_to_ship'].includes(cb.getAttribute('data-shipping-status'))
                 );
 
                 if (pendingOrders.length > 0) {
-                    alert('Some selected orders are not yet shipped (Pending to be prepared). You must "Ship Now" first before printing labels.');
+                    alert('Some selected orders do not have a created shipment. You must "Create Shipment" first before printing labels.');
                     return;
                 }
 

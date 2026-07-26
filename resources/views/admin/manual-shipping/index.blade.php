@@ -80,15 +80,13 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                    <select name="status"
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Status</label>
+                    <select name="shipping_partner_status"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Status</option>
-                        <option value="not_shipped" {{ request('status') == 'not_shipped' ? 'selected' : '' }}>Not Shipped</option>
-                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="shipped" {{ request('status') == 'shipped' ? 'selected' : '' }}>Shipped</option>
-                        <option value="delivered" {{ request('status') == 'delivered' ? 'selected' : '' }}>Delivered
-                        </option>
+                        <option value="">All Shipping Status</option>
+                        <option value="pending" {{ request('shipping_partner_status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="shipment_created" {{ request('shipping_partner_status') == 'shipment_created' ? 'selected' : '' }}>Shipment Created</option>
+                        <option value="ready_to_ship" {{ request('shipping_partner_status') == 'ready_to_ship' ? 'selected' : '' }}>Ready to Ship</option>
                     </select>
                 </div>
 

@@ -195,12 +195,12 @@ class BulkOrderController extends Controller
             abort(404, 'This is not a bulk order');
         }
 
-        try {
-            AWBNumberGenerator::assignToOrder($order);
-            $order->refresh();
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+        if (!in_array($order->shipping_partner_status, [Order::SHIPPING_PARTNER_SHIPMENT_CREATED, Order::SHIPPING_PARTNER_READY_TO_SHIP])) {
+            return back()->with('error', 'Label cannot be printed until shipment is created.');
         }
+
+        // Update status to ready_to_ship
+        $order->update(['shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP]);
 
         return view('admin.manual-shipping.print-label', compact('order'));
     }
@@ -220,20 +220,20 @@ class BulkOrderController extends Controller
             ->bulkOrders()
             ->get();
 
-        try {
-            foreach ($orders as $order) {
-                AWBNumberGenerator::assignToOrder($order);
-            }
-        } catch (\Exception $e) {
-            return back()->with('error', 'Label generation error: ' . $e->getMessage());
-        }
+        $invalidOrders = $orders->filter(function ($order) {
+            return !in_array($order->shipping_partner_status, [Order::SHIPPING_PARTNER_SHIPMENT_CREATED, Order::SHIPPING_PARTNER_READY_TO_SHIP]);
+        });
 
-        $orders = Order::with(['user', 'orderItems.book'])
-            ->whereIn('id', $request->order_ids)
-            ->get();
+        if ($invalidOrders->count() > 0) {
+            return back()->with('error', 'Labels can only be printed for orders with "Shipment Created" or "Ready to Ship" status.');
+        }
 
         $pdf = Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
             ->setPaper('a4', 'landscape');
+
+        // Update status to ready_to_ship
+        Order::whereIn('id', $request->order_ids)
+            ->update(['shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP]);
 
         return $pdf->download('bulk_order_labels_' . date('Y-m-d_H-i-s') . '.pdf');
     }

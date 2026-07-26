@@ -19,7 +19,8 @@ class Order extends Model
 
     // Shipping Partner Status
     const SHIPPING_PARTNER_PENDING = 'pending';
-    const SHIPPING_PARTNER_APPROVED = 'approved';
+    const SHIPPING_PARTNER_SHIPMENT_CREATED = 'shipment_created';
+    const SHIPPING_PARTNER_READY_TO_SHIP = 'ready_to_ship';
     const SHIPPING_PARTNER_REJECTED = 'rejected';
 
     protected $fillable = [
@@ -240,6 +241,7 @@ class Order extends Model
         $updateData = [
             'manual_shipping_marked_at' => now(),
             'status' => 'shipped',
+            'shipping_partner_status' => self::SHIPPING_PARTNER_SHIPMENT_CREATED,
             'shipped_at' => now(),
         ];
 
@@ -254,6 +256,8 @@ class Order extends Model
         if (!empty($courierData['manual_tracking_id'])) {
             $updateData['manual_tracking_id'] = $courierData['manual_tracking_id'];
         }
+
+        \App\Helpers\AWBNumberGenerator::assignToOrder($this);
 
         return $this->update($updateData);
     }
