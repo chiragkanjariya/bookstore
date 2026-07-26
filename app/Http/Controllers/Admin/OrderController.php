@@ -62,16 +62,9 @@ class OrderController extends Controller
         }
 
         // Filter by shipping partner status
-        $shippingPartnerStatus = $request->input('shipping_partner_status', 'not_shipped');
+        $shippingPartnerStatus = $request->input('shipping_partner_status', 'pending');
         if (!empty($shippingPartnerStatus)) {
-            if ($shippingPartnerStatus === 'not_shipped') {
-                $query->where(function ($q) {
-                    $q->where('shipping_partner_status', '!=', 'approved')
-                      ->orWhereNull('shipping_partner_status');
-                });
-            } else {
-                $query->where('shipping_partner_status', $shippingPartnerStatus);
-            }
+            $query->where('shipping_partner_status', $shippingPartnerStatus);
             $request->merge(['shipping_partner_status' => $shippingPartnerStatus]);
         }
 
@@ -372,16 +365,10 @@ class OrderController extends Controller
             $query->where('is_bulk_purchased', $request->is_bulk_purchased === '1');
         }
 
-        $shippingPartnerStatus = $request->input('shipping_partner_status', 'not_shipped');
+        // Apply shipping status filter
+        $shippingPartnerStatus = $request->input('shipping_partner_status', 'pending');
         if (!empty($shippingPartnerStatus)) {
-            if ($shippingPartnerStatus === 'not_shipped') {
-                $query->where(function ($q) {
-                    $q->where('shipping_partner_status', '!=', 'approved')
-                      ->orWhereNull('shipping_partner_status');
-                });
-            } else {
-                $query->where('shipping_partner_status', $shippingPartnerStatus);
-            }
+            $query->where('shipping_partner_status', $shippingPartnerStatus);
         }
 
         $orders = $query->get();

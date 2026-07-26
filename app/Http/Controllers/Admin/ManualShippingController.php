@@ -27,19 +27,11 @@ class ManualShippingController extends Controller
             ->manualOrders()
             ->orderBy('created_at', 'desc');
 
-        // Filter by status (default to not_shipped / not shipped)
-        $status = $request->input('status', 'not_shipped');
-        if (!empty($status)) {
-            if ($status === 'not_shipped') {
-                $query->whereNull('manual_shipping_marked_at')->where('status', '!=', 'delivered');
-            } elseif ($status === 'pending') {
-                $query->whereNull('manual_shipping_marked_at')->whereIn('status', ['pending', 'pending_to_be_prepared']);
-            } elseif ($status === 'shipped') {
-                $query->whereNotNull('manual_shipping_marked_at')->where('status', '!=', 'delivered');
-            } elseif ($status === 'delivered') {
-                $query->where('status', 'delivered');
-            }
-            $request->merge(['status' => $status]);
+        // Filter by shipping partner status
+        $shippingPartnerStatus = $request->input('shipping_partner_status', 'pending');
+        if (!empty($shippingPartnerStatus)) {
+            $query->where('shipping_partner_status', $shippingPartnerStatus);
+            $request->merge(['shipping_partner_status' => $shippingPartnerStatus]);
         }
 
         // Search by order number or customer name
@@ -194,18 +186,9 @@ class ManualShippingController extends Controller
         $query = Order::with(['user', 'orderItems.book'])
             ->manualOrders();
 
-        // Apply same filters as index
-        $status = $request->input('status', 'not_shipped');
-        if (!empty($status)) {
-            if ($status === 'not_shipped') {
-                $query->whereNull('manual_shipping_marked_at')->where('status', '!=', 'delivered');
-            } elseif ($status === 'pending') {
-                $query->whereNull('manual_shipping_marked_at')->whereIn('status', ['pending', 'pending_to_be_prepared']);
-            } elseif ($status === 'shipped') {
-                $query->whereNotNull('manual_shipping_marked_at')->where('status', '!=', 'delivered');
-            } elseif ($status === 'delivered') {
-                $query->where('status', 'delivered');
-            }
+        $shippingPartnerStatus = $request->input('shipping_partner_status', 'pending');
+        if (!empty($shippingPartnerStatus)) {
+            $query->where('shipping_partner_status', $shippingPartnerStatus);
         }
 
         if ($request->filled('search')) {
