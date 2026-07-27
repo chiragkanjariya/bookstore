@@ -27,10 +27,10 @@ class BulkOrderController extends Controller
             ->bulkOrders()
             ->orderBy('created_at', 'desc');
 
-        // Filter by shipping partner status
+        // Filter by shipping status (based on the displayed column status)
         $shippingPartnerStatus = $request->input('shipping_partner_status', 'pending');
         if (!empty($shippingPartnerStatus)) {
-            $query->where('shipping_partner_status', $shippingPartnerStatus);
+            $this->applyShippingStatusFilter($query, $shippingPartnerStatus);
             $request->merge(['shipping_partner_status' => $shippingPartnerStatus]);
         }
 
@@ -67,6 +67,31 @@ class BulkOrderController extends Controller
         $manualCouriers = ManualCourier::active()->orderBy('name')->get();
 
         return view('admin.bulk-orders.index', compact('orders', 'stats', 'request', 'manualCouriers'));
+    }
+
+    /**
+     * Apply the shipping status filter based on the displayed column status.
+     *
+     * The status column shows Delivered / Shipped / Pending derived from the
+     * order's `status` and `manual_shipping_marked_at`, so the filter must use
+     * the same logic (not the decoupled `shipping_partner_status` column).
+     */
+    private function applyShippingStatusFilter($query, string $status): void
+    {
+        switch ($status) {
+            case 'delivered':
+                $query->where('status', 'delivered');
+                break;
+            case 'shipped':
+                $query->whereNotNull('manual_shipping_marked_at')
+                    ->where('status', '!=', 'delivered');
+                break;
+            case 'pending':
+            default:
+                $query->whereNull('manual_shipping_marked_at')
+                    ->where('status', '!=', 'delivered');
+                break;
+        }
     }
 
     /**
@@ -240,7 +265,7 @@ class BulkOrderController extends Controller
 
         $shippingPartnerStatus = $request->input('shipping_partner_status', 'pending');
         if (!empty($shippingPartnerStatus)) {
-            $query->where('shipping_partner_status', $shippingPartnerStatus);
+            $this->applyShippingStatusFilter($query, $shippingPartnerStatus);
         }
 
         if ($request->filled('search')) {

@@ -85,8 +85,8 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">All Shipping Status</option>
                         <option value="pending" {{ request('shipping_partner_status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="shipment_created" {{ request('shipping_partner_status') == 'shipment_created' ? 'selected' : '' }}>Shipment Created</option>
-                        <option value="ready_to_ship" {{ request('shipping_partner_status') == 'ready_to_ship' ? 'selected' : '' }}>Ready to Ship</option>
+                        <option value="shipped" {{ request('shipping_partner_status') == 'shipped' ? 'selected' : '' }}>Shipped</option>
+                        <option value="delivered" {{ request('shipping_partner_status') == 'delivered' ? 'selected' : '' }}>Delivered</option>
                     </select>
                 </div>
 
