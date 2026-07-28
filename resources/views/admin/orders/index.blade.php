@@ -219,8 +219,8 @@
 
                                             @if($order->shipping_partner_status)
                                                 <div class="mt-1">
-                                                    <span class="text-xs font-bold {{ $order->shipping_partner_status == 'approved' ? 'text-green-600' : ($order->shipping_partner_status == 'rejected' ? 'text-red-600' : 'text-gray-500') }}">
-                                                        <i class="fas fa-{{ $order->shipping_partner_status == 'approved' ? 'check' : 'times' }} mr-1"></i>{{ ucfirst($order->shipping_partner_status) }}
+                                                    <span class="text-xs font-bold {{ in_array($order->shipping_partner_status, ['approved', 'ready_to_ship', 'shipment_created', 'shipped', 'delivered']) ? 'text-green-600' : ($order->shipping_partner_status == 'rejected' ? 'text-red-600' : 'text-gray-500') }}">
+                                                        <i class="fas fa-{{ in_array($order->shipping_partner_status, ['approved', 'ready_to_ship', 'shipment_created', 'shipped', 'delivered']) ? 'check' : 'times' }} mr-1"></i>{{ ucfirst($order->shipping_partner_status) }}
                                                     </span>
                                                 </div>
                                                 @if($order->shipping_partner_status == 'rejected' && $order->shipping_partner_error)

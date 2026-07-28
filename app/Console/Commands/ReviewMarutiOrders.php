@@ -80,7 +80,7 @@ class ReviewMarutiOrders extends Command
                     if ($rates['success'] == '1') {
                         $this->info("✓ Pincode {$pincode} is serviceable.");
                         $order->update([
-                            'shipping_partner_status' => Order::SHIPPING_PARTNER_APPROVED,
+                            'shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP,
                             'shipping_partner_error' => null
                         ]);
 
