@@ -104,8 +104,8 @@ class OrderController extends Controller
         $oldStatus = $order->status;
 
         $updateData = [
-            'status'       => $request->status,
-            'shipped_at'   => $request->status === 'shipped' ? now() : $order->shipped_at,
+            'status' => $request->status,
+            'shipped_at' => $request->status === 'shipped' ? now() : $order->shipped_at,
             'delivered_at' => $request->status === 'delivered' ? now() : $order->delivered_at,
         ];
 
@@ -149,8 +149,8 @@ class OrderController extends Controller
 
         foreach ($orders as $order) {
             $order->update([
-                'status'       => $request->status,
-                'shipped_at'   => $request->status === 'shipped' ? now() : $order->shipped_at,
+                'status' => $request->status,
+                'shipped_at' => $request->status === 'shipped' ? now() : $order->shipped_at,
                 'delivered_at' => $request->status === 'delivered' ? now() : $order->delivered_at,
             ]);
 
@@ -177,10 +177,10 @@ class OrderController extends Controller
             if ($response && isset($response['success']) && $response['success']) {
                 $order->update([
                     'shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP,
-                    'shipping_partner_error'  => null,
+                    'shipping_partner_error' => null,
                 ]);
                 Log::info('Maruti courier order created on ship', [
-                    'order_id'     => $order->id,
+                    'order_id' => $order->id,
                     'order_number' => $order->order_number,
                 ]);
 
@@ -196,18 +196,18 @@ class OrderController extends Controller
 
                 $order->update([
                     'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
-                    'shipping_partner_error'  => $errorMessage,
+                    'shipping_partner_error' => $errorMessage,
                 ]);
                 Log::error('Maruti courier order failed on ship', [
-                    'order_id'     => $order->id,
+                    'order_id' => $order->id,
                     'order_number' => $order->order_number,
-                    'error'        => $errorMessage,
+                    'error' => $errorMessage,
                 ]);
             }
         } catch (\Exception $e) {
             Log::error('Exception submitting order to Maruti on ship', [
                 'order_id' => $order->id,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -283,7 +283,7 @@ class OrderController extends Controller
                 if ($response && isset($response['success']) && $response['success']) {
                     // Mark as ready to ship
                     $order->update([
-                        'status' => Order::STATUS_READY_TO_SHIP,
+                        'status' => Order::SHIPPING_PARTNER_SHIPMENT_CREATED,
                         'shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP,
                         'shipping_partner_error' => null
                     ]);
@@ -301,7 +301,7 @@ class OrderController extends Controller
                     $errorMessage = is_array($response) && isset($response['message'])
                         ? $response['message']
                         : "Failed to create courier order";
-                    
+
                     $order->update([
                         'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
                         'shipping_partner_error' => $errorMessage
@@ -337,12 +337,12 @@ class OrderController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        
+
         $paymentStatus = $request->input('payment_status', 'paid');
         if (!empty($paymentStatus)) {
             $query->where('payment_status', $paymentStatus);
         }
-        
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -353,7 +353,7 @@ class OrderController extends Controller
                     });
             });
         }
-        
+
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
