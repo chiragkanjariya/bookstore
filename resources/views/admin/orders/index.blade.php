@@ -84,10 +84,12 @@
                     <select name="payment_status"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">All Payment Status</option>
-                        <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending
+                        </option>
                         <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
                         <option value="failed" {{ request('payment_status') == 'failed' ? 'selected' : '' }}>Failed</option>
-                        <option value="refunded" {{ request('payment_status') == 'refunded' ? 'selected' : '' }}>Refunded</option>
+                        <option value="refunded" {{ request('payment_status') == 'refunded' ? 'selected' : '' }}>Refunded
+                        </option>
                     </select>
                 </div>
 
@@ -96,8 +98,9 @@
                     <select name="shipping_partner_status"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">All Shipping Status</option>
-                        <option value="pending" {{ request('shipping_partner_status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="shipment_created" {{ request('shipping_partner_status') == 'shipment_created' ? 'selected' : '' }}>Shipment Created</option>
+                        <option value="pending" {{ request('shipping_partner_status') == 'pending' ? 'selected' : '' }}>
+                            Pending</option>
+                        <option value="shipment_created" {{ request('shipping_partner_status') == 'ready_to_ship' ? 'selected' : '' }}>Shipment Created</option>
                         <option value="ready_to_ship" {{ request('shipping_partner_status') == 'ready_to_ship' ? 'selected' : '' }}>Ready to Ship</option>
                     </select>
                 </div>
@@ -141,8 +144,7 @@
                                 <i class="fas fa-shipping-fast mr-2"></i>Create Shipment
                             </button>
                             <button type="button" id="print-labels-btn"
-                                class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm transition duration-200"
-                                >
+                                class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm transition duration-200">
                                 <i class="fas fa-print mr-2"></i>Print Labels
                             </button>
                             <select id="bulk-status" name="status"
@@ -191,8 +193,7 @@
                                         <input type="checkbox" name="order_ids[]" value="{{ $order->id }}"
                                             data-status="{{ $order->status }}"
                                             data-shipping-status="{{ $order->shipping_partner_status }}"
-                                            onchange="updateActionButtons()"
-                                            class="order-checkbox rounded">
+                                            onchange="updateActionButtons()" class="order-checkbox rounded">
                                     </td>
                                     <td class="px-6 py-4">
                                         <div>
@@ -201,14 +202,18 @@
 
                                             @if($order->courier_provider == 'shree_maruti' && $order->courier_document_ref)
                                                 <div class="mt-1">
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">
-                                                        <i class="fas fa-barcode mr-1"></i>Maruti: {{ $order->courier_document_ref }}
+                                                    <span
+                                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">
+                                                        <i class="fas fa-barcode mr-1"></i>Maruti:
+                                                        {{ $order->courier_document_ref }}
                                                     </span>
                                                 </div>
                                             @elseif($order->tracking_number || $order->courier_awb_number)
                                                 <div class="mt-1">
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">
-                                                        <i class="fas fa-barcode mr-1"></i>{{ $order->tracking_number ?? $order->courier_awb_number }}
+                                                    <span
+                                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">
+                                                        <i
+                                                            class="fas fa-barcode mr-1"></i>{{ $order->tracking_number ?? $order->courier_awb_number }}
                                                     </span>
                                                 </div>
                                             @elseif($order->status === 'shipped')
@@ -219,55 +224,57 @@
 
                                             @if($order->shipping_partner_status)
                                                 <div class="mt-1">
-                                                    <span class="text-xs font-bold {{ in_array($order->shipping_partner_status, ['approved', 'ready_to_ship', 'shipment_created', 'shipped', 'delivered']) ? 'text-green-600' : ($order->shipping_partner_status == 'rejected' ? 'text-red-600' : 'text-gray-500') }}">
-                                                        <i class="fas fa-{{ in_array($order->shipping_partner_status, ['approved', 'ready_to_ship', 'shipment_created', 'shipped', 'delivered']) ? 'check' : 'times' }} mr-1"></i>{{ ucfirst($order->shipping_partner_status) }}
+                                                    <span
+                                                        class="text-xs font-bold {{ in_array($order->shipping_partner_status, ['approved', 'ready_to_ship', 'shipment_created', 'shipped', 'delivered']) ? 'text-green-600' : ($order->shipping_partner_status == 'rejected' ? 'text-red-600' : 'text-gray-500') }}">
+                                                        <i
+                                                            class="fas fa-{{ in_array($order->shipping_partner_status, ['approved', 'ready_to_ship', 'shipment_created', 'shipped', 'delivered']) ? 'check' : 'times' }} mr-1"></i>{{ ucfirst($order->shipping_partner_status) }}
                                                     </span>
                                                 </div>
                                                 @if($order->shipping_partner_status == 'rejected' && $order->shipping_partner_error)
-                                                    <div class="text-xs text-red-600 mt-0.5 max-w-xs truncate" title="{{ $order->shipping_partner_error }}">
+                                                    <div class="text-xs text-red-600 mt-0.5 max-w-xs truncate"
+                                                        title="{{ $order->shipping_partner_error }}">
                                                         {{ Str::limit($order->shipping_partner_error, 45) }}
                                                     </div>
                                                 @endif
                                             @endif
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div>
-                                        <div class="text-sm font-medium text-gray-900">{{ $order->user->name }}</div>
-                                        <div class="text-sm text-gray-500">{{ $order->user->email }}</div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $order->status_badge_color }}-100 text-{{ $order->status_badge_color }}-800">
-                                        {{ $order->maruti_status_label }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $order->payment_status_badge_color }}-100 text-{{ $order->payment_status_badge_color }}-800">
-                                        {{ ucfirst($order->payment_status) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                                    ₹{{ number_format($order->total_amount, 2) }}
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-500">
-                                    {{ $order->created_at->format('M d, Y') }}
-                                </td>
-                                <td class="px-6 py-4 text-sm font-medium space-x-2">
-                                    <a href="{{ route('admin.orders.show', $order) }}"
-                                        class="text-blue-600 hover:text-blue-900">View</a>
-                                    
-                                    @if(!$order->requires_manual_shipping && (in_array($order->status, ['pending', 'pending_to_be_prepared']) || $order->shipping_partner_status == 'rejected'))
-                                        <button type="button" 
-                                            onclick="moveToManualShipping({{ $order->id }}, '{{ $order->order_number }}')"
-                                            class="text-orange-600 hover:text-orange-900 ml-2"
-                                            title="Move to Manual Shipping">
-                                            Manual
-                                        </button>
-                                    @endif
-                                </td>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">{{ $order->user->name }}</div>
+                                            <div class="text-sm text-gray-500">{{ $order->user->email }}</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $order->status_badge_color }}-100 text-{{ $order->status_badge_color }}-800">
+                                            {{ $order->maruti_status_label }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $order->payment_status_badge_color }}-100 text-{{ $order->payment_status_badge_color }}-800">
+                                            {{ ucfirst($order->payment_status) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                        ₹{{ number_format($order->total_amount, 2) }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">
+                                        {{ $order->created_at->format('M d, Y') }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-medium space-x-2">
+                                        <a href="{{ route('admin.orders.show', $order) }}"
+                                            class="text-blue-600 hover:text-blue-900">View</a>
+
+                                        @if(!$order->requires_manual_shipping && (in_array($order->status, ['pending', 'pending_to_be_prepared']) || $order->shipping_partner_status == 'rejected'))
+                                            <button type="button"
+                                                onclick="moveToManualShipping({{ $order->id }}, '{{ $order->order_number }}')"
+                                                class="text-orange-600 hover:text-orange-900 ml-2" title="Move to Manual Shipping">
+                                                Manual
+                                            </button>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
@@ -367,7 +374,7 @@
                 }
 
                 // Check for valid shipping status
-                const pendingOrders = Array.from(checkedBoxes).filter(cb => 
+                const pendingOrders = Array.from(checkedBoxes).filter(cb =>
                     !['shipment_created', 'ready_to_ship'].includes(cb.getAttribute('data-shipping-status'))
                 );
 
@@ -395,19 +402,19 @@
                         'Accept': 'application/json'
                     }
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        window.location.reload();
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while moving the order to manual shipping.');
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while moving the order to manual shipping.');
+                    });
             }
         }
     </script>
