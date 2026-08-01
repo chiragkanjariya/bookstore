@@ -100,7 +100,7 @@
                         <option value="">All Shipping Status</option>
                         <option value="pending" {{ request('shipping_partner_status') == 'pending' ? 'selected' : '' }}>
                             Pending</option>
-                        <option value="shipment_created" {{ request('shipping_partner_status') == 'ready_to_ship' ? 'selected' : '' }}>Shipment Created</option>
+                        <option value="ready_to_ship" {{ request('shipping_partner_status') == 'ready_to_ship' ? 'selected' : '' }}>Shipment Created</option>
                         <option value="ready_to_ship" {{ request('shipping_partner_status') == 'ready_to_ship' ? 'selected' : '' }}>Ready to Ship</option>
                     </select>
                 </div>
