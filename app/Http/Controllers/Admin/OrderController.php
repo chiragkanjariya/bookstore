@@ -371,6 +371,12 @@ class OrderController extends Controller
             $query->where('shipping_partner_status', $shippingPartnerStatus);
         }
 
+        // Apply payment status filter
+        $paymentStatus = $request->input('payment_status', 'paid');
+        if (!empty($paymentStatus)) {
+            $query->where('payment_status', $paymentStatus);
+        }
+
         $orders = $query->get();
 
         $filename = 'orders_' . date('Y-m-d_H-i-s') . '.csv';

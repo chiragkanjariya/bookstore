@@ -34,6 +34,13 @@ class ManualShippingController extends Controller
             $request->merge(['shipping_partner_status' => $shippingPartnerStatus]);
         }
 
+        // Filter by payment status
+        $paymentStatus = $request->input('payment_status', 'paid');
+        if (!empty($paymentStatus)) {
+            $query->where('payment_status', $paymentStatus);
+            $request->merge(['payment_status' => $paymentStatus]);
+        }
+
         // Search by order number or customer name
         if ($request->filled('search')) {
             $search = $request->search;
@@ -214,6 +221,11 @@ class ManualShippingController extends Controller
         $shippingPartnerStatus = $request->input('shipping_partner_status', 'pending');
         if (!empty($shippingPartnerStatus)) {
             $this->applyShippingStatusFilter($query, $shippingPartnerStatus);
+        }
+
+        $paymentStatus = $request->input('payment_status', 'paid');
+        if (!empty($paymentStatus)) {
+            $query->where('payment_status', $paymentStatus);
         }
 
         if ($request->filled('search')) {

@@ -158,6 +158,8 @@
                 @php
                     $isManualOrBulk = $order->requires_manual_shipping || $order->is_bulk_purchased;
                     $trackingNumber = $isManualOrBulk ? ($order->manual_tracking_id ?: $order->awb_number) : $order->awb_number;
+                    // Fallback to order number if tracking is missing to prevent barcode errors
+                    $trackingNumber = $trackingNumber ?: $order->order_number;
                     $trackingLabel = $isManualOrBulk ? 'Tracking ID' : 'AWB';
                 @endphp
                 <div class="order-column">
