@@ -210,24 +210,16 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
-                                    @if($order->status === 'delivered')
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            <i class="fas fa-check-double mr-1"></i>Delivered
+                                    @if($order->shipping_partner_status === 'ready_to_ship')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <i class="fas fa-check-double mr-1"></i>Ready to Ship
                                         </span>
-                                    @elseif($order->isManuallyShipped())
-                                        <div>
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                <i class="fas fa-truck mr-1"></i>Shipped
-                                            </span>
-                                            <div class="text-xs text-gray-500 mt-1">
-                                                {{ $order->manual_shipping_marked_at->format('M d, Y') }}
-                                            </div>
-                                        </div>
+                                    @elseif($order->shipping_partner_status === 'shipment_created')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            <i class="fas fa-truck mr-1"></i>Shipment Created
+                                        </span>
                                     @else
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                             <i class="fas fa-clock mr-1"></i>Pending
                                         </span>
                                     @endif
