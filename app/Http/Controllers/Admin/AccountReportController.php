@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Book;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -81,6 +82,35 @@ class AccountReportController extends Controller
 
         $orders = $query->latest()->get();
 
+        $orderIds = $orders->pluck('id');
+
+        // One column per book actually purchased across the filtered orders.
+        $bookIds = OrderItem::whereIn('order_id', $orderIds)
+            ->distinct()
+            ->pluck('book_id')
+            ->filter();
+
+        $bookColumns = Book::whereIn('id', $bookIds)
+            ->orderBy('title')
+            ->orderBy('id')
+            ->pluck('title', 'id')
+            ->all();
+
+        // order_items keeps no title snapshot, so books removed from inventory
+        // still need a column rather than having their quantities disappear.
+        foreach ($bookIds->diff(array_keys($bookColumns)) as $missingBookId) {
+            $bookColumns[$missingBookId] = 'Book #' . $missingBookId;
+        }
+
+        // Quantity per (order, book) in a single aggregate query. Summed so an
+        // order listing the same book on two line items reports the combined qty.
+        $quantities = OrderItem::whereIn('order_id', $orderIds)
+            ->selectRaw('order_id, book_id, SUM(quantity) as qty')
+            ->groupBy('order_id', 'book_id')
+            ->get()
+            ->groupBy('order_id')
+            ->map(fn ($rows) => $rows->pluck('qty', 'book_id'));
+
         $filename = 'orders_report_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
         $headers = [
@@ -88,7 +118,7 @@ class AccountReportController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function () use ($orders) {
+        $callback = function () use ($orders, $bookColumns, $quantities) {
             $file = fopen('php://output', 'w');
 
             // CSV Headers
@@ -101,6 +131,7 @@ class AccountReportController extends Controller
                 'District',
                 'Taluka',
                 'City',
+                ...array_values($bookColumns),
                 'Total Amount (₹)',
                 'Shipping Cost (₹)',
                 'Maruti Shipping Rate (₹)',
@@ -115,6 +146,7 @@ class AccountReportController extends Controller
                 $user = $order->user;
                 $shippingAddress = $order->shipping_address;
                 $totalExcludingShipping = $order->total_amount - $order->shipping_cost - ($order->maruti_shipping_rate ?? 0);
+                $orderQuantities = $quantities->get($order->id, collect());
 
                 fputcsv($file, [
                     $user->name ?? 'N/A',
@@ -125,6 +157,11 @@ class AccountReportController extends Controller
                     $user->district->name ?? ($shippingAddress['district'] ?? 'N/A'),
                     $user->taluka->name ?? ($shippingAddress['taluka'] ?? 'N/A'),
                     $shippingAddress['city'] ?? 'N/A',
+                    // Must stay in the same order as the book headers above.
+                    ...array_map(
+                        fn ($bookId) => (int) ($orderQuantities[$bookId] ?? 0),
+                        array_keys($bookColumns)
+                    ),
                     number_format($order->total_amount, 2),
                     number_format($order->shipping_cost, 2),
                     number_format($order->maruti_shipping_rate ?? 0, 2),
