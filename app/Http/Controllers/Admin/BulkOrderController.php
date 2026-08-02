@@ -252,8 +252,10 @@ class BulkOrderController extends Controller
             return back()->with('error', 'Labels can only be printed for orders with "Shipment Created" or "Ready to Ship" status.');
         }
 
+        // Portrait to match the @page rule in the view (dompdf's @page size wins
+        // over setPaper anyway, so keep the two in sync)
         $pdf = Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
-            ->setPaper('a4', 'landscape');
+            ->setPaper('a4', 'portrait');
 
         // Update status to ready_to_ship
         Order::whereIn('id', $request->order_ids)

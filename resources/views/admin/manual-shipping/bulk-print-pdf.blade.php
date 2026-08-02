@@ -15,7 +15,9 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
+            /* DejaVu Sans is bundled with dompdf and has the ₹ glyph; Arial maps
+               to core Helvetica, which renders ₹ as "?" */
+            font-family: 'DejaVu Sans', sans-serif;
             margin: 0;
             padding: 0;
         }
@@ -23,6 +25,7 @@
         /* Two orders per page layout */
         .order-pair {
             display: table;
+            width: 100%;
             page-break-inside: avoid;
         }
         .page-break {
@@ -45,10 +48,13 @@
             padding-right: 0;
         }
 
-        /* Label section - top half */
+        /* Label section - top half.
+           dompdf ignores box-sizing, so height is content-box: the rendered box
+           is 115 + 10 (padding) + ~1.6 (border) + 4 (margin) ≈ 130.6mm.
+           Together with the invoice below (~126mm) that fits the 277mm of a
+           10mm-margin A4 portrait page. */
         .label-section {
-            height: 120mm;
-            /* Reduced slightly to ensure fit with margin */
+            height: 115mm;
             border: 3px solid black;
             padding: 5mm;
             margin-bottom: 4mm;
@@ -56,7 +62,7 @@
 
         /* Invoice section - bottom half */
         .invoice-section {
-            height: 120mm;
+            height: 115mm;
             border: 2px solid #666;
             padding: 5mm;
         }
@@ -79,9 +85,14 @@
             margin-bottom: 5mm;
         }
 
+        /* The barcode must have an explicit width: at its natural size the PNG is
+           ~444px ≈ 117mm, which is wider than the 78mm column and pushes the
+           auto-layout table past the page edge, cropping the right column. */
+        .barcode-container img,
         .barcode-container svg {
+            width: 70mm;
+            height: 14mm;
             max-width: 100%;
-            height: auto;
         }
 
         .info-box {
