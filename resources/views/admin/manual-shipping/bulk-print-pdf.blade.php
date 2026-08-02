@@ -49,29 +49,31 @@
         }
 
         /* Label section - top half.
-           dompdf ignores box-sizing, so height is content-box: the rendered box
-           is 115 + 10 (padding) + ~1.6 (border) + 4 (margin) ≈ 130.6mm.
-           Together with the invoice below (~126mm) that fits the 277mm of a
-           10mm-margin A4 portrait page. */
+           min-height, not height: a fixed height makes long addresses overflow
+           the border and collide with the invoice below. dompdf also ignores
+           box-sizing, so this is content-box — the box renders at
+           118 + 10 (padding) + ~1.6 (border) + 4 (margin) ≈ 133.6mm, and grows
+           taller when the address needs it. */
         .label-section {
-            height: 115mm;
+            min-height: 118mm;
             border: 3px solid black;
             padding: 5mm;
             margin-bottom: 4mm;
         }
 
-        /* Invoice section - bottom half */
+        /* Invoice section - bottom half. Worst case is a tall label (~147mm)
+           plus this (~101mm), which still clears the 277mm printable height. */
         .invoice-section {
-            height: 115mm;
+            min-height: 90mm;
             border: 2px solid #666;
             padding: 5mm;
         }
 
         .label-title {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: bold;
             text-align: center;
-            margin: 0 0 5mm 0;
+            margin: 0 0 3mm 0;
         }
 
         .invoice-title {
