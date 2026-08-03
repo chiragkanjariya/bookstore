@@ -283,7 +283,7 @@ class OrderController extends Controller
                 if ($response && isset($response['success']) && $response['success']) {
                     // Mark as ready to ship
                     $order->update([
-                        'status' => Order::SHIPPING_PARTNER_SHIPMENT_CREATED,
+                        'status' => Order::STATUS_READY_TO_SHIP,
                         'shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP,
                         'shipping_partner_error' => null
                     ]);
