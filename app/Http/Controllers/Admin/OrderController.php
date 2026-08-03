@@ -284,7 +284,7 @@ class OrderController extends Controller
                     // Mark as ready to ship
                     $order->update([
                         'status' => Order::STATUS_READY_TO_SHIP,
-                        'shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP,
+                        'shipping_partner_status' => Order::SHIPPING_PARTNER_SHIPMENT_CREATED,
                         'shipping_partner_error' => null
                     ]);
 
