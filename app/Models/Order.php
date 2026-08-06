@@ -17,11 +17,24 @@ class Order extends Model
     const STATUS_DELIVERED = 'delivered';
     const STATUS_CANCELLED = 'cancelled';
 
-    // Shipping Partner Status
+    /**
+     * Shipping Partner Status — the only status shown to admins.
+     *
+     * pending          → order placed, no shipment yet (default on creation)
+     * shipment_created → admin shipped the order
+     * ready_to_ship    → admin printed the shipping label
+     *
+     * No other shipping partner statuses exist.
+     */
     const SHIPPING_PARTNER_PENDING = 'pending';
     const SHIPPING_PARTNER_SHIPMENT_CREATED = 'shipment_created';
     const SHIPPING_PARTNER_READY_TO_SHIP = 'ready_to_ship';
-    const SHIPPING_PARTNER_REJECTED = 'rejected';
+
+    const SHIPPING_PARTNER_STATUSES = [
+        self::SHIPPING_PARTNER_PENDING,
+        self::SHIPPING_PARTNER_SHIPMENT_CREATED,
+        self::SHIPPING_PARTNER_READY_TO_SHIP,
+    ];
 
     protected $fillable = [
         'order_number',
@@ -46,6 +59,8 @@ class Order extends Model
         'manual_courier_name',
         'shipping_partner_status',
         'shipping_partner_error',
+        'shipment_created_at',
+        'label_printed_at',
         'manual_shipping_marked_at',
         'subtotal',
         'shipping_cost',
@@ -78,6 +93,8 @@ class Order extends Model
         'ready_to_ship_email_sent' => 'boolean',
         'delivered_email_sent' => 'boolean',
         'manual_shipping_marked_at' => 'datetime',
+        'shipment_created_at' => 'datetime',
+        'label_printed_at' => 'datetime',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
     ];
@@ -147,6 +164,105 @@ class Order extends Model
             return 'Order Placed';
         }
         return ucfirst($this->status);
+    }
+
+    /**
+     * Get the display label for the shipping partner status.
+     */
+    public function getShippingPartnerStatusLabelAttribute(): string
+    {
+        return match ($this->shipping_partner_status) {
+            self::SHIPPING_PARTNER_SHIPMENT_CREATED => 'Shipment Created',
+            self::SHIPPING_PARTNER_READY_TO_SHIP => 'Ready to Ship',
+            default => 'Pending',
+        };
+    }
+
+    /**
+     * Get the badge classes for the shipping partner status.
+     * Full class names so Tailwind can pick them up.
+     */
+    public function getShippingPartnerStatusClassesAttribute(): string
+    {
+        return match ($this->shipping_partner_status) {
+            self::SHIPPING_PARTNER_SHIPMENT_CREATED => 'bg-blue-100 text-blue-800',
+            self::SHIPPING_PARTNER_READY_TO_SHIP => 'bg-green-100 text-green-800',
+            default => 'bg-yellow-100 text-yellow-800',
+        };
+    }
+
+    /**
+     * Get the icon for the shipping partner status.
+     */
+    public function getShippingPartnerStatusIconAttribute(): string
+    {
+        return match ($this->shipping_partner_status) {
+            self::SHIPPING_PARTNER_SHIPMENT_CREATED => 'fa-truck',
+            self::SHIPPING_PARTNER_READY_TO_SHIP => 'fa-check-double',
+            default => 'fa-clock',
+        };
+    }
+
+    /**
+     * Scope by shipping partner status. Legacy rows with a NULL status count as pending.
+     */
+    public function scopeShippingPartnerStatus($query, string $status)
+    {
+        if ($status === self::SHIPPING_PARTNER_PENDING) {
+            return $query->where(function ($q) {
+                $q->where('shipping_partner_status', self::SHIPPING_PARTNER_PENDING)
+                    ->orWhereNull('shipping_partner_status');
+            });
+        }
+
+        return $query->where('shipping_partner_status', $status);
+    }
+
+    /**
+     * Whether a shipment has been created for this order.
+     */
+    public function hasShipment(): bool
+    {
+        return in_array($this->shipping_partner_status, [
+            self::SHIPPING_PARTNER_SHIPMENT_CREATED,
+            self::SHIPPING_PARTNER_READY_TO_SHIP,
+        ], true);
+    }
+
+    /**
+     * Move the order to "Shipment Created" and stamp the shipment date.
+     */
+    public function markShipmentCreated(): bool
+    {
+        return $this->update([
+            'shipping_partner_status' => self::SHIPPING_PARTNER_SHIPMENT_CREATED,
+            'shipment_created_at' => $this->shipment_created_at ?? now(),
+            'shipping_partner_error' => null,
+        ]);
+    }
+
+    /**
+     * Move the order to "Ready to Ship" and stamp the first label print date.
+     */
+    public function markLabelPrinted(): bool
+    {
+        return $this->update([
+            'shipping_partner_status' => self::SHIPPING_PARTNER_READY_TO_SHIP,
+            'label_printed_at' => $this->label_printed_at ?? now(),
+        ]);
+    }
+
+    /**
+     * Move a set of orders to "Ready to Ship", keeping the first label print date.
+     */
+    public static function markLabelsPrinted(array $orderIds): void
+    {
+        static::whereIn('id', $orderIds)
+            ->whereNull('label_printed_at')
+            ->update(['label_printed_at' => now()]);
+
+        static::whereIn('id', $orderIds)
+            ->update(['shipping_partner_status' => self::SHIPPING_PARTNER_READY_TO_SHIP]);
     }
 
     /**
@@ -242,6 +358,7 @@ class Order extends Model
             'manual_shipping_marked_at' => now(),
             'status' => 'shipped',
             'shipping_partner_status' => self::SHIPPING_PARTNER_SHIPMENT_CREATED,
+            'shipment_created_at' => $this->shipment_created_at ?? now(),
             'shipped_at' => now(),
         ];
 

@@ -19,7 +19,7 @@
         </div>
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-blue-100 text-blue-600">
@@ -35,11 +35,23 @@
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                        <i class="fas fa-box text-xl"></i>
+                        <i class="fas fa-clock text-xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Order Placed</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['order_placed']) }}</p>
+                        <p class="text-sm font-medium text-gray-600">Pending</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['pending']) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-truck text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Shipment Created</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['shipment_created']) }}</p>
                     </div>
                 </div>
             </div>
@@ -47,11 +59,11 @@
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-green-100 text-green-600">
-                        <i class="fas fa-truck text-xl"></i>
+                        <i class="fas fa-check-double text-xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Shipped</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['shipped_orders']) }}</p>
+                        <p class="text-sm font-medium text-gray-600">Ready to Ship</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['ready_to_ship']) }}</p>
                     </div>
                 </div>
             </div>
@@ -132,7 +144,7 @@
 
         <!-- Orders Table -->
         <div class="bg-white rounded-lg shadow overflow-hidden">
-            <form id="bulk-form" method="POST" action="{{ route('admin.orders.bulk-status') }}">
+            <form id="bulk-form" method="POST" action="{{ route('admin.orders.bulk-ship-now') }}">
                 @csrf
                 <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex items-center justify-between">
@@ -144,20 +156,9 @@
                                 <i class="fas fa-shipping-fast mr-2"></i>Create Shipment
                             </button>
                             <button type="button" id="print-labels-btn"
-                                class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm transition duration-200">
-                                <i class="fas fa-print mr-2"></i>Print Labels
-                            </button>
-                            <select id="bulk-status" name="status"
-                                class="px-3 py-2 border border-gray-300 rounded-md text-sm">
-                                <option value="">Bulk Update Status</option>
-                                <option value="pending_to_be_prepared">Mark as Order Placed</option>
-                                <option value="shipped">Mark as Shipped</option>
-                                <option value="delivered">Mark as Delivered</option>
-                            </select>
-                            <button type="button" id="bulk-submit"
-                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm transition duration-200"
+                                class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm transition duration-200"
                                 disabled>
-                                Update Selected
+                                <i class="fas fa-print mr-2"></i>Print Labels
                             </button>
                         </div>
                     </div>
@@ -175,7 +176,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Customer</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Status</th>
+                                    Shipping Status</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Payment</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -191,9 +192,8 @@
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4">
                                         <input type="checkbox" name="order_ids[]" value="{{ $order->id }}"
-                                            data-status="{{ $order->status }}"
-                                            data-shipping-status="{{ $order->shipping_partner_status }}"
-                                            onchange="updateActionButtons()" class="order-checkbox rounded">
+                                            data-shipping-status="{{ $order->shipping_partner_status ?? 'pending' }}"
+                                            class="order-checkbox rounded">
                                     </td>
                                     <td class="px-6 py-4">
                                         <div>
@@ -216,26 +216,17 @@
                                                             class="fas fa-barcode mr-1"></i>{{ $order->tracking_number ?? $order->courier_awb_number }}
                                                     </span>
                                                 </div>
-                                            @elseif($order->status === 'shipped')
+                                            @elseif($order->hasShipment())
                                                 <div class="mt-1 text-xs text-yellow-600">
                                                     <i class="fas fa-clock mr-1"></i>Maruti ID pending
                                                 </div>
                                             @endif
 
-                                            @if($order->shipping_partner_status)
-                                                <div class="mt-1">
-                                                    <span
-                                                        class="text-xs font-bold {{ in_array($order->shipping_partner_status, ['approved', 'ready_to_ship', 'shipment_created', 'shipped', 'delivered']) ? 'text-green-600' : ($order->shipping_partner_status == 'rejected' ? 'text-red-600' : 'text-gray-500') }}">
-                                                        <i
-                                                            class="fas fa-{{ in_array($order->shipping_partner_status, ['approved', 'ready_to_ship', 'shipment_created', 'shipped', 'delivered']) ? 'check' : 'times' }} mr-1"></i>{{ ucfirst($order->shipping_partner_status) }}
-                                                    </span>
+                                            @if($order->shipping_partner_error)
+                                                <div class="text-xs text-red-600 mt-1 max-w-xs truncate"
+                                                    title="{{ $order->shipping_partner_error }}">
+                                                    <i class="fas fa-exclamation-circle mr-1"></i>{{ Str::limit($order->shipping_partner_error, 45) }}
                                                 </div>
-                                                @if($order->shipping_partner_status == 'rejected' && $order->shipping_partner_error)
-                                                    <div class="text-xs text-red-600 mt-0.5 max-w-xs truncate"
-                                                        title="{{ $order->shipping_partner_error }}">
-                                                        {{ Str::limit($order->shipping_partner_error, 45) }}
-                                                    </div>
-                                                @endif
                                             @endif
                                         </div>
                                     </td>
@@ -247,9 +238,19 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $order->status_badge_color }}-100 text-{{ $order->status_badge_color }}-800">
-                                            {{ $order->maruti_status_label }}
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $order->shipping_partner_status_classes }}">
+                                            <i class="fas {{ $order->shipping_partner_status_icon }} mr-1"></i>{{ $order->shipping_partner_status_label }}
                                         </span>
+                                        @if($order->shipment_created_at)
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                Shipment: {{ $order->shipment_created_at->format('M d, Y h:i A') }}
+                                            </div>
+                                        @endif
+                                        @if($order->label_printed_at)
+                                            <div class="text-xs text-gray-500">
+                                                Label: {{ $order->label_printed_at->format('M d, Y h:i A') }}
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4">
                                         <span
@@ -267,7 +268,7 @@
                                         <a href="{{ route('admin.orders.show', $order) }}"
                                             class="text-blue-600 hover:text-blue-900">View</a>
 
-                                        @if(!$order->requires_manual_shipping && (in_array($order->status, ['pending', 'pending_to_be_prepared']) || $order->shipping_partner_status == 'rejected'))
+                                        @if(!$order->requires_manual_shipping && !$order->hasShipment())
                                             <button type="button"
                                                 onclick="moveToManualShipping({{ $order->id }}, '{{ $order->order_number }}')"
                                                 class="text-orange-600 hover:text-orange-900 ml-2" title="Move to Manual Shipping">
@@ -302,10 +303,12 @@
         document.addEventListener('DOMContentLoaded', function () {
             const selectAll = document.getElementById('select-all');
             const orderCheckboxes = document.querySelectorAll('.order-checkbox');
-            const bulkStatus = document.getElementById('bulk-status');
-            const bulkSubmit = document.getElementById('bulk-submit');
             const shipNowBtn = document.getElementById('ship-now-btn');
+            const printLabelsBtn = document.getElementById('print-labels-btn');
             const bulkForm = document.getElementById('bulk-form');
+
+            const shipNowAction = '{{ route("admin.orders.bulk-ship-now") }}';
+            const printLabelAction = '{{ route("admin.orders.bulk-print-label") }}';
 
             // Select all functionality
             selectAll.addEventListener('change', function () {
@@ -323,30 +326,11 @@
             // Update bulk button states
             function updateBulkButtons() {
                 const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
-                bulkSubmit.disabled = checkedBoxes.length === 0 || !bulkStatus.value;
                 shipNowBtn.disabled = checkedBoxes.length === 0;
+                printLabelsBtn.disabled = checkedBoxes.length === 0;
             }
 
-            // Bulk status change
-            bulkStatus.addEventListener('change', updateBulkButtons);
-
-            // Bulk submit
-            bulkSubmit.addEventListener('click', function () {
-                const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
-                if (checkedBoxes.length === 0) {
-                    alert('Please select at least one order.');
-                    return;
-                }
-                if (!bulkStatus.value) {
-                    alert('Please select a status to update.');
-                    return;
-                }
-                if (confirm(`Are you sure you want to update ${checkedBoxes.length} order(s) to ${bulkStatus.options[bulkStatus.selectedIndex].text}?`)) {
-                    bulkForm.submit();
-                }
-            });
-
-            // Create Shipment button
+            // Create Shipment button — Pending → Shipment Created
             shipNowBtn.addEventListener('click', function () {
                 const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
                 if (checkedBoxes.length === 0) {
@@ -354,18 +338,22 @@
                     return;
                 }
 
-                if (confirm(`Are you sure you want to create shipment for ${checkedBoxes.length} order(s) now?\n\nThis will:\n- Submit orders to Courier API\n- Mark orders as "Shipment Created"\n- Allow you to print labels afterwards`)) {
-                    // Change form action to ship now route
-                    const originalAction = bulkForm.action;
-                    bulkForm.action = '{{ route("admin.orders.bulk-ship-now") }}';
+                const alreadyShipped = Array.from(checkedBoxes).filter(cb =>
+                    cb.getAttribute('data-shipping-status') !== 'pending'
+                );
+
+                if (alreadyShipped.length > 0) {
+                    alert('Some selected orders already have a shipment. Only orders in "Pending" status can have a shipment created.');
+                    return;
+                }
+
+                if (confirm(`Are you sure you want to create shipment for ${checkedBoxes.length} order(s) now?\n\nThis will:\n- Submit orders to Courier API\n- Move orders to "Shipment Created"\n- Allow you to print labels afterwards`)) {
+                    bulkForm.action = shipNowAction;
                     bulkForm.submit();
-                    // Restore original action in case of back button
-                    bulkForm.action = originalAction;
                 }
             });
 
-            // Print Labels button
-            const printLabelsBtn = document.getElementById('print-labels-btn');
+            // Print Labels button — Shipment Created → Ready to Ship
             printLabelsBtn.addEventListener('click', function () {
                 const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
                 if (checkedBoxes.length === 0) {
@@ -373,22 +361,18 @@
                     return;
                 }
 
-                // Check for valid shipping status
-                const pendingOrders = Array.from(checkedBoxes).filter(cb =>
+                // Labels can only be printed once a shipment exists
+                const withoutShipment = Array.from(checkedBoxes).filter(cb =>
                     !['shipment_created', 'ready_to_ship'].includes(cb.getAttribute('data-shipping-status'))
                 );
 
-                if (pendingOrders.length > 0) {
+                if (withoutShipment.length > 0) {
                     alert('Some selected orders do not have a created shipment. You must "Create Shipment" first before printing labels.');
                     return;
                 }
 
-                // Change form action to bulk print route
-                const originalAction = bulkForm.action;
-                // Use the generic bulk print route for all orders
-                bulkForm.action = '{{ route("admin.orders.bulk-print-label") }}';
+                bulkForm.action = printLabelAction;
                 bulkForm.submit();
-                bulkForm.action = originalAction;
             });
         });
 

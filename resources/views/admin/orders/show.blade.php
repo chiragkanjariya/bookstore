@@ -33,8 +33,8 @@
                         <h2 class="text-xl font-semibold text-gray-900">Order Information</h2>
                         <div class="flex space-x-2">
                             <span
-                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-{{ $order->status_badge_color }}-100 text-{{ $order->status_badge_color }}-800">
-                                {{ ucfirst($order->status) }}
+                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $order->shipping_partner_status_classes }}">
+                                <i class="fas {{ $order->shipping_partner_status_icon }} mr-1"></i>{{ $order->shipping_partner_status_label }}
                             </span>
                             <span
                                 class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-{{ $order->payment_status_badge_color }}-100 text-{{ $order->payment_status_badge_color }}-800">
@@ -84,66 +84,25 @@
                             <p class="text-gray-600 font-medium">Payment Status</p>
                             <p class="text-gray-900">{{ $order->payment_status }}</p>
                         </div>
+                        @if($order->shipment_created_at)
+                            <div>
+                                <p class="text-gray-600 font-medium">Shipment Created</p>
+                                <p class="text-gray-900">{{ $order->shipment_created_at->format('M d, Y h:i A') }}</p>
+                            </div>
+                        @endif
+                        @if($order->label_printed_at)
+                            <div>
+                                <p class="text-gray-600 font-medium">Label Printed</p>
+                                <p class="text-gray-900">{{ $order->label_printed_at->format('M d, Y h:i A') }}</p>
+                            </div>
+                        @endif
                     </div>
 
-                    <!-- Status Update Forms -->
-                    {{-- <div class="mt-6 pt-6 border-t grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <form method="POST" action="{{ route('admin.orders.update-status', $order) }}"
-                                class="flex items-end space-x-2">
-                                @csrf
-                                @method('PATCH')
-                                <div class="flex-1">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Update Order Status</label>
-                                    <select name="status"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="pending" {{ $order->status == 'pending' ? 'selected' : '' }}>Pending
-                                        </option>
-                                        <option value="processing" {{ $order->status == 'processing' ? 'selected' : ''
-                                            }}>Processing</option>
-                                        <option value="shipped" {{ $order->status == 'shipped' ? 'selected' : '' }}>Shipped
-                                        </option>
-                                        <option value="delivered" {{ $order->status == 'delivered' ? 'selected' : ''
-                                            }}>Delivered</option>
-                                        <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : ''
-                                            }}>Cancelled</option>
-                                    </select>
-                                </div>
-                                <button type="submit"
-                                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
-                                    Update
-                                </button>
-                            </form>
+                    @if($order->shipping_partner_error)
+                        <div class="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-800">
+                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $order->shipping_partner_error }}
                         </div>
-
-                        <div>
-                            <form method="POST" action="{{ route('admin.orders.update-payment-status', $order) }}"
-                                class="flex items-end space-x-2">
-                                @csrf
-                                @method('PATCH')
-                                <div class="flex-1">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Update Payment
-                                        Status</label>
-                                    <select name="payment_status"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="pending" {{ $order->payment_status == 'pending' ? 'selected' : ''
-                                            }}>Pending</option>
-                                        <option value="paid" {{ $order->payment_status == 'paid' ? 'selected' : '' }}>Paid
-                                        </option>
-                                        <option value="failed" {{ $order->payment_status == 'failed' ? 'selected' : ''
-                                            }}>Failed</option>
-                                        <option value="refunded" {{ $order->payment_status == 'refunded' ? 'selected' : ''
-                                            }}>Refunded</option>
-                                    </select>
-                                </div>
-                                <button type="submit"
-                                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200">
-                                    Update
-                                </button>
-                            </form>
-                        </div>
-                    </div> --}}
-
+                    @endif
 
                     <!-- Maruti Courier Section -->
                     @if($order->courier_provider == 'shree_maruti')
@@ -168,16 +127,16 @@
                                         <p class="text-gray-600 font-medium">Courier Provider</p>
                                         <p class="text-gray-900">Shree Maruti Courier</p>
                                     </div>
-                                    @if($order->shipped_at)
+                                    @if($order->shipment_created_at)
                                         <div>
-                                            <p class="text-gray-600 font-medium">Shipped Date</p>
-                                            <p class="text-gray-900">{{ $order->shipped_at->format('M d, Y h:i A') }}</p>
+                                            <p class="text-gray-600 font-medium">Shipment Created Date</p>
+                                            <p class="text-gray-900">{{ $order->shipment_created_at->format('M d, Y h:i A') }}</p>
                                         </div>
                                     @endif
-                                    @if($order->delivered_at)
+                                    @if($order->label_printed_at)
                                         <div>
-                                            <p class="text-gray-600 font-medium">Delivered Date</p>
-                                            <p class="text-gray-900">{{ $order->delivered_at->format('M d, Y h:i A') }}</p>
+                                            <p class="text-gray-600 font-medium">Label Print Date</p>
+                                            <p class="text-gray-900">{{ $order->label_printed_at->format('M d, Y h:i A') }}</p>
                                         </div>
                                     @endif
                                 </div>
@@ -214,7 +173,7 @@
                                         <div>
                                             <p class="text-yellow-800 font-medium">Pending Shipment</p>
                                             <p class="text-yellow-700 text-sm">This order is
-                                                {{ ucfirst(str_replace('_', ' ', $order->status)) }} and will be shipped via bulk
+                                                {{ $order->shipping_partner_status_label }} and will be shipped via bulk
                                                 action from the orders list.</p>
                                         </div>
                                     </div>

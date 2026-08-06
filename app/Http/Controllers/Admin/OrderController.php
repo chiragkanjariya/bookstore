@@ -7,7 +7,6 @@ use App\Models\Order;
 use App\Services\CourierManager;
 use App\Services\EmailService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -24,15 +23,6 @@ class OrderController extends Controller
         $query = Order::with(['user', 'orderItems.book'])
             ->marutiOrders()
             ->orderBy('created_at', 'desc');
-
-        // Filter by status
-        if ($request->filled('status')) {
-            if ($request->status === 'order_placed') {
-                $query->whereIn('status', ['pending_to_be_prepared', 'ready_to_ship', 'pending', 'processing']);
-            } else {
-                $query->where('status', $request->status);
-            }
-        }
 
         // Filter by payment status
         $paymentStatus = $request->input('payment_status', 'paid');
@@ -61,10 +51,10 @@ class OrderController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        // Filter by shipping partner status
-        $shippingPartnerStatus = $request->input('shipping_partner_status', 'pending');
-        if (!empty($shippingPartnerStatus)) {
-            $query->where('shipping_partner_status', $shippingPartnerStatus);
+        // Filter by shipping partner status (the only status shown in the listing)
+        $shippingPartnerStatus = $request->input('shipping_partner_status', Order::SHIPPING_PARTNER_PENDING);
+        if (in_array($shippingPartnerStatus, Order::SHIPPING_PARTNER_STATUSES, true)) {
+            $query->shippingPartnerStatus($shippingPartnerStatus);
             $request->merge(['shipping_partner_status' => $shippingPartnerStatus]);
         }
 
@@ -73,9 +63,9 @@ class OrderController extends Controller
         // Get statistics (Maruti orders only)
         $stats = [
             'total_orders' => Order::marutiOrders()->count(),
-            'order_placed' => Order::marutiOrders()->whereIn('status', ['pending_to_be_prepared', 'ready_to_ship', 'pending', 'processing'])->count(),
-            'shipped_orders' => Order::marutiOrders()->where('status', 'shipped')->count(),
-            'delivered_orders' => Order::marutiOrders()->where('status', 'delivered')->count(),
+            'pending' => Order::marutiOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_PENDING)->count(),
+            'shipment_created' => Order::marutiOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_SHIPMENT_CREATED)->count(),
+            'ready_to_ship' => Order::marutiOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_READY_TO_SHIP)->count(),
             'total_revenue' => Order::marutiOrders()->where('payment_status', 'paid')->sum('total_amount'),
         ];
 
@@ -89,34 +79,6 @@ class OrderController extends Controller
     {
         $order->load(['user', 'orderItems.book.category']);
         return view('admin.orders.show', compact('order'));
-    }
-
-    /**
-     * Update the order status.
-     * When marking as Shipped, calls the Maruti API to create the courier order.
-     */
-    public function updateStatus(Request $request, Order $order)
-    {
-        $request->validate([
-            'status' => 'required|in:pending_to_be_prepared,shipped,delivered'
-        ]);
-
-        $oldStatus = $order->status;
-
-        $updateData = [
-            'status' => $request->status,
-            'shipped_at' => $request->status === 'shipped' ? now() : $order->shipped_at,
-            'delivered_at' => $request->status === 'delivered' ? now() : $order->delivered_at,
-        ];
-
-        $order->update($updateData);
-
-        // When marking a Maruti order as Shipped → call Maruti API
-        if ($request->status === 'shipped' && !$order->requires_manual_shipping && !$order->is_bulk_purchased) {
-            $this->submitToMarutiApi($order);
-        }
-
-        return redirect()->back()->with('success', 'Order status updated successfully.');
     }
 
     /**
@@ -134,86 +96,8 @@ class OrderController extends Controller
     }
 
     /**
-     * Bulk update order statuses.
-     * When marking as Shipped, calls Maruti API for each eligible Maruti order.
-     */
-    public function bulkUpdateStatus(Request $request)
-    {
-        $request->validate([
-            'order_ids' => 'required|array',
-            'order_ids.*' => 'exists:orders,id',
-            'status' => 'required|in:pending_to_be_prepared,shipped,delivered'
-        ]);
-
-        $orders = Order::whereIn('id', $request->order_ids)->marutiOrders()->get();
-
-        foreach ($orders as $order) {
-            $order->update([
-                'status' => $request->status,
-                'shipped_at' => $request->status === 'shipped' ? now() : $order->shipped_at,
-                'delivered_at' => $request->status === 'delivered' ? now() : $order->delivered_at,
-            ]);
-
-            // When marking as Shipped → call Maruti API
-            if ($request->status === 'shipped') {
-                $this->submitToMarutiApi($order);
-            }
-        }
-
-        return redirect()->back()->with('success', count($request->order_ids) . ' orders updated successfully.');
-    }
-
-    /**
-     * Submit a Maruti order to the courier API (called on ship).
-     */
-    private function submitToMarutiApi(Order $order): void
-    {
-        try {
-            $order->load(['orderItems.book', 'user']);
-            $courierManager = app(CourierManager::class);
-
-            $response = $courierManager->createOrder($order);
-
-            if ($response && isset($response['success']) && $response['success']) {
-                $order->update([
-                    'shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP,
-                    'shipping_partner_error' => null,
-                ]);
-                Log::info('Maruti courier order created on ship', [
-                    'order_id' => $order->id,
-                    'order_number' => $order->order_number,
-                ]);
-
-                // Send shipped email notification since status is changed to shipped manually
-                $emailService = new EmailService();
-                if (!$order->shipped_email_sent) {
-                    $emailService->sendOrderShippedEmail($order);
-                }
-            } else {
-                $errorMessage = is_array($response) && isset($response['message'])
-                    ? $response['message']
-                    : 'Failed to create courier order';
-
-                $order->update([
-                    'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
-                    'shipping_partner_error' => $errorMessage,
-                ]);
-                Log::error('Maruti courier order failed on ship', [
-                    'order_id' => $order->id,
-                    'order_number' => $order->order_number,
-                    'error' => $errorMessage,
-                ]);
-            }
-        } catch (\Exception $e) {
-            Log::error('Exception submitting order to Maruti on ship', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    /**
      * Bulk print labels for selected orders.
+     * Printing a label moves the order to "Ready to Ship".
      */
     public function bulkPrintLabel(Request $request)
     {
@@ -226,9 +110,7 @@ class OrderController extends Controller
             ->whereIn('id', $request->order_ids)
             ->get();
 
-        $invalidOrders = $orders->filter(function ($order) {
-            return !in_array($order->shipping_partner_status, [Order::SHIPPING_PARTNER_SHIPMENT_CREATED, Order::SHIPPING_PARTNER_READY_TO_SHIP]);
-        });
+        $invalidOrders = $orders->filter(fn($order) => !$order->hasShipment());
 
         if ($invalidOrders->count() > 0) {
             return back()->with('error', 'Labels can only be printed for orders with "Shipment Created" or "Ready to Ship" status.');
@@ -237,9 +119,7 @@ class OrderController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
             ->setPaper('a4', 'portrait');
 
-        // Update status to ready_to_ship
-        Order::whereIn('id', $request->order_ids)
-            ->update(['shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP]);
+        Order::markLabelsPrinted($request->order_ids);
 
         return $pdf->download('shipping_labels_' . date('Y-m-d_H-i-s') . '.pdf');
     }
@@ -254,12 +134,13 @@ class OrderController extends Controller
             'order_ids.*' => 'exists:orders,id',
         ]);
 
+        // Only orders that have no shipment yet can have one created.
         $orders = Order::whereIn('id', $request->order_ids)
-            ->where('status', Order::STATUS_PENDING_TO_BE_PREPARED)
+            ->shippingPartnerStatus(Order::SHIPPING_PARTNER_PENDING)
             ->get();
 
         if ($orders->isEmpty()) {
-            return redirect()->back()->with('error', 'No eligible orders found to ship.');
+            return redirect()->back()->with('error', 'No eligible orders found to ship. Shipments can only be created for orders in "Pending" status.');
         }
 
         $courierManager = app(CourierManager::class);
@@ -281,11 +162,11 @@ class OrderController extends Controller
                 $response = $courierManager->createOrder($order);
 
                 if ($response && isset($response['success']) && $response['success']) {
-                    // Mark as ready to ship
+                    // Shipment created — label can now be printed
+                    $order->markShipmentCreated();
                     $order->update([
                         'status' => Order::STATUS_READY_TO_SHIP,
-                        'shipping_partner_status' => Order::SHIPPING_PARTNER_SHIPMENT_CREATED,
-                        'shipping_partner_error' => null
+                        'shipped_at' => $order->shipped_at ?? now(),
                     ]);
 
                     // Send email notification
@@ -302,8 +183,9 @@ class OrderController extends Controller
                         ? $response['message']
                         : "Failed to create courier order";
 
+                    // Shipment could not be created — the order stays Pending
                     $order->update([
-                        'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
+                        'shipping_partner_status' => Order::SHIPPING_PARTNER_PENDING,
                         'shipping_partner_error' => $errorMessage
                     ]);
 
@@ -331,12 +213,8 @@ class OrderController extends Controller
      */
     public function export(Request $request)
     {
-        $query = Order::with(['user', 'orderItems.book']);
-
-        // Apply same filters as index
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        // Same set of orders as the listing
+        $query = Order::with(['user', 'orderItems.book'])->marutiOrders();
 
         $paymentStatus = $request->input('payment_status', 'paid');
         if (!empty($paymentStatus)) {
@@ -361,20 +239,10 @@ class OrderController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        if ($request->filled('is_bulk_purchased')) {
-            $query->where('is_bulk_purchased', $request->is_bulk_purchased === '1');
-        }
-
         // Apply shipping status filter
-        $shippingPartnerStatus = $request->input('shipping_partner_status', 'pending');
-        if (!empty($shippingPartnerStatus)) {
-            $query->where('shipping_partner_status', $shippingPartnerStatus);
-        }
-
-        // Apply payment status filter
-        $paymentStatus = $request->input('payment_status', 'paid');
-        if (!empty($paymentStatus)) {
-            $query->where('payment_status', $paymentStatus);
+        $shippingPartnerStatus = $request->input('shipping_partner_status', Order::SHIPPING_PARTNER_PENDING);
+        if (in_array($shippingPartnerStatus, Order::SHIPPING_PARTNER_STATUSES, true)) {
+            $query->shippingPartnerStatus($shippingPartnerStatus);
         }
 
         $orders = $query->get();
@@ -394,7 +262,7 @@ class OrderController extends Controller
                 'Order Number',
                 'Customer',
                 'Email',
-                'Status',
+                'Shipping Status',
                 'Payment Status',
                 'Subtotal',
                 'Shipping Cost',
@@ -403,6 +271,8 @@ class OrderController extends Controller
                 'Tracking Number',
                 'Courier Provider',
                 'Order Date',
+                'Shipment Created At',
+                'Label Printed At',
                 'Items Count'
             ]);
 
@@ -411,7 +281,7 @@ class OrderController extends Controller
                     $order->order_number,
                     $order->user->name,
                     $order->user->email,
-                    ucfirst($order->status),
+                    $order->shipping_partner_status_label,
                     ucfirst($order->payment_status),
                     '₹' . number_format($order->subtotal, 2),
                     '₹' . number_format($order->shipping_cost, 2),
@@ -420,6 +290,8 @@ class OrderController extends Controller
                     $order->tracking_number ?? $order->courier_awb_number ?? 'N/A',
                     $order->courier_provider ? ucfirst(str_replace('_', ' ', $order->courier_provider)) : 'N/A',
                     $order->created_at->format('Y-m-d H:i:s'),
+                    $order->shipment_created_at ? $order->shipment_created_at->format('Y-m-d H:i:s') : '',
+                    $order->label_printed_at ? $order->label_printed_at->format('Y-m-d H:i:s') : '',
                     $order->orderItems->count()
                 ]);
             }
@@ -454,10 +326,8 @@ class OrderController extends Controller
             $response = $courierManager->createOrder($order);
 
             if ($response && isset($response['success']) && $response['success']) {
-                $order->update([
-                    'shipping_partner_status' => Order::SHIPPING_PARTNER_SHIPMENT_CREATED,
-                    'shipping_partner_error' => null
-                ]);
+                $order->markShipmentCreated();
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Courier order created successfully.',
@@ -469,8 +339,9 @@ class OrderController extends Controller
                 ? $response['message']
                 : "Failed to create courier order";
 
+            // Shipment could not be created — the order stays Pending
             $order->update([
-                'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
+                'shipping_partner_status' => Order::SHIPPING_PARTNER_PENDING,
                 'shipping_partner_error' => $errorMessage
             ]);
 
@@ -647,11 +518,14 @@ class OrderController extends Controller
     public function moveToManualShipping(Order $order)
     {
         try {
+            // Moving to manual shipping restarts the shipping flow from Pending
             $order->update([
                 'requires_manual_shipping' => true,
-                'status' => Order::STATUS_READY_TO_SHIP,
-                'shipping_partner_status' => null,
-                'shipping_partner_error' => null
+                'status' => Order::STATUS_PENDING_TO_BE_PREPARED,
+                'shipping_partner_status' => Order::SHIPPING_PARTNER_PENDING,
+                'shipping_partner_error' => null,
+                'shipment_created_at' => null,
+                'label_printed_at' => null,
             ]);
 
             return response()->json([

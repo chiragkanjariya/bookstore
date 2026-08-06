@@ -27,10 +27,10 @@ class BulkOrderController extends Controller
             ->bulkOrders()
             ->orderBy('created_at', 'desc');
 
-        // Filter by shipping status (based on the displayed column status)
-        $shippingPartnerStatus = $request->input('shipping_partner_status', 'pending');
-        if (!empty($shippingPartnerStatus)) {
-            $this->applyShippingStatusFilter($query, $shippingPartnerStatus);
+        // Filter by shipping partner status (the only status shown in the listing)
+        $shippingPartnerStatus = $request->input('shipping_partner_status', Order::SHIPPING_PARTNER_PENDING);
+        if (in_array($shippingPartnerStatus, Order::SHIPPING_PARTNER_STATUSES, true)) {
+            $query->shippingPartnerStatus($shippingPartnerStatus);
             $request->merge(['shipping_partner_status' => $shippingPartnerStatus]);
         }
 
@@ -66,39 +66,14 @@ class BulkOrderController extends Controller
         // Get statistics
         $stats = [
             'total' => Order::bulkOrders()->count(),
-            'pending' => Order::bulkOrders()->whereNull('manual_shipping_marked_at')->where('status', '!=', 'delivered')->count(),
-            'shipped' => Order::bulkOrders()->whereNotNull('manual_shipping_marked_at')->where('status', '!=', 'delivered')->count(),
-            'delivered' => Order::bulkOrders()->where('status', 'delivered')->count(),
+            'pending' => Order::bulkOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_PENDING)->count(),
+            'shipment_created' => Order::bulkOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_SHIPMENT_CREATED)->count(),
+            'ready_to_ship' => Order::bulkOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_READY_TO_SHIP)->count(),
         ];
 
         $manualCouriers = ManualCourier::active()->orderBy('name')->get();
 
         return view('admin.bulk-orders.index', compact('orders', 'stats', 'request', 'manualCouriers'));
-    }
-
-    /**
-     * Apply the shipping status filter based on the displayed column status.
-     *
-     * The status column shows Delivered / Shipped / Pending derived from the
-     * order's `status` and `manual_shipping_marked_at`, so the filter must use
-     * the same logic (not the decoupled `shipping_partner_status` column).
-     */
-    private function applyShippingStatusFilter($query, string $status): void
-    {
-        switch ($status) {
-            case 'delivered':
-                $query->where('status', 'delivered');
-                break;
-            case 'shipped':
-                $query->whereNotNull('manual_shipping_marked_at')
-                    ->where('status', '!=', 'delivered');
-                break;
-            case 'pending':
-            default:
-                $query->whereNull('manual_shipping_marked_at')
-                    ->where('status', '!=', 'delivered');
-                break;
-        }
     }
 
     /**
@@ -118,10 +93,10 @@ class BulkOrderController extends Controller
             ], 400);
         }
 
-        if ($order->status === 'shipped' || $order->status === 'delivered') {
+        if ($order->hasShipment()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order is already shipped or delivered'
+                'message' => 'Shipment is already created for this order'
             ], 400);
         }
 
@@ -219,12 +194,12 @@ class BulkOrderController extends Controller
             abort(404, 'This is not a bulk order');
         }
 
-        if (!in_array($order->shipping_partner_status, [Order::SHIPPING_PARTNER_SHIPMENT_CREATED, Order::SHIPPING_PARTNER_READY_TO_SHIP])) {
+        if (!$order->hasShipment()) {
             return back()->with('error', 'Label cannot be printed until shipment is created.');
         }
 
-        // Update status to ready_to_ship
-        $order->update(['shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP]);
+        // Printing the label moves the order to Ready to Ship
+        $order->markLabelPrinted();
 
         return view('admin.manual-shipping.print-label', compact('order'));
     }
@@ -244,9 +219,7 @@ class BulkOrderController extends Controller
             ->bulkOrders()
             ->get();
 
-        $invalidOrders = $orders->filter(function ($order) {
-            return !in_array($order->shipping_partner_status, [Order::SHIPPING_PARTNER_SHIPMENT_CREATED, Order::SHIPPING_PARTNER_READY_TO_SHIP]);
-        });
+        $invalidOrders = $orders->filter(fn($order) => !$order->hasShipment());
 
         if ($invalidOrders->count() > 0) {
             return back()->with('error', 'Labels can only be printed for orders with "Shipment Created" or "Ready to Ship" status.');
@@ -257,9 +230,7 @@ class BulkOrderController extends Controller
         $pdf = Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
             ->setPaper('a4', 'portrait');
 
-        // Update status to ready_to_ship
-        Order::whereIn('id', $request->order_ids)
-            ->update(['shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP]);
+        Order::markLabelsPrinted($request->order_ids);
 
         return $pdf->download('bulk_order_labels_' . date('Y-m-d_H-i-s') . '.pdf');
     }
@@ -272,9 +243,9 @@ class BulkOrderController extends Controller
         $query = Order::with(['user', 'orderItems.book'])
             ->bulkOrders();
 
-        $shippingPartnerStatus = $request->input('shipping_partner_status', 'pending');
-        if (!empty($shippingPartnerStatus)) {
-            $this->applyShippingStatusFilter($query, $shippingPartnerStatus);
+        $shippingPartnerStatus = $request->input('shipping_partner_status', Order::SHIPPING_PARTNER_PENDING);
+        if (in_array($shippingPartnerStatus, Order::SHIPPING_PARTNER_STATUSES, true)) {
+            $query->shippingPartnerStatus($shippingPartnerStatus);
         }
 
         $paymentStatus = $request->input('payment_status', 'paid');
@@ -327,7 +298,8 @@ class BulkOrderController extends Controller
                 'Shipping Status',
                 'Courier',
                 'Tracking ID',
-                'Shipped At'
+                'Shipment Created At',
+                'Label Printed At'
             ]);
 
             foreach ($orders as $order) {
@@ -345,10 +317,11 @@ class BulkOrderController extends Controller
                     '₹' . number_format($order->total_amount, 2),
                     $order->orderItems->count(),
                     $order->created_at->format('Y-m-d H:i:s'),
-                    $order->status === 'delivered' ? 'Delivered' : ($order->isManuallyShipped() ? 'Shipped' : 'Pending'),
+                    $order->shipping_partner_status_label,
                     $order->manual_courier_name ?? '',
                     $order->manual_tracking_id ?? '',
-                    $order->manual_shipping_marked_at ? $order->manual_shipping_marked_at->format('Y-m-d H:i:s') : ''
+                    $order->shipment_created_at ? $order->shipment_created_at->format('Y-m-d H:i:s') : '',
+                    $order->label_printed_at ? $order->label_printed_at->format('Y-m-d H:i:s') : ''
                 ]);
             }
 

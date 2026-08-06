@@ -335,10 +335,7 @@ class WebhookController extends Controller
             $response = $courierManager->createOrder($order);
 
             if ($response && isset($response['success']) && $response['success']) {
-                $order->update([
-                    'shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP,
-                    'shipping_partner_error' => null
-                ]);
+                $order->markShipmentCreated();
                 Log::info('Courier order created successfully via webhook', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
@@ -350,8 +347,9 @@ class WebhookController extends Controller
                     ? $response['message']
                     : "Failed to create courier order";
 
+                // Shipment could not be created — the order stays Pending
                 $order->update([
-                    'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
+                    'shipping_partner_status' => Order::SHIPPING_PARTNER_PENDING,
                     'shipping_partner_error' => $errorMessage
                 ]);
 

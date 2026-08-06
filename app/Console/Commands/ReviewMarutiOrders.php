@@ -33,7 +33,7 @@ class ReviewMarutiOrders extends Command
 
         // Get 10 orders that are pending and haven't had their shipping partner status approved/rejected yet
         $orders = Order::whereIn('status', [Order::STATUS_PENDING, Order::STATUS_PENDING_TO_BE_PREPARED, Order::STATUS_PROCESSING])
-            ->where('shipping_partner_status', Order::SHIPPING_PARTNER_PENDING)
+            ->shippingPartnerStatus(Order::SHIPPING_PARTNER_PENDING)
             ->where('requires_manual_shipping', false)
             ->limit(10)
             ->get();
@@ -79,10 +79,10 @@ class ReviewMarutiOrders extends Command
                 if ($rates && isset($rates['success'])) {
                     if ($rates['success'] == '1') {
                         $this->info("✓ Pincode {$pincode} is serviceable.");
-                        $order->update([
-                            'shipping_partner_status' => Order::SHIPPING_PARTNER_READY_TO_SHIP,
-                            'shipping_partner_error' => null
-                        ]);
+
+                        // The order stays Pending until an admin creates the shipment;
+                        // this command only validates serviceability.
+                        $order->update(['shipping_partner_error' => null]);
 
                         // Also update the ServiceableZipcode table if entry exists
                         ServiceableZipcode::where('pincode', $pincode)->update(['is_serviceable' => 'YES']);
@@ -105,10 +105,12 @@ class ReviewMarutiOrders extends Command
                         } else {
                             $this->error("✗ Pincode {$pincode} is NOT serviceable. Error: {$errorMessage}");
 
+                            // Not serviceable by Maruti — the order moves to manual
+                            // shipping and stays Pending until an admin ships it.
                             $order->update([
-                                'shipping_partner_status' => Order::SHIPPING_PARTNER_REJECTED,
+                                'shipping_partner_status' => Order::SHIPPING_PARTNER_PENDING,
                                 'shipping_partner_error' => $errorMessage,
-                                'requires_manual_shipping' => true  
+                                'requires_manual_shipping' => true
                             ]);
 
                             // Update the ServiceableZipcode table to NO

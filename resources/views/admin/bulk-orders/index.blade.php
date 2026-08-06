@@ -38,7 +38,7 @@
                         <i class="fas fa-clock text-xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Pending Shipment</p>
+                        <p class="text-sm font-medium text-gray-600">Pending</p>
                         <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['pending']) }}</p>
                     </div>
                 </div>
@@ -50,8 +50,8 @@
                         <i class="fas fa-truck text-xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Shipped</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['shipped']) }}</p>
+                        <p class="text-sm font-medium text-gray-600">Shipment Created</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['shipment_created']) }}</p>
                     </div>
                 </div>
             </div>
@@ -59,11 +59,11 @@
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-green-100 text-green-600">
-                        <i class="fas fa-check-circle text-xl"></i>
+                        <i class="fas fa-check-double text-xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Delivered</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['delivered']) }}</p>
+                        <p class="text-sm font-medium text-gray-600">Ready to Ship</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['ready_to_ship']) }}</p>
                     </div>
                 </div>
             </div>
@@ -152,7 +152,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Total</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status</th>
+                                Shipping Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Tracking</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -210,18 +210,18 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
-                                    @if($order->shipping_partner_status === 'ready_to_ship')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            <i class="fas fa-check-double mr-1"></i>Ready to Ship
-                                        </span>
-                                    @elseif($order->shipping_partner_status === 'shipment_created')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            <i class="fas fa-truck mr-1"></i>Shipment Created
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                            <i class="fas fa-clock mr-1"></i>Pending
-                                        </span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $order->shipping_partner_status_classes }}">
+                                        <i class="fas {{ $order->shipping_partner_status_icon }} mr-1"></i>{{ $order->shipping_partner_status_label }}
+                                    </span>
+                                    @if($order->shipment_created_at)
+                                        <div class="text-xs text-gray-500 mt-1">
+                                            Shipment: {{ $order->shipment_created_at->format('M d, Y h:i A') }}
+                                        </div>
+                                    @endif
+                                    @if($order->label_printed_at)
+                                        <div class="text-xs text-gray-500">
+                                            Label: {{ $order->label_printed_at->format('M d, Y h:i A') }}
+                                        </div>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
@@ -240,15 +240,16 @@
                                             class="text-blue-600 hover:text-blue-900">
                                             <i class="fas fa-eye mr-1"></i>View Details
                                         </a>
-                                        <a href="{{ route('admin.bulk-orders.print-label', $order) }}"
-                                            class="text-purple-600 hover:text-purple-900" target="_blank">
-                                            <i class="fas fa-print mr-1"></i>Print Label & Invoice
-                                        </a>
-                                        @if(!$order->isManuallyShipped() && $order->status !== 'delivered')
+                                        @if($order->hasShipment())
+                                            <a href="{{ route('admin.bulk-orders.print-label', $order) }}"
+                                                class="text-purple-600 hover:text-purple-900" target="_blank">
+                                                <i class="fas fa-print mr-1"></i>Print Label & Invoice
+                                            </a>
+                                        @else
                                             <button type="button"
                                                 onclick="openShipModal({{ $order->id }}, '{{ $order->order_number }}')"
                                                 class="text-left text-green-600 hover:text-green-900">
-                                                <i class="fas fa-check mr-1"></i>Mark Shipped
+                                                <i class="fas fa-truck mr-1"></i>Create Shipment
                                             </button>
                                         @endif
                                     </div>
@@ -279,7 +280,7 @@
     <div id="ship-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 hidden flex items-center justify-center">
         <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Mark as Shipped</h3>
+                <h3 class="text-lg font-semibold text-gray-900">Create Shipment</h3>
                 <button onclick="closeShipModal()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -319,7 +320,7 @@
                 </button>
                 <button onclick="submitShipModal()"
                     class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
-                    <i class="fas fa-truck mr-1"></i> Confirm Ship
+                    <i class="fas fa-truck mr-1"></i> Create Shipment
                 </button>
             </div>
         </div>
