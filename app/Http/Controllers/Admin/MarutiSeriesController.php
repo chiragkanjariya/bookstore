@@ -19,6 +19,10 @@ class MarutiSeriesController extends Controller
             $query->where('series_id', $request->series_id);
         }
 
+        if ($request->filled('year')) {
+            $query->where('year', $request->year);
+        }
+
         $seriesRecords = $query->orderBy('id', 'desc')->paginate(50);
         $seriesRecords->appends(request()->query());
 
@@ -27,19 +31,45 @@ class MarutiSeriesController extends Controller
 
         // Fetch distinct series_ids for the filter dropdown
         $availableSeriesIds = ShreeMarutiSeries::select('series_id')->distinct()->orderBy('series_id', 'desc')->pluck('series_id');
+        $availableYears = ShreeMarutiSeries::select('year')->distinct()->orderBy('year', 'desc')->pluck('year');
 
-        return view('admin.maruti-series.index', compact('seriesRecords', 'notificationEmail', 'notifyThreshold', 'availableSeriesIds'));
+        $currentYear = (int) now()->year;
+        $currentYearAvailable = ShreeMarutiSeries::where('is_used', false)->forYear($currentYear)->count();
+
+        // Remaining unused numbers per year, so it is clear what is locked to which year.
+        $availabilityByYear = ShreeMarutiSeries::where('is_used', false)
+            ->selectRaw('year, COUNT(*) as total')
+            ->groupBy('year')
+            ->orderBy('year', 'desc')
+            ->pluck('total', 'year');
+
+        return view('admin.maruti-series.index', compact(
+            'seriesRecords',
+            'notificationEmail',
+            'notifyThreshold',
+            'availableSeriesIds',
+            'availableYears',
+            'currentYear',
+            'currentYearAvailable',
+            'availabilityByYear'
+        ));
     }
 
     public function store(Request $request)
     {
+        $currentYear = (int) now()->year;
+
         $request->validate([
             'start_number' => 'required|numeric',
             'end_number' => 'required|numeric',
+            'year' => 'required|integer|min:' . $currentYear . '|max:' . ($currentYear + 10),
+        ], [
+            'year.min' => 'Series can only be added for the current year or a later year.',
         ]);
 
         $start = $request->start_number;
         $end = $request->end_number;
+        $year = (int) $request->year;
 
         $isGreater = false;
         if (function_exists('bccomp')) {
@@ -80,6 +110,7 @@ class MarutiSeriesController extends Controller
                 if (!ShreeMarutiSeries::where('awb_number', $awb)->exists()) {
                     $records[] = [
                         'series_id' => $seriesId,
+                        'year' => $year,
                         'awb_number' => $awb,
                         'is_used' => false,
                         'created_at' => now(),
@@ -123,7 +154,7 @@ class MarutiSeriesController extends Controller
             }
 
             DB::commit();
-            return back()->with('success', "Batch generated successfully. Added {$addedCount} tracking numbers under Series ID: {$seriesId}.");
+            return back()->with('success', "Batch generated successfully. Added {$addedCount} tracking numbers under Series ID: {$seriesId} for year {$year}.");
 
         } catch (\Exception $e) {
             DB::rollBack();

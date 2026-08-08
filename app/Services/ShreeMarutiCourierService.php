@@ -661,12 +661,43 @@ class ShreeMarutiCourierService implements CourierServiceInterface
      */
     public function getNextSeriesNumber($orderId = null)
     {
+        $currentYear = (int) now()->year;
+        $threshold = (int) Setting::get('shree_maruti_notify_threshold', 0);
+
+        // A series is locked to the year it was added for.
+        $currentYearAvailable = \App\Models\ShreeMarutiSeries::where('is_used', false)
+            ->forYear($currentYear)
+            ->count();
+
         $nextAvailable = \App\Models\ShreeMarutiSeries::where('is_used', false)
+            ->forYear($currentYear)
             ->orderBy('id', 'asc')
             ->first();
 
+        // Once the current year runs at or below the threshold, series added for
+        // a later year are unlocked so label generation never stalls.
+        if (!$nextAvailable && $currentYearAvailable <= $threshold) {
+            $nextAvailable = \App\Models\ShreeMarutiSeries::where('is_used', false)
+                ->where('year', '>', $currentYear)
+                ->orderBy('year', 'asc')
+                ->orderBy('id', 'asc')
+                ->first();
+
+            if ($nextAvailable) {
+                Log::warning('ShreeMaruti: Current year series exhausted, falling back to a later year.', [
+                    'current_year' => $currentYear,
+                    'current_year_available' => $currentYearAvailable,
+                    'threshold' => $threshold,
+                    'fallback_year' => $nextAvailable->year,
+                ]);
+            }
+        }
+
         if (!$nextAvailable) {
-            Log::warning('ShreeMaruti: Series tracking active but no available numbers left.');
+            Log::warning('ShreeMaruti: Series tracking active but no available numbers left.', [
+                'current_year' => $currentYear,
+                'current_year_available' => $currentYearAvailable,
+            ]);
             return null;
         }
 
@@ -682,33 +713,39 @@ class ShreeMarutiCourierService implements CourierServiceInterface
             'order_id' => $orderId
         ]);
 
-        $threshold = Setting::get('shree_maruti_notify_threshold');
         $email = Setting::get('shree_maruti_notification_email');
 
-        if (!empty($threshold) && !empty($email)) {
-            $availableCount = \App\Models\ShreeMarutiSeries::where('is_used', false)->count();
-            
-            $isNotified = Cache::get('shree_maruti_series_notified_' . $threshold, false);
+        if ($threshold > 0 && !empty($email)) {
+            // Alert on what is left for the current year, not the whole table.
+            $availableCount = \App\Models\ShreeMarutiSeries::where('is_used', false)
+                ->forYear($currentYear)
+                ->count();
+
+            $cacheKey = 'shree_maruti_series_notified_' . $currentYear . '_' . $threshold;
+            $isNotified = Cache::get($cacheKey, false);
 
             if ($availableCount <= $threshold) {
                 if (!$isNotified) {
-                    $this->sendSeriesExpirationNotification($nextAvailable->awb_number, $threshold, $email);
-                    Cache::put('shree_maruti_series_notified_' . $threshold, true, now()->addDays(7));
+                    $this->sendSeriesExpirationNotification($nextAvailable->awb_number, $threshold, $email, $currentYear);
+                    Cache::put($cacheKey, true, now()->addDays(7));
                 }
-            } elseif ($availableCount > $threshold && $isNotified) {
-                Cache::forget('shree_maruti_series_notified_' . $threshold);
+            } elseif ($isNotified) {
+                Cache::forget($cacheKey);
             }
         }
 
         return $nextAvailable->awb_number;
     }
 
-    private function sendSeriesExpirationNotification($current, $threshold, $email)
+    private function sendSeriesExpirationNotification($current, $threshold, $email, $year = null)
     {
         try {
+            $year = $year ?: (int) now()->year;
+
             $subject = 'URGENT: Shree Maruti Courier Series Expiration Warning';
             $body = "Hello Admin,\n\n" .
                    "Your Shree Maruti Courier series number is approaching its limit.\n" .
+                   "Year: $year\n" .
                    "Current Series: $current\n" .
                    "Threshold Level: $threshold\n\n" .
                    "Please obtain a new series range to ensure uninterrupted label generation.\n\n" .
@@ -718,6 +755,7 @@ class ShreeMarutiCourierService implements CourierServiceInterface
             $emailService->sendEmail([$email => 'Admin'], $subject, nl2br($body));
 
             Log::warning("ShreeMaruti: Expiration email sent to $email", [
+                'year' => $year,
                 'current' => $current,
                 'threshold' => $threshold
             ]);

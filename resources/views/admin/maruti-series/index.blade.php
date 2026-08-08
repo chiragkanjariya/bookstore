@@ -12,12 +12,50 @@
             </div>
         </div>
 
+        @if($errors->any())
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                <ul class="list-disc list-inside text-sm">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <!-- Availability by year -->
+        <div class="mb-8 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="text-sm font-medium text-gray-700">Available numbers:</span>
+                @forelse($availabilityByYear as $year => $total)
+                    @php $isCurrent = (int) $year === $currentYear; @endphp
+                    <span
+                        class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium {{ $isCurrent ? 'bg-[#00BDE0]/10 text-[#0092AE]' : 'bg-gray-200 text-gray-600' }}">
+                        {{ $year }}
+                        <span class="font-semibold">{{ number_format($total) }}</span>
+                        @if($isCurrent)
+                            <span class="text-[10px] uppercase tracking-wide">in use</span>
+                        @else
+                            <span class="text-[10px] uppercase tracking-wide">locked</span>
+                        @endif
+                    </span>
+                @empty
+                    <span class="text-sm text-gray-500">None</span>
+                @endforelse
+            </div>
+            @if($notifyThreshold !== '' && $currentYearAvailable <= (int) $notifyThreshold)
+                <p class="mt-3 text-xs text-red-600">
+                    Only {{ number_format($currentYearAvailable) }} numbers left for {{ $currentYear }} (threshold
+                    {{ $notifyThreshold }}). Later years are now unlocked for use.
+                </p>
+            @endif
+        </div>
+
 
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-2 mb-8">
             <!-- Add Series Form -->
             <section>
                 <h4 class="text-xl font-semibold text-[#00BDE0] mb-4">Add Series</h4>
-                <p class="mb-4 text-sm text-gray-600">Generate a new batch of tracking numbers.</p>
+                <p class="mb-4 text-sm text-gray-600">Generate a new batch of tracking numbers for a specific year.</p>
 
                 <form action="{{ route('admin.maruti-series.store') }}" method="POST" class="space-y-4">
                     @csrf
@@ -26,6 +64,7 @@
                             <label for="start_number" class="block text-sm font-medium text-gray-700 mb-1">Start Number
                                 <span class="text-red-500">*</span></label>
                             <input type="text" name="start_number" id="start_number" required
+                                value="{{ old('start_number') }}"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
                         </div>
 
@@ -33,9 +72,24 @@
                             <label for="end_number" class="block text-sm font-medium text-gray-700 mb-1">End Number <span
                                     class="text-red-500">*</span></label>
                             <input type="text" name="end_number" id="end_number" required
+                                value="{{ old('end_number') }}"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                        </div>
+
+                        <div class="flex-1 min-w-[120px]">
+                            <label for="year" class="block text-sm font-medium text-gray-700 mb-1">Year <span
+                                    class="text-red-500">*</span></label>
+                            <input type="number" name="year" id="year" required
+                                min="{{ $currentYear }}" max="{{ $currentYear + 10 }}" step="1"
+                                value="{{ old('year', $currentYear) }}"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
                         </div>
                     </div>
+
+                    <p class="text-xs text-gray-500">
+                        Numbers are locked to this year. A future year's batch is only used once the
+                        {{ $currentYear }} stock drops to the threshold below.
+                    </p>
 
                     <div class="text-right mt-4">
                         <button type="submit"
@@ -49,7 +103,8 @@
             <!-- Notification Settings Form -->
             <section>
                 <h4 class="text-xl font-semibold text-[#00BDE0] mb-4">Low Series Alerts</h4>
-                <p class="mb-4 text-sm text-gray-600">Configure threshold alerts.</p>
+                <p class="mb-4 text-sm text-gray-600">Configure threshold alerts. The threshold is measured against
+                    {{ $currentYear }}'s remaining numbers, and later years unlock once it is reached.</p>
 
                 <form action="{{ route('admin.maruti-series.settings') }}" method="POST" class="space-y-4">
                     @csrf
@@ -103,12 +158,25 @@
                     </select>
                 </div>
 
+                <div>
+                    <label for="year_filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Year</label>
+                    <select id="year_filter" name="year"
+                        class="w-full min-w-[140px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                        <option value="">All Years</option>
+                        @foreach($availableYears as $availableYear)
+                            <option value="{{ $availableYear }}" {{ request('year') == $availableYear ? 'selected' : '' }}>
+                                {{ $availableYear }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <button type="submit"
                     class="bg-gray-100 text-gray-700 border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors">
                     Filter
                 </button>
 
-                @if(request('series_id'))
+                @if(request('series_id') || request('year'))
                     <a href="{{ route('admin.maruti-series.index') }}"
                         class="text-sm text-[#00BDE0] hover:text-[#00A5C7] mb-2 px-2">Clear Filter</a>
                 @endif
@@ -135,6 +203,7 @@
                     <tr>
                         <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold tracking-wider">ID</th>
                         <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold tracking-wider">Series ID</th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold tracking-wider">Year</th>
                         <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold tracking-wider">AWB Number</th>
                         <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold tracking-wider">Status</th>
                         <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold tracking-wider">Order ID</th>
@@ -147,6 +216,10 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $record->id }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <span class="px-2 py-1 bg-gray-100 rounded text-xs font-mono">{{ $record->series_id }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <span
+                                    class="px-2 py-1 rounded text-xs font-mono {{ (int) $record->year === $currentYear ? 'bg-[#00BDE0]/10 text-[#0092AE]' : 'bg-gray-100 text-gray-600' }}">{{ $record->year }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{{ $record->awb_number }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -175,7 +248,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500 border-t border-gray-200">
+                            <td colspan="7" class="px-4 py-6 text-center text-sm text-gray-500 border-t border-gray-200">
                                 No tracking numbers found. Generate a series batch to get started.
                             </td>
                         </tr>
