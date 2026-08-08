@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ShreeMarutiSeries;
 use App\Models\Setting;
+use App\Providers\AppServiceProvider;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -34,7 +36,6 @@ class MarutiSeriesController extends Controller
         $availableYears = ShreeMarutiSeries::select('year')->distinct()->orderBy('year', 'desc')->pluck('year');
 
         $currentYear = (int) now()->year;
-        $currentYearAvailable = ShreeMarutiSeries::where('is_used', false)->forYear($currentYear)->count();
 
         // Remaining unused numbers per year, so it is clear what is locked to which year.
         $availabilityByYear = ShreeMarutiSeries::where('is_used', false)
@@ -50,7 +51,6 @@ class MarutiSeriesController extends Controller
             'availableSeriesIds',
             'availableYears',
             'currentYear',
-            'currentYearAvailable',
             'availabilityByYear'
         ));
     }
@@ -154,6 +154,8 @@ class MarutiSeriesController extends Controller
             }
 
             DB::commit();
+            Cache::forget(AppServiceProvider::MARUTI_SERIES_WARNING_CACHE_KEY);
+
             return back()->with('success', "Batch generated successfully. Added {$addedCount} tracking numbers under Series ID: {$seriesId} for year {$year}.");
 
         } catch (\Exception $e) {
@@ -181,6 +183,7 @@ class MarutiSeriesController extends Controller
         }
 
         DB::table('shree_maruti_series')->where('series_id', $seriesId)->delete();
+        Cache::forget(AppServiceProvider::MARUTI_SERIES_WARNING_CACHE_KEY);
 
         return back()->with('success', "Series ID {$seriesId} and its unassigned tracking numbers have been successfully deleted.");
     }
@@ -194,6 +197,8 @@ class MarutiSeriesController extends Controller
 
         Setting::set('shree_maruti_notification_email', $request->shree_maruti_notification_email, 'string', 'courier', 'Shree Maruti Notification Email');
         Setting::set('shree_maruti_notify_threshold', $request->shree_maruti_notify_threshold, 'string', 'courier', 'Shree Maruti Notify Threshold');
+
+        Cache::forget(AppServiceProvider::MARUTI_SERIES_WARNING_CACHE_KEY);
 
         return back()->with('success', 'Notification settings updated successfully.');
     }

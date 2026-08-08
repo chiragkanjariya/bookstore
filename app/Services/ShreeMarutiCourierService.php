@@ -724,6 +724,9 @@ class ShreeMarutiCourierService implements CourierServiceInterface
             $cacheKey = 'shree_maruti_series_notified_' . $currentYear . '_' . $threshold;
             $isNotified = Cache::get($cacheKey, false);
 
+            // Refresh the admin header banner as soon as the threshold is crossed.
+            Cache::forget(\App\Providers\AppServiceProvider::MARUTI_SERIES_WARNING_CACHE_KEY);
+
             if ($availableCount <= $threshold) {
                 if (!$isNotified) {
                     $this->sendSeriesExpirationNotification($nextAvailable->awb_number, $threshold, $email, $currentYear);

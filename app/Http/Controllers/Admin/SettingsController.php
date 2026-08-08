@@ -124,6 +124,8 @@ class SettingsController extends Controller
         Setting::set('shree_maruti_notification_email', $request->shree_maruti_notification_email, 'string', 'courier', 'Shree Maruti Notification Email');
         Setting::set('shree_maruti_notify_threshold', $request->shree_maruti_notify_threshold, 'string', 'courier', 'Shree Maruti Notify Threshold');
 
+        \Illuminate\Support\Facades\Cache::forget(\App\Providers\AppServiceProvider::MARUTI_SERIES_WARNING_CACHE_KEY);
+
         // Update bulk purchase settings
         Setting::set('min_bulk_purchase', $request->min_bulk_purchase, 'integer', 'bulk', 'Minimum Bulk Purchase Quantity');
 

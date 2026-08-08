@@ -12,16 +12,6 @@
             </div>
         </div>
 
-        @if($errors->any())
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-                <ul class="list-disc list-inside text-sm">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
         <!-- Availability by year -->
         <div class="mb-8 rounded-lg border border-gray-200 bg-gray-50 p-4">
             <div class="flex flex-wrap items-center gap-3">
@@ -42,12 +32,6 @@
                     <span class="text-sm text-gray-500">None</span>
                 @endforelse
             </div>
-            @if($notifyThreshold !== '' && $currentYearAvailable <= (int) $notifyThreshold)
-                <p class="mt-3 text-xs text-red-600">
-                    Only {{ number_format($currentYearAvailable) }} numbers left for {{ $currentYear }} (threshold
-                    {{ $notifyThreshold }}). Later years are now unlocked for use.
-                </p>
-            @endif
         </div>
 
 

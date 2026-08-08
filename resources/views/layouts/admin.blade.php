@@ -333,6 +333,20 @@
             </div>
         </header>
 
+        @if(!empty($marutiSeriesWarning))
+            <div class="bg-red-600 text-white px-4 sm:px-6 py-3" role="alert">
+                <div class="flex flex-wrap items-center gap-2 text-sm font-medium">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>{{ $marutiSeriesWarning }}</span>
+                    <a href="{{ route('admin.maruti-series.index') }}"
+                        class="underline underline-offset-2 font-semibold hover:text-red-100">Manage series</a>
+                </div>
+            </div>
+        @endif
+
         <!-- Page Content -->
         <main class="p-4 sm:p-6">
             @if(session('success'))
@@ -343,7 +357,7 @@
             @endif
 
             @if(session('error'))
-                <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <div class="mb-4 bg-red-600 border border-red-700 text-white px-4 py-3 rounded relative" role="alert">
                     <strong class="font-bold">Error!</strong>
                     <span class="block sm:inline">{{ session('error') }}</span>
                 </div>
@@ -357,10 +371,10 @@
             @endif
             
             @if($errors->any())
-                <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <div class="mb-4 bg-red-600 border border-red-700 text-white px-4 py-3 rounded relative" role="alert">
                     <strong class="font-bold">Whoops!</strong>
                     <span class="block sm:inline">There were some problems with your input.</span>
-                    <ul class="mt-2 list-disc list-inside text-sm text-red-600">
+                    <ul class="mt-2 list-disc list-inside text-sm text-white">
                         @foreach($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
