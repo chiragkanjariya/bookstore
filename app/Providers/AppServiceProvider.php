@@ -58,15 +58,8 @@ class AppServiceProvider extends ServiceProvider
                     return null;
                 }
 
-                $laterYears = ShreeMarutiSeries::where('is_used', false)
-                    ->where('year', '>', $currentYear)
-                    ->count();
-
-                $message = "Only {$available} Maruti tracking numbers left for {$currentYear} (threshold {$threshold}). ";
-
-                return $message . ($laterYears > 0
-                    ? number_format($laterYears) . ' numbers from later years are now unlocked for use.'
-                    : 'Add a new series to avoid label generation failures.');
+                return "Only {$available} Maruti tracking numbers left for {$currentYear}. "
+                    . 'Add a new series to avoid label generation failures.';
             });
         } catch (\Throwable $e) {
             // Never break page rendering over a warning banner.
