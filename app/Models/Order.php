@@ -401,7 +401,8 @@ class Order extends Model
     public function scopeMarutiOrders($query)
     {
         return $query->where('requires_manual_shipping', false)
-            ->where('is_bulk_purchased', false);
+            ->where('is_bulk_purchased', false)
+            ->where('payment_status', 'paid');
     }
 
     /**

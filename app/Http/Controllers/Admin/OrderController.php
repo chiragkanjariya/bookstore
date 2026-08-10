@@ -24,13 +24,6 @@ class OrderController extends Controller
             ->marutiOrders()
             ->orderBy('created_at', 'desc');
 
-        // Filter by payment status
-        $paymentStatus = $request->input('payment_status', 'paid');
-        if (!empty($paymentStatus)) {
-            $query->where('payment_status', $paymentStatus);
-            $request->merge(['payment_status' => $paymentStatus]);
-        }
-
         // Search by order number or user name
         if ($request->filled('search')) {
             $search = $request->search;
@@ -66,7 +59,7 @@ class OrderController extends Controller
             'pending' => Order::marutiOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_PENDING)->count(),
             'shipment_created' => Order::marutiOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_SHIPMENT_CREATED)->count(),
             'ready_to_ship' => Order::marutiOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_READY_TO_SHIP)->count(),
-            'total_revenue' => Order::marutiOrders()->where('payment_status', 'paid')->sum('total_amount'),
+            'total_revenue' => Order::marutiOrders()->sum('total_amount'),
         ];
 
         return view('admin.orders.index', compact('orders', 'stats', 'request'));
@@ -215,11 +208,6 @@ class OrderController extends Controller
     {
         // Same set of orders as the listing
         $query = Order::with(['user', 'orderItems.book'])->marutiOrders();
-
-        $paymentStatus = $request->input('payment_status', 'paid');
-        if (!empty($paymentStatus)) {
-            $query->where('payment_status', $paymentStatus);
-        }
 
         if ($request->filled('search')) {
             $search = $request->search;
