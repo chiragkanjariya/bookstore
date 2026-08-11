@@ -8,8 +8,10 @@
 @section('content')
     @php
         $isManualOrBulk = $order->requires_manual_shipping || $order->is_bulk_purchased;
-        $trackingNumber = $isManualOrBulk ? ($order->manual_tracking_id ?: $order->awb_number) : $order->awb_number;
-        $trackingLabel = $isManualOrBulk ? 'Tracking ID' : 'AWB';
+        $trackingNumber = $isManualOrBulk ? ($order->manual_tracking_id ?: $order->tracking_number) : $order->tracking_number;
+        // Fallback to order number if tracking is missing to prevent barcode errors
+        $trackingNumber = $trackingNumber ?: $order->order_number;
+        $trackingLabel = 'Tracking Number';
     @endphp
     <style>
         @media print {
@@ -120,9 +122,9 @@
                 <div class="border-4 border-black p-4">
                     <h1 class="text-3xl font-bold text-center mb-4">SHIPPING LABEL</h1>
 
-                    <!-- AWB Barcode -->
+                    <!-- Tracking Number Barcode -->
                     <div class="text-center mb-4">
-                        <svg id="awb-barcode"></svg>
+                        <svg id="tracking-barcode"></svg>
                         <p class="text-xs text-gray-600 mt-1">{{ $trackingLabel }}: {{ $trackingNumber }}</p>
                     </div>
 
@@ -264,8 +266,8 @@
     <!-- Initialize Barcode -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Generate barcode for AWB number
-            JsBarcode("#awb-barcode", "{{ $trackingNumber }}", {
+            // Generate barcode for tracking number
+            JsBarcode("#tracking-barcode", "{{ $trackingNumber }}", {
                 format: "CODE128",
                 width: 1.5,
                 height: 60,

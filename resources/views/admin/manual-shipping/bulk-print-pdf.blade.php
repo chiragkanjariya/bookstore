@@ -170,17 +170,17 @@
         @foreach($pair as $order)
                 @php
                     $isManualOrBulk = $order->requires_manual_shipping || $order->is_bulk_purchased;
-                    $trackingNumber = $isManualOrBulk ? ($order->manual_tracking_id ?: $order->awb_number) : $order->awb_number;
+                    $trackingNumber = $isManualOrBulk ? ($order->manual_tracking_id ?: $order->tracking_number) : $order->tracking_number;
                     // Fallback to order number if tracking is missing to prevent barcode errors
                     $trackingNumber = $trackingNumber ?: $order->order_number;
-                    $trackingLabel = $isManualOrBulk ? 'Tracking ID' : 'AWB';
+                    $trackingLabel = 'Tracking Number';
                 @endphp
                 <div class="order-column">
                     <!-- LABEL SECTION (Top Half) -->
                     <div class="label-section">
                         <h1 class="label-title">SHIPPING LABEL</h1>
 
-                        <!-- AWB Barcode -->
+                        <!-- Tracking Number Barcode -->
                         <div class="barcode-container">
                             <?php
                                 $barcodeBase64 = base64_encode(
