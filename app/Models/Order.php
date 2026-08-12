@@ -425,6 +425,36 @@ class Order extends Model
     }
 
     /**
+     * Filter by a date range the admin entered in display (IST) dates.
+     *
+     * Timestamps are stored in UTC, so an IST day has to be translated into
+     * the UTC instants that bound it before it hits the database — otherwise
+     * orders placed between midnight and 5:30 AM IST land on the wrong day.
+     */
+    public function scopeCreatedBetweenDisplayDates($query, ?string $from, ?string $to)
+    {
+        $timezone = config('app.display_timezone');
+
+        if ($from) {
+            $query->where(
+                'created_at',
+                '>=',
+                \Illuminate\Support\Carbon::parse($from, $timezone)->startOfDay()->utc()
+            );
+        }
+
+        if ($to) {
+            $query->where(
+                'created_at',
+                '<=',
+                \Illuminate\Support\Carbon::parse($to, $timezone)->endOfDay()->utc()
+            );
+        }
+
+        return $query;
+    }
+
+    /**
      * Get tracking URL for manual/bulk shipped order.
      */
     public function getManualTrackingUrlAttribute(): ?string

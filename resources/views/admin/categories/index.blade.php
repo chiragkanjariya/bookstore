@@ -136,7 +136,7 @@
                                     {{ $category->sort_order }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $category->created_at->format('M d, Y') }}
+                                    {{ $category->created_at->ist()->format('M d, Y') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">

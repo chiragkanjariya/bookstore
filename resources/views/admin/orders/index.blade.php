@@ -229,12 +229,12 @@
                                         </span>
                                         @if($order->shipment_created_at)
                                             <div class="text-xs text-gray-500 mt-1">
-                                                Shipment: {{ $order->shipment_created_at->format('M d, Y h:i A') }}
+                                                Shipment: {{ $order->shipment_created_at->ist()->format('M d, Y h:i A') }}
                                             </div>
                                         @endif
                                         @if($order->label_printed_at)
                                             <div class="text-xs text-gray-500">
-                                                Label: {{ $order->label_printed_at->format('M d, Y h:i A') }}
+                                                Label: {{ $order->label_printed_at->ist()->format('M d, Y h:i A') }}
                                             </div>
                                         @endif
                                     </td>
@@ -248,7 +248,7 @@
                                         ₹{{ number_format($order->total_amount, 2) }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-500">
-                                        {{ $order->created_at->format('M d, Y') }}
+                                        {{ $order->created_at->ist()->format('M d, Y') }}
                                     </td>
                                     <td class="px-6 py-4 text-sm font-medium space-x-2">
                                         <a href="{{ route('admin.orders.show', $order) }}"

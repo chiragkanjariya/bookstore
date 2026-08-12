@@ -37,7 +37,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div>
                             <p class="text-gray-600">Order Date</p>
-                            <p class="font-medium">{{ $order->created_at->format('M d, Y h:i A') }}</p>
+                            <p class="font-medium">{{ $order->created_at->ist()->format('M d, Y h:i A') }}</p>
                         </div>
                         <div>
                             <p class="text-gray-600">Payment Method</p>

@@ -38,13 +38,10 @@ class AccountReportController extends Controller
             });
         }
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->get('date_from'));
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->get('date_to'));
-        }
+        $query->createdBetweenDisplayDates(
+            $request->input('date_from'),
+            $request->input('date_to')
+        );
 
         if ($request->filled('order_number')) {
             $query->where('order_number', 'like', "%{$request->get('order_number')}%");
@@ -111,7 +108,7 @@ class AccountReportController extends Controller
             ->groupBy('order_id')
             ->map(fn ($rows) => $rows->pluck('qty', 'book_id'));
 
-        $filename = 'orders_report_' . now()->format('Y-m-d_H-i-s') . '.csv';
+        $filename = 'orders_report_' . now()->ist()->format('Y-m-d_H-i-s') . '.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -167,7 +164,7 @@ class AccountReportController extends Controller
                     number_format($order->maruti_shipping_rate ?? 0, 2),
                     number_format($totalExcludingShipping, 2),
                     'IPDC-' . str_pad($order->id, 5, '0', STR_PAD_LEFT),
-                    $order->created_at->format('Y-m-d H:i:s'),
+                    $order->created_at->ist()->format('Y-m-d H:i:s'),
                     $order->razorpay_payment_id ?? 'N/A',
                     $order->razorpay_order_id ?? 'N/A'
                 ]);
@@ -211,7 +208,7 @@ class AccountReportController extends Controller
             'totalShipping'
         ));
 
-        $filename = 'combined_invoice_' . now()->format('Y-m-d_H-i-s') . '.pdf';
+        $filename = 'combined_invoice_' . now()->ist()->format('Y-m-d_H-i-s') . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -251,13 +248,10 @@ class AccountReportController extends Controller
             });
         }
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->get('date_from'));
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->get('date_to'));
-        }
+        $query->createdBetweenDisplayDates(
+            $request->input('date_from'),
+            $request->input('date_to')
+        );
 
         if ($request->filled('order_number')) {
             $query->where('order_number', 'like', "%{$request->get('order_number')}%");

@@ -232,7 +232,7 @@
                                     </td>
                                     <td>
                                         <p style="color: #666; margin: 0;">Date</p>
-                                        <p class="font-bold" style="margin: 0;">{{ $order->created_at->format('d M, Y') }}</p>
+                                        <p class="font-bold" style="margin: 0;">{{ $order->created_at->ist()->format('d M, Y') }}</p>
                                     </td>
                                     <td>
                                         <p style="color: #666; margin: 0;">Items</p>
@@ -258,7 +258,7 @@
                                 </td>
                                 <td class="text-right">
                                     <p style="margin: 0;"><strong>Invoice #:</strong> {{ $order->order_number }}</p>
-                                    <p style="margin: 0;"><strong>Date:</strong> {{ $order->created_at->format('d M, Y') }}</p>
+                                    <p style="margin: 0;"><strong>Date:</strong> {{ $order->created_at->ist()->format('d M, Y') }}</p>
                                     <p style="margin: 0;"><strong>{{ $trackingLabel }}:</strong> {{ $trackingNumber }}</p>
                                 </td>
                             </tr>

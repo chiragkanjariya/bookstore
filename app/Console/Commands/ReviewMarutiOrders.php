@@ -58,7 +58,7 @@ class ReviewMarutiOrders extends Command
                     $this->warn("Order #{$order->order_number} has no pincode. Skipping.");
                     $reviewData[] = [
                         'order_number' => $order->order_number,
-                        'date' => $order->created_at->format('Y-m-d H:i'),
+                        'date' => $order->created_at->ist()->format('Y-m-d H:i'),
                         'pincode' => 'MISSING',
                         'city' => $city,
                         'status' => 'PENDING',
@@ -96,7 +96,7 @@ class ReviewMarutiOrders extends Command
                             $this->warn("⚠️ API Error (Origin): {$errorMessage}. Skipping validation for this order.");
                             $reviewData[] = [
                                 'order_number' => $order->order_number,
-                                'date' => $order->created_at->format('Y-m-d H:i'),
+                                'date' => $order->created_at->ist()->format('Y-m-d H:i'),
                                 'pincode' => $pincode,
                                 'city' => $city,
                                 'status' => 'STILL PENDING',
@@ -118,7 +118,7 @@ class ReviewMarutiOrders extends Command
 
                             $reviewData[] = [
                                 'order_number' => $order->order_number,
-                                'date' => $order->created_at->format('Y-m-d H:i'),
+                                'date' => $order->created_at->ist()->format('Y-m-d H:i'),
                                 'pincode' => $pincode,
                                 'city' => $city,
                                 'status' => 'REJECTED',
@@ -130,7 +130,7 @@ class ReviewMarutiOrders extends Command
                     $this->error("Maruti API service returned an error or unsuccessful response for order #{$order->order_number}.");
                     $reviewData[] = [
                         'order_number' => $order->order_number,
-                        'date' => $order->created_at->format('Y-m-d H:i'),
+                        'date' => $order->created_at->ist()->format('Y-m-d H:i'),
                         'pincode' => $pincode,
                         'city' => $city,
                         'status' => 'STILL PENDING',
@@ -148,7 +148,7 @@ class ReviewMarutiOrders extends Command
                 ]);
                 $reviewData[] = [
                     'order_number' => $order->order_number,
-                    'date' => $order->created_at->format('Y-m-d H:i'),
+                    'date' => $order->created_at->ist()->format('Y-m-d H:i'),
                     'pincode' => $pincode ?? 'N/A',
                     'city' => $city ?? 'N/A',
                     'status' => 'ERROR',

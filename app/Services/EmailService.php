@@ -339,7 +339,7 @@ class EmailService
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
-                            <td style="padding: 8px 0; color: #333;">' . $order->created_at->format('F d, Y') . '</td>
+                            <td style="padding: 8px 0; color: #333;">' . $order->created_at->ist()->format('F d, Y') . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Status:</td>
@@ -439,7 +439,7 @@ class EmailService
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
-                            <td style="padding: 8px 0; color: #333;">' . $order->created_at->format('F d, Y') . '</td>
+                            <td style="padding: 8px 0; color: #333;">' . $order->created_at->ist()->format('F d, Y') . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Status:</td>
@@ -768,7 +768,7 @@ class EmailService
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
-                            <td style="padding: 8px 0; color: #333;">' . $order->created_at->format('F d, Y') . '</td>
+                            <td style="padding: 8px 0; color: #333;">' . $order->created_at->ist()->format('F d, Y') . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Status:</td>
@@ -831,7 +831,7 @@ class EmailService
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Shipped Date:</td>
-                            <td style="padding: 8px 0; color: #333;">' . ($order->shipped_at ? $order->shipped_at->format('F d, Y') : now()->format('F d, Y')) . '</td>
+                            <td style="padding: 8px 0; color: #333;">' . ($order->shipped_at ? $order->shipped_at->ist()->format('F d, Y') : now()->ist()->format('F d, Y')) . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Courier:</td>
@@ -889,7 +889,7 @@ class EmailService
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Delivered Date:</td>
-                            <td style="padding: 8px 0; color: #333;">' . ($order->delivered_at ? $order->delivered_at->format('F d, Y') : now()->format('F d, Y')) . '</td>
+                            <td style="padding: 8px 0; color: #333;">' . ($order->delivered_at ? $order->delivered_at->ist()->format('F d, Y') : now()->ist()->format('F d, Y')) . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Status:</td>
@@ -1030,7 +1030,7 @@ class EmailService
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Shipped Date:</td>
-                            <td style="padding: 8px 0; color: #333;">' . ($order->shipped_at ? $order->shipped_at->format('F d, Y') : now()->format('F d, Y')) . '</td>
+                            <td style="padding: 8px 0; color: #333;">' . ($order->shipped_at ? $order->shipped_at->ist()->format('F d, Y') : now()->ist()->format('F d, Y')) . '</td>
                         </tr>
                     </table>
                     ' . $trackingSection . '
@@ -1046,7 +1046,7 @@ class EmailService
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
-                            <td style="padding: 8px 0; color: #333;">' . $order->created_at->format('F d, Y') . '</td>
+                            <td style="padding: 8px 0; color: #333;">' . $order->created_at->ist()->format('F d, Y') . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Total Amount:</td>
@@ -1068,7 +1068,7 @@ class EmailService
                 <!-- Footer -->
                 <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
                     <p style="color: #999; font-size: 12px; margin: 0;">
-                        &copy; ' . date('Y') . ' ' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '. All rights reserved.
+                        &copy; ' . now()->ist()->format('Y') . ' ' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '. All rights reserved.
                     </p>
                 </div>
             </div>
@@ -1170,7 +1170,7 @@ class EmailService
                 <!-- Footer -->
                 <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
                     <p style="color: #999; font-size: 12px; margin: 0;">
-                        &copy; ' . date('Y') . ' ' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '. All rights reserved.
+                        &copy; ' . now()->ist()->format('Y') . ' ' . (\App\Models\Setting::get('company_name') ?: 'IPDC') . '. All rights reserved.
                     </p>
                 </div>
             </div>

@@ -197,10 +197,10 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $user->last_login_at ? $user->last_login_at->format('M d, Y H:i') : 'Never' }}
+                                {{ $user->last_login_at ? $user->last_login_at->ist()->format('M d, Y H:i') : 'Never' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $user->created_at->format('M d, Y') }}
+                                {{ $user->created_at->ist()->format('M d, Y') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">

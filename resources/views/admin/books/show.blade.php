@@ -204,11 +204,11 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Created</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $book->created_at->format('F j, Y \a\t g:i A') }}</p>
+                                <p class="mt-1 text-sm text-gray-900">{{ $book->created_at->ist()->format('F j, Y \a\t g:i A') }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Last Updated</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $book->updated_at->format('F j, Y \a\t g:i A') }}</p>
+                                <p class="mt-1 text-sm text-gray-900">{{ $book->updated_at->ist()->format('F j, Y \a\t g:i A') }}</p>
                             </div>
                         </div>
                     </div>

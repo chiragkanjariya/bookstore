@@ -47,12 +47,10 @@ class ManualShippingController extends Controller
         }
 
         // Date range filter
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
+        $query->createdBetweenDisplayDates(
+            $request->input('date_from'),
+            $request->input('date_to')
+        );
 
         $orders = $query->paginate(20)->withQueryString();
 
@@ -202,16 +200,14 @@ class ManualShippingController extends Controller
             });
         }
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
+        $query->createdBetweenDisplayDates(
+            $request->input('date_from'),
+            $request->input('date_to')
+        );
 
         $orders = $query->get();
 
-        $filename = 'manual_orders_' . date('Y-m-d_H-i-s') . '.csv';
+        $filename = 'manual_orders_' . now()->ist()->format('Y-m-d_H-i-s') . '.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -253,12 +249,12 @@ class ManualShippingController extends Controller
                     $shippingAddress['city'] ?? '',
                     $shippingAddress['state'] ?? '',
                     '₹' . number_format($order->total_amount, 2),
-                    $order->created_at->format('Y-m-d H:i:s'),
+                    $order->created_at->ist()->format('Y-m-d H:i:s'),
                     $order->shipping_partner_status_label,
                     $order->manual_courier_name ?? '',
                     $order->manual_tracking_id ?? '',
-                    $order->shipment_created_at ? $order->shipment_created_at->format('Y-m-d H:i:s') : '',
-                    $order->label_printed_at ? $order->label_printed_at->format('Y-m-d H:i:s') : ''
+                    $order->shipment_created_at ? $order->shipment_created_at->ist()->format('Y-m-d H:i:s') : '',
+                    $order->label_printed_at ? $order->label_printed_at->ist()->format('Y-m-d H:i:s') : ''
                 ]);
             }
 
@@ -315,6 +311,6 @@ class ManualShippingController extends Controller
 
         Order::markLabelsPrinted($request->order_ids);
 
-        return $pdf->download('manual_shipping_labels_' . date('Y-m-d_H-i-s') . '.pdf');
+        return $pdf->download('manual_shipping_labels_' . now()->ist()->format('Y-m-d_H-i-s') . '.pdf');
     }
 }

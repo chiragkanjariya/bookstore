@@ -161,7 +161,7 @@
                             </div>
                             <div>
                                 <p class="text-gray-600">Date</p>
-                                <p class="font-bold">{{ $order->created_at->format('d M, Y') }}</p>
+                                <p class="font-bold">{{ $order->created_at->ist()->format('d M, Y') }}</p>
                             </div>
                             <div>
                                 <p class="text-gray-600">Items</p>
@@ -187,7 +187,7 @@
                         </div>
                         <div class="text-right compact-text">
                             <p><strong>Invoice #:</strong> {{ $order->order_number }}</p>
-                            <p><strong>Date:</strong> {{ $order->created_at->format('d M, Y') }}</p>
+                            <p><strong>Date:</strong> {{ $order->created_at->ist()->format('d M, Y') }}</p>
                             <p><strong>{{ $trackingLabel }}:</strong> {{ $trackingNumber }}</p>
                         </div>
                     </div>

@@ -8,7 +8,7 @@
         <div class="bg-white rounded-lg shadow-md p-8">
             <div class="mb-8">
                 <h1 class="text-3xl font-bold text-gray-900 mb-2">Terms of Use</h1>
-                <p class="text-gray-600">Last updated: {{ date('F d, Y') }}</p>
+                <p class="text-gray-600">Last updated: {{ now()->ist()->format('F d, Y') }}</p>
             </div>
             
             <div class="prose prose-lg max-w-none">

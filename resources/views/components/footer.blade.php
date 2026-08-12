@@ -31,7 +31,7 @@
         <div class="border-t border-gray-800 mt-12 pt-8 ">
             <div class="flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <p class="text-gray-400 text-sm">
-                    © {{ date('Y') }} IPDC. All rights reserved.
+                    © {{ now()->ist()->format('Y') }} IPDC. All rights reserved.
                 </p>
                 <div class="flex flex-wrap justify-center md:justify-end space-x-4 mt-4 md:mt-0">
                     <a href="{{ route('pages.privacy-policy') }}" class="text-gray-400 hover:text-[#00BDE0] text-sm transition-colors">Privacy Policy</a>

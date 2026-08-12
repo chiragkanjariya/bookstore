@@ -141,14 +141,14 @@
                     <div class="space-y-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Member Since</label>
-                            <p class="mt-1 text-gray-900">{{ $user->created_at->format('F j, Y') }}</p>
+                            <p class="mt-1 text-gray-900">{{ $user->created_at->ist()->format('F j, Y') }}</p>
                             <p class="text-sm text-gray-500">{{ $user->created_at->diffForHumans() }}</p>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Last Login</label>
                             <p class="mt-1 text-gray-900">
-                                {{ $user->last_login_at ? $user->last_login_at->format('F j, Y \a\t g:i A') : 'Never logged in' }}
+                                {{ $user->last_login_at ? $user->last_login_at->ist()->format('F j, Y \a\t g:i A') : 'Never logged in' }}
                             </p>
                             @if($user->last_login_at)
                                 <p class="text-sm text-gray-500">{{ $user->last_login_at->diffForHumans() }}</p>
@@ -157,7 +157,7 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Last Updated</label>
-                            <p class="mt-1 text-gray-900">{{ $user->updated_at->format('F j, Y \a\t g:i A') }}</p>
+                            <p class="mt-1 text-gray-900">{{ $user->updated_at->ist()->format('F j, Y \a\t g:i A') }}</p>
                             <p class="text-sm text-gray-500">{{ $user->updated_at->diffForHumans() }}</p>
                         </div>
 

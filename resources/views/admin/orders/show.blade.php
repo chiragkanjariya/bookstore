@@ -46,7 +46,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
                         <div>
                             <p class="text-gray-600 font-medium">Order Date</p>
-                            <p class="text-gray-900">{{ $order->created_at->format('M d, Y h:i A') }}</p>
+                            <p class="text-gray-900">{{ $order->created_at->ist()->format('M d, Y h:i A') }}</p>
                         </div>
                         <div>
                             <p class="text-gray-600 font-medium">Payment Method</p>
@@ -87,13 +87,13 @@
                         @if($order->shipment_created_at)
                             <div>
                                 <p class="text-gray-600 font-medium">Shipment Created</p>
-                                <p class="text-gray-900">{{ $order->shipment_created_at->format('M d, Y h:i A') }}</p>
+                                <p class="text-gray-900">{{ $order->shipment_created_at->ist()->format('M d, Y h:i A') }}</p>
                             </div>
                         @endif
                         @if($order->label_printed_at)
                             <div>
                                 <p class="text-gray-600 font-medium">Label Printed</p>
-                                <p class="text-gray-900">{{ $order->label_printed_at->format('M d, Y h:i A') }}</p>
+                                <p class="text-gray-900">{{ $order->label_printed_at->ist()->format('M d, Y h:i A') }}</p>
                             </div>
                         @endif
                     </div>
@@ -130,13 +130,13 @@
                                     @if($order->shipment_created_at)
                                         <div>
                                             <p class="text-gray-600 font-medium">Shipment Created Date</p>
-                                            <p class="text-gray-900">{{ $order->shipment_created_at->format('M d, Y h:i A') }}</p>
+                                            <p class="text-gray-900">{{ $order->shipment_created_at->ist()->format('M d, Y h:i A') }}</p>
                                         </div>
                                     @endif
                                     @if($order->label_printed_at)
                                         <div>
                                             <p class="text-gray-600 font-medium">Label Print Date</p>
-                                            <p class="text-gray-900">{{ $order->label_printed_at->format('M d, Y h:i A') }}</p>
+                                            <p class="text-gray-900">{{ $order->label_printed_at->ist()->format('M d, Y h:i A') }}</p>
                                         </div>
                                     @endif
                                 </div>
@@ -194,7 +194,7 @@
                                 <p><span class="font-medium">Name:</span> {{ $order->user->name }}</p>
                                 <p><span class="font-medium">Email:</span> {{ $order->user->email }}</p>
                                 <p><span class="font-medium">Member Since:</span>
-                                    {{ $order->user->created_at->format('M Y') }}</p>
+                                    {{ $order->user->created_at->ist()->format('M Y') }}</p>
                             </div>
                         </div>
 

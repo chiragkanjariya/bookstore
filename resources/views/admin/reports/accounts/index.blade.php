@@ -187,7 +187,7 @@
                                 <div class="space-y-1">
                                     <div><strong>Order #:</strong> {{ $order->order_number }}</div>
                                     <div><strong>Invoice #:</strong> IPDC-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</div>
-                                    <div><strong>Date:</strong> {{ $order->created_at->format('M d, Y') }}</div>
+                                    <div><strong>Date:</strong> {{ $order->created_at->ist()->format('M d, Y') }}</div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

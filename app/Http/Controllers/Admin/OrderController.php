@@ -37,12 +37,10 @@ class OrderController extends Controller
         }
 
         // Date range filter
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
+        $query->createdBetweenDisplayDates(
+            $request->input('date_from'),
+            $request->input('date_to')
+        );
 
         // Filter by shipping partner status (the only status shown in the listing)
         $shippingPartnerStatus = $request->input('shipping_partner_status', Order::SHIPPING_PARTNER_PENDING);
@@ -114,7 +112,7 @@ class OrderController extends Controller
 
         Order::markLabelsPrinted($request->order_ids);
 
-        return $pdf->download('shipping_labels_' . date('Y-m-d_H-i-s') . '.pdf');
+        return $pdf->download('shipping_labels_' . now()->ist()->format('Y-m-d_H-i-s') . '.pdf');
     }
 
     /**
@@ -220,12 +218,10 @@ class OrderController extends Controller
             });
         }
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
+        $query->createdBetweenDisplayDates(
+            $request->input('date_from'),
+            $request->input('date_to')
+        );
 
         // Apply shipping status filter
         $shippingPartnerStatus = $request->input('shipping_partner_status', Order::SHIPPING_PARTNER_PENDING);
@@ -235,7 +231,7 @@ class OrderController extends Controller
 
         $orders = $query->get();
 
-        $filename = 'orders_' . date('Y-m-d_H-i-s') . '.csv';
+        $filename = 'orders_' . now()->ist()->format('Y-m-d_H-i-s') . '.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -277,9 +273,9 @@ class OrderController extends Controller
                     '₹' . number_format($order->total_amount, 2),
                     $order->tracking_number ?? $order->courier_awb_number ?? 'N/A',
                     $order->courier_provider ? ucfirst(str_replace('_', ' ', $order->courier_provider)) : 'N/A',
-                    $order->created_at->format('Y-m-d H:i:s'),
-                    $order->shipment_created_at ? $order->shipment_created_at->format('Y-m-d H:i:s') : '',
-                    $order->label_printed_at ? $order->label_printed_at->format('Y-m-d H:i:s') : '',
+                    $order->created_at->ist()->format('Y-m-d H:i:s'),
+                    $order->shipment_created_at ? $order->shipment_created_at->ist()->format('Y-m-d H:i:s') : '',
+                    $order->label_printed_at ? $order->label_printed_at->ist()->format('Y-m-d H:i:s') : '',
                     $order->orderItems->count()
                 ]);
             }

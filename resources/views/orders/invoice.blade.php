@@ -126,7 +126,7 @@
         </div>
         <div>
             <h3>Invoice Details:</h3>
-            <strong>Order Date:</strong> {{ $order->created_at->format('M d, Y') }}<br>
+            <strong>Order Date:</strong> {{ $order->created_at->ist()->format('M d, Y') }}<br>
             <strong>Payment Method:</strong> {{ ucfirst($order->payment_method) }}<br>
             <strong>Payment Status:</strong> {{ ucfirst($order->payment_status) }}<br>
             @if($order->razorpay_payment_id)

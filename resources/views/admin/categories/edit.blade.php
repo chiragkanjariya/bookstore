@@ -144,11 +144,11 @@
                             </div>
                             <div>
                                 <span class="text-gray-500">Created:</span>
-                                <span class="font-medium text-gray-900">{{ $category->created_at->format('M d, Y') }}</span>
+                                <span class="font-medium text-gray-900">{{ $category->created_at->ist()->format('M d, Y') }}</span>
                             </div>
                             <div>
                                 <span class="text-gray-500">Last Updated:</span>
-                                <span class="font-medium text-gray-900">{{ $category->updated_at->format('M d, Y') }}</span>
+                                <span class="font-medium text-gray-900">{{ $category->updated_at->ist()->format('M d, Y') }}</span>
                             </div>
                         </div>
                     </div>

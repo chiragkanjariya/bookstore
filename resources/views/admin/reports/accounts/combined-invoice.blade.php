@@ -180,8 +180,8 @@
                                         <td class="strong small text-end small w-50 gry-color">Invoice No : &nbsp;&nbsp;IPDC-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
                                     </tr>
                                     <tr>
-                                        <td class="strong small gry-color">Order Date : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $order->created_at->format('d-M-Y') }}</td>
-                                        <td class="strong small text-end small w-50 gry-color">Payment Date : &nbsp;&nbsp;{{ $order->created_at->format('d-M-Y') }}</td>
+                                        <td class="strong small gry-color">Order Date : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $order->created_at->ist()->format('d-M-Y') }}</td>
+                                        <td class="strong small text-end small w-50 gry-color">Payment Date : &nbsp;&nbsp;{{ $order->created_at->ist()->format('d-M-Y') }}</td>
                                     </tr>
                                     <tr>
                                         <td class="strong small gry-color"></td>

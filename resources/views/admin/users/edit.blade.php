@@ -210,12 +210,12 @@
                             </div>
                             <div>
                                 <span class="text-gray-500">Joined:</span>
-                                <span class="font-medium text-gray-900">{{ $user->created_at->format('M d, Y') }}</span>
+                                <span class="font-medium text-gray-900">{{ $user->created_at->ist()->format('M d, Y') }}</span>
                             </div>
                             <div>
                                 <span class="text-gray-500">Last Login:</span>
                                 <span class="font-medium text-gray-900">
-                                    {{ $user->last_login_at ? $user->last_login_at->format('M d, Y') : 'Never' }}
+                                    {{ $user->last_login_at ? $user->last_login_at->ist()->format('M d, Y') : 'Never' }}
                                 </span>
                             </div>
                         </div>

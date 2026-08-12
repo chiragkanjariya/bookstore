@@ -184,7 +184,7 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-sm font-medium text-gray-500">Added:</span>
-                        <span class="text-sm text-gray-900">{{ $book->created_at->format('F j, Y') }}</span>
+                        <span class="text-sm text-gray-900">{{ $book->created_at->ist()->format('F j, Y') }}</span>
                     </div>
                     @if($book->height || $book->width || $book->depth || $book->weight)
                     <div class="border-t pt-3 mt-3">

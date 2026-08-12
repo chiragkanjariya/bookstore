@@ -69,6 +69,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Display Timezone
+    |--------------------------------------------------------------------------
+    |
+    | Timestamps are stored in UTC (see above) but every date and time shown
+    | to a user — pages, PDFs, emails, CSV exports — is rendered in this
+    | timezone via the ->ist() Carbon macro. Filters on date ranges are
+    | translated from this timezone back to UTC before they hit the database.
+    |
+    */
+
+    'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Asia/Kolkata'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

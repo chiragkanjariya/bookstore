@@ -28,7 +28,7 @@
                             <div class="flex flex-col md:flex-row md:items-center md:space-x-6">
                                 <div>
                                     <h3 class="text-lg font-semibold text-gray-900">Order #{{ $order->order_number }}</h3>
-                                    <p class="text-sm text-gray-600">Placed on {{ $order->created_at->format('M d, Y') }}</p>
+                                    <p class="text-sm text-gray-600">Placed on {{ $order->created_at->ist()->format('M d, Y') }}</p>
                                 </div>
                                 
                                 <div class="mt-2 md:mt-0 flex space-x-4">

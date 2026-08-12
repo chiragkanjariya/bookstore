@@ -226,8 +226,8 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $record->created_at->format('M d, Y') }}
-                                <div class="text-xs text-gray-400">{{ $record->created_at->format('h:i A') }}</div>
+                                {{ $record->created_at->ist()->format('M d, Y') }}
+                                <div class="text-xs text-gray-400">{{ $record->created_at->ist()->format('h:i A') }}</div>
                             </td>
                         </tr>
                     @empty

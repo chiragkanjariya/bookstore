@@ -35,6 +35,11 @@ class DashboardController extends Controller
         $user = Auth::user();
         
         // Dynamic admin stats
+        // "This month" means the current month in the display timezone, so the
+        // window is built in IST and then compared against the UTC column.
+        $monthStart = now()->ist()->startOfMonth()->utc();
+        $monthEnd = now()->ist()->endOfMonth()->utc();
+
         $stats = [
             'total_users' => User::where('role', 'user')->count(),
             'total_orders' => Order::count(),
@@ -46,11 +51,9 @@ class DashboardController extends Controller
             'delivered_orders' => Order::where('status', 'delivered')->count(),
             'cancelled_orders' => Order::where('status', 'cancelled')->count(),
             'monthly_revenue' => Order::where('payment_status', 'paid')
-                                     ->whereMonth('created_at', now()->month)
-                                     ->whereYear('created_at', now()->year)
+                                     ->whereBetween('created_at', [$monthStart, $monthEnd])
                                      ->sum('total_amount'),
-            'monthly_orders' => Order::whereMonth('created_at', now()->month)
-                                    ->whereYear('created_at', now()->year)
+            'monthly_orders' => Order::whereBetween('created_at', [$monthStart, $monthEnd])
                                     ->count(),
         ];
         

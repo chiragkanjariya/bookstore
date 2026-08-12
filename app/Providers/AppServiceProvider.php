@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Models\Setting;
 use App\Models\ShreeMarutiSeries;
 use App\Support\AdminMenu;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
@@ -39,6 +41,22 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->registerMenuPermissions();
+        $this->registerDisplayTimezone();
+    }
+
+    /**
+     * Timestamps are stored in UTC; ->ist() returns a copy in the display
+     * timezone so pages, PDFs, emails and exports all read as local time.
+     */
+    protected function registerDisplayTimezone(): void
+    {
+        $toDisplayTimezone = function () {
+            /** @var \Carbon\CarbonInterface $this */
+            return $this->copy()->setTimezone(config('app.display_timezone'));
+        };
+
+        Carbon::macro('ist', $toDisplayTimezone);
+        CarbonImmutable::macro('ist', $toDisplayTimezone);
     }
 
     /**

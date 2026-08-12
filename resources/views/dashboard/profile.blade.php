@@ -143,12 +143,12 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Member Since</label>
-                                    <p class="mt-1 text-sm text-gray-900">{{ $user->created_at->format('F j, Y') }}</p>
+                                    <p class="mt-1 text-sm text-gray-900">{{ $user->created_at->ist()->format('F j, Y') }}</p>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Last Login</label>
                                     <p class="mt-1 text-sm text-gray-900">
-                                        {{ $user->last_login_at ? $user->last_login_at->format('F j, Y \a\t g:i A') : 'Never' }}
+                                        {{ $user->last_login_at ? $user->last_login_at->ist()->format('F j, Y \a\t g:i A') : 'Never' }}
                                     </p>
                                 </div>
                                 <div>

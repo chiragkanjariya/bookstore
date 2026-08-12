@@ -258,10 +258,10 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $recentUser->created_at->format('M d, Y') }}
+                                        {{ $recentUser->created_at->ist()->format('M d, Y') }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $recentUser->last_login_at ? $recentUser->last_login_at->format('M d, Y H:i') : 'Never' }}
+                                        {{ $recentUser->last_login_at ? $recentUser->last_login_at->ist()->format('M d, Y H:i') : 'Never' }}
                                     </td>
                                 </tr>
                                 @endforeach
@@ -322,7 +322,7 @@
                                         ₹{{ number_format($order->total_amount, 2) }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $order->created_at->format('M d, Y') }}
+                                        {{ $order->created_at->ist()->format('M d, Y') }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         @menu('orders')

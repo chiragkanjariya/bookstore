@@ -139,8 +139,8 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $courier->created_at->format('M d, Y') }}
-                                <div class="text-xs text-gray-400">{{ $courier->created_at->format('h:i A') }}</div>
+                                {{ $courier->created_at->ist()->format('M d, Y') }}
+                                <div class="text-xs text-gray-400">{{ $courier->created_at->ist()->format('h:i A') }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex items-center space-x-3">

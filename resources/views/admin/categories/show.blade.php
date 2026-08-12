@@ -90,11 +90,11 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Created</label>
-                                    <p class="mt-1 text-gray-900">{{ $category->created_at->format('M d, Y') }}</p>
+                                    <p class="mt-1 text-gray-900">{{ $category->created_at->ist()->format('M d, Y') }}</p>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Last Updated</label>
-                                    <p class="mt-1 text-gray-900">{{ $category->updated_at->format('M d, Y') }}</p>
+                                    <p class="mt-1 text-gray-900">{{ $category->updated_at->ist()->format('M d, Y') }}</p>
                                 </div>
                             </div>
                         </div>

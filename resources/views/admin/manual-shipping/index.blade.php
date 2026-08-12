@@ -153,7 +153,7 @@
                                 <td class="px-6 py-4">
                                     <div>
                                         <div class="text-sm font-medium text-gray-900">#{{ $order->order_number }}</div>
-                                        <div class="text-sm text-gray-500">{{ $order->created_at->format('M d, Y') }}</div>
+                                        <div class="text-sm text-gray-500">{{ $order->created_at->ist()->format('M d, Y') }}</div>
                                         <div class="text-xs text-gray-500">{{ $order->orderItems->count() }} item(s)</div>
                                     </div>
                                 </td>
@@ -197,12 +197,12 @@
                                     </span>
                                     @if($order->shipment_created_at)
                                         <div class="text-xs text-gray-500 mt-1">
-                                            Shipment: {{ $order->shipment_created_at->format('M d, Y h:i A') }}
+                                            Shipment: {{ $order->shipment_created_at->ist()->format('M d, Y h:i A') }}
                                         </div>
                                     @endif
                                     @if($order->label_printed_at)
                                         <div class="text-xs text-gray-500">
-                                            Label: {{ $order->label_printed_at->format('M d, Y h:i A') }}
+                                            Label: {{ $order->label_printed_at->ist()->format('M d, Y h:i A') }}
                                         </div>
                                     @endif
                                 </td>
