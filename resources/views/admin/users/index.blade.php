@@ -180,9 +180,17 @@
                                     {{ $user->getRoleName() }}
                                 </span>
                                 @if($user->isAdmin())
-                                    <div class="mt-1 text-xs {{ $user->adminRole ? 'text-gray-500' : 'text-yellow-600' }}">
-                                        {{ $user->getAdminRoleName() }}
-                                    </div>
+                                    @if($user->adminRoles->isEmpty())
+                                        <div class="mt-1 text-xs text-yellow-600">No role assigned</div>
+                                    @else
+                                        <div class="mt-1 flex flex-wrap gap-1">
+                                            @foreach($user->adminRoles as $assignedRole)
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {{ $assignedRole->is_super_admin ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-700' }}">
+                                                    {{ $assignedRole->name }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">

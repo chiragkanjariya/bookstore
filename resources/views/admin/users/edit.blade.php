@@ -138,33 +138,13 @@
                         @enderror
                     </div>
 
-                    <!-- Admin Role (menu permissions) -->
+                    <!-- Admin Roles (menu permissions) -->
                     <div id="admin-role-wrapper" class="{{ old('role', $user->role) === 'admin' ? '' : 'hidden' }}">
-                        <label for="admin_role_id" class="block text-sm font-medium text-gray-700 mb-1">
-                            Admin Role <span class="text-red-500">*</span>
-                        </label>
-                        <select name="admin_role_id" id="admin_role_id"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('admin_role_id') border-red-300 @enderror"
-                                {{ $user->id === auth()->id() ? 'disabled' : '' }}>
-                            <option value="">Select an admin role</option>
-                            @foreach($adminRoles as $adminRole)
-                                <option value="{{ $adminRole->id }}"
-                                    {{ (string) old('admin_role_id', $user->admin_role_id) === (string) $adminRole->id ? 'selected' : '' }}>
-                                    {{ $adminRole->name }}{{ $adminRole->is_super_admin ? ' (full access)' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @if($user->id === auth()->id())
-                            <p class="mt-1 text-xs text-yellow-600">You cannot change your own admin role</p>
-                        @else
-                            <p class="mt-1 text-xs text-gray-500">
-                                Decides which admin menus this user can open.
-                                <a href="{{ route('admin.roles.index') }}" class="text-[#00BDE0] hover:underline">Manage roles</a>
-                            </p>
-                        @endif
-                        @error('admin_role_id')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        @include('admin.users._admin-roles', [
+                            'adminRoles' => $adminRoles,
+                            'selectedRoleIds' => collect(old('admin_role_ids', $user->adminRoles->pluck('id')->all()))->map(fn ($id) => (int) $id),
+                            'disabled' => $user->id === auth()->id(),
+                        ])
                     </div>
 
                     <!-- Status -->
@@ -198,7 +178,7 @@
                             </div>
                             @if($user->isAdmin())
                                 <div>
-                                    <span class="text-gray-500">Admin Role:</span>
+                                    <span class="text-gray-500">Admin Roles:</span>
                                     <span class="font-medium text-gray-900">{{ $user->getAdminRoleName() }}</span>
                                 </div>
                             @endif

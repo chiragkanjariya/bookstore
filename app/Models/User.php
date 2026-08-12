@@ -27,7 +27,6 @@ class User extends Authenticatable
         'district_id',
         'taluka_id',
         'role',
-        'admin_role_id',
     ];
 
     /**
@@ -79,11 +78,13 @@ class User extends Authenticatable
     }
 
     /**
-     * The admin role that grants this user their menu permissions.
+     * The admin roles that grant this user their menu permissions.
+     *
+     * A user may hold several roles; access is the union of all of them.
      */
-    public function adminRole()
+    public function adminRoles()
     {
-        return $this->belongsTo(AdminRole::class);
+        return $this->belongsToMany(AdminRole::class, 'admin_role_user')->withTimestamps();
     }
 
     /**
@@ -91,7 +92,7 @@ class User extends Authenticatable
      */
     public function isSuperAdmin(): bool
     {
-        return $this->isAdmin() && (bool) $this->adminRole?->is_super_admin;
+        return $this->isAdmin() && $this->adminRoles->contains('is_super_admin', true);
     }
 
     /**
@@ -108,11 +109,11 @@ class User extends Authenticatable
             return true;
         }
 
-        return (bool) $this->adminRole?->hasPermission($key);
+        return $this->adminRoles->contains(fn (AdminRole $role) => $role->hasPermission($key));
     }
 
     /**
-     * All admin menu keys this user may access.
+     * All admin menu keys this user may access, combined across every role.
      *
      * @return array<int, string>
      */
@@ -122,11 +123,13 @@ class User extends Authenticatable
             return [];
         }
 
-        return $this->adminRole?->permissionKeys() ?? [];
+        $keys = $this->adminRoles->flatMap->permissionKeys()->unique()->all();
+
+        return \App\Support\AdminMenu::filterKeys($keys);
     }
 
     /**
-     * Label shown for the user's admin role.
+     * Label shown for the user's admin roles.
      */
     public function getAdminRoleName(): string
     {
@@ -134,7 +137,9 @@ class User extends Authenticatable
             return '—';
         }
 
-        return $this->adminRole?->name ?? 'No role assigned';
+        $names = $this->adminRoles->pluck('name');
+
+        return $names->isEmpty() ? 'No role assigned' : $names->implode(', ');
     }
 
     /**

@@ -131,27 +131,13 @@
                         @enderror
                     </div>
 
-                    <!-- Admin Role (menu permissions) -->
+                    <!-- Admin Roles (menu permissions) -->
                     <div id="admin-role-wrapper" class="{{ old('role') === 'admin' ? '' : 'hidden' }}">
-                        <label for="admin_role_id" class="block text-sm font-medium text-gray-700 mb-1">
-                            Admin Role <span class="text-red-500">*</span>
-                        </label>
-                        <select name="admin_role_id" id="admin_role_id"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('admin_role_id') border-red-300 @enderror">
-                            <option value="">Select an admin role</option>
-                            @foreach($adminRoles as $adminRole)
-                                <option value="{{ $adminRole->id }}" {{ (string) old('admin_role_id') === (string) $adminRole->id ? 'selected' : '' }}>
-                                    {{ $adminRole->name }}{{ $adminRole->is_super_admin ? ' (full access)' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <p class="mt-1 text-xs text-gray-500">
-                            Decides which admin menus this user can open.
-                            <a href="{{ route('admin.roles.index') }}" class="text-[#00BDE0] hover:underline">Manage roles</a>
-                        </p>
-                        @error('admin_role_id')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        @include('admin.users._admin-roles', [
+                            'adminRoles' => $adminRoles,
+                            'selectedRoleIds' => collect(old('admin_role_ids', []))->map(fn ($id) => (int) $id),
+                            'disabled' => false,
+                        ])
                     </div>
 
                     <!-- Status -->

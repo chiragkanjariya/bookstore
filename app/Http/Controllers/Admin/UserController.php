@@ -17,7 +17,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::query()->with('adminRole');
+        $query = User::query()->with('adminRoles');
 
         // Search functionality
         if ($request->filled('search')) {
@@ -34,7 +34,7 @@ class UserController extends Controller
 
         // Filter by admin role
         if ($request->filled('admin_role')) {
-            $query->where('admin_role_id', $request->admin_role);
+            $query->whereHas('adminRoles', fn ($q) => $q->where('admin_roles.id', $request->admin_role));
         }
 
         // Filter by status (we'll use email_verified_at as active/inactive indicator)
@@ -74,18 +74,19 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::min(6)],
             'role' => ['required', Rule::in(['user', 'admin'])],
-            'admin_role_id' => $this->adminRoleRules($request),
+            'admin_role_ids' => $this->adminRoleRules($request),
+            'admin_role_ids.*' => [Rule::exists('admin_roles', 'id')],
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],
             'is_active' => ['boolean'],
-        ], [], ['admin_role_id' => 'admin role']);
+        ], [], ['admin_role_ids' => 'admin roles']);
 
         $data = $request->only(['name', 'email', 'role', 'phone', 'address']);
-        $data['admin_role_id'] = $request->role === 'admin' ? $request->admin_role_id : null;
         $data['password'] = Hash::make($request->password);
         $data['email_verified_at'] = $request->boolean('is_active', true) ? now() : null;
 
-        User::create($data);
+        $user = User::create($data);
+        $user->adminRoles()->sync($this->grantableRoleIds($request));
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User created successfully!');
@@ -120,18 +121,20 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', Password::min(6)],
             'role' => ['required', Rule::in(['user', 'admin'])],
-            'admin_role_id' => $this->adminRoleRules($request, $user),
+            'admin_role_ids' => $this->adminRoleRules($request),
+            'admin_role_ids.*' => [Rule::exists('admin_roles', 'id')],
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],
             'is_active' => ['boolean'],
-        ], [], ['admin_role_id' => 'admin role']);
+        ], [], ['admin_role_ids' => 'admin roles']);
 
         $data = $request->only(['name', 'email', 'role', 'phone', 'address']);
-        $data['admin_role_id'] = $request->role === 'admin' ? $request->admin_role_id : null;
 
         // Never let an admin lock themselves out by lowering their own access.
-        if ($user->id === auth()->id()) {
-            unset($data['role'], $data['admin_role_id']);
+        $editingSelf = $user->id === auth()->id();
+
+        if ($editingSelf) {
+            unset($data['role']);
         }
 
         // Update password if provided
@@ -143,6 +146,16 @@ class UserController extends Controller
         $data['email_verified_at'] = $request->boolean('is_active') ? ($user->email_verified_at ?? now()) : null;
 
         $user->update($data);
+
+        if (!$editingSelf) {
+            // Roles the editor cannot grant stay attached rather than being dropped.
+            $locked = $user->adminRoles->pluck('id')
+                ->diff($this->assignableAdminRoles($user)->pluck('id'));
+
+            $user->adminRoles()->sync(
+                $locked->merge($this->grantableRoleIds($request, $user))->unique()->all()
+            );
+        }
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully!');
@@ -197,8 +210,8 @@ class UserController extends Controller
     /**
      * Admin roles the current admin may hand out.
      *
-     * Only a super admin can grant unrestricted access; the role already on the
-     * user stays selectable so an edit never silently drops it.
+     * Only a super admin can grant unrestricted access; roles already on the
+     * user stay selectable so an edit never silently drops them.
      */
     protected function assignableAdminRoles(?User $user = null)
     {
@@ -208,25 +221,45 @@ class UserController extends Controller
             return $roles;
         }
 
+        $held = $user?->adminRoles->pluck('id') ?? collect();
+
         return $roles->filter(
-            fn (AdminRole $role) => !$role->is_super_admin || $role->id === $user?->admin_role_id
+            fn (AdminRole $role) => !$role->is_super_admin || $held->contains($role->id)
         )->values();
     }
 
     /**
-     * Validation rules for the admin role select.
+     * Validation rules for the admin role checkboxes.
      *
      * @return array<int, mixed>
      */
-    protected function adminRoleRules(Request $request, ?User $user = null): array
+    protected function adminRoleRules(Request $request): array
     {
         if ($request->input('role') !== 'admin') {
-            return ['nullable'];
+            return ['nullable', 'array'];
         }
 
-        $allowed = $this->assignableAdminRoles($user)->pluck('id')->all();
+        // An admin with no role can only reach the dashboard, so require one.
+        return ['required', 'array', 'min:1'];
+    }
 
-        return ['required', Rule::in($allowed)];
+    /**
+     * Role ids from the request, minus any the current admin cannot grant.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    protected function grantableRoleIds(Request $request, ?User $user = null)
+    {
+        if ($request->input('role') !== 'admin') {
+            return collect();
+        }
+
+        $allowed = $this->assignableAdminRoles($user)->pluck('id');
+
+        return collect($request->input('admin_role_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->intersect($allowed)
+            ->values();
     }
 
     /**

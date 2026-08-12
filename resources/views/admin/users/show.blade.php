@@ -108,9 +108,15 @@
                                     {{ $user->getRoleName() }}
                                 </span>
                                 @if($user->isAdmin())
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-                                        {{ $user->getAdminRoleName() }}
-                                    </span>
+                                    @forelse($user->adminRoles as $assignedRole)
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                            {{ $assignedRole->name }}
+                                        </span>
+                                    @empty
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                            No role assigned
+                                        </span>
+                                    @endforelse
                                 @endif
                             </div>
                         </div>
@@ -189,12 +195,15 @@
                                 </p>
                                 @if($user->isSuperAdmin())
                                     <p class="text-sm text-gray-700">Full access to every admin menu.</p>
-                                @elseif(!$user->adminRole)
+                                @elseif($user->adminRoles->isEmpty())
                                     <p class="text-sm text-gray-700">
                                         No admin role assigned, so only the Dashboard is available.
                                     </p>
                                 @else
-                                    <p class="text-sm text-gray-700">Dashboard plus the menus below:</p>
+                                    <p class="text-sm text-gray-700">
+                                        Dashboard plus the menus below, combined across
+                                        {{ $user->adminRoles->count() }} {{ Str::plural('role', $user->adminRoles->count()) }}:
+                                    </p>
                                     <div class="flex flex-wrap gap-1">
                                         @forelse($user->accessibleMenuKeys() as $key)
                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white border border-gray-200 text-gray-700">

@@ -27,7 +27,7 @@ class AdminRole extends Model
      */
     public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->belongsToMany(User::class, 'admin_role_user')->withTimestamps();
     }
 
     /**
