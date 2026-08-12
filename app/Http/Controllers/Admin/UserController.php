@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +17,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::query();
+        $query = User::query()->with('adminRole');
 
         // Search functionality
         if ($request->filled('search')) {
@@ -31,6 +32,11 @@ class UserController extends Controller
             $query->where('role', $request->role);
         }
 
+        // Filter by admin role
+        if ($request->filled('admin_role')) {
+            $query->where('admin_role_id', $request->admin_role);
+        }
+
         // Filter by status (we'll use email_verified_at as active/inactive indicator)
         if ($request->filled('status')) {
             if ($request->status === 'active') {
@@ -42,7 +48,10 @@ class UserController extends Controller
 
         $users = $query->latest()->paginate(15)->withQueryString();
 
-        return view('admin.users.index', compact('users'));
+        return view('admin.users.index', [
+            'users' => $users,
+            'adminRoles' => AdminRole::ordered()->get(),
+        ]);
     }
 
     /**
@@ -50,7 +59,9 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('admin.users.create');
+        return view('admin.users.create', [
+            'adminRoles' => $this->assignableAdminRoles(),
+        ]);
     }
 
     /**
@@ -63,12 +74,14 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::min(6)],
             'role' => ['required', Rule::in(['user', 'admin'])],
+            'admin_role_id' => $this->adminRoleRules($request),
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],
             'is_active' => ['boolean'],
-        ]);
+        ], [], ['admin_role_id' => 'admin role']);
 
         $data = $request->only(['name', 'email', 'role', 'phone', 'address']);
+        $data['admin_role_id'] = $request->role === 'admin' ? $request->admin_role_id : null;
         $data['password'] = Hash::make($request->password);
         $data['email_verified_at'] = $request->boolean('is_active', true) ? now() : null;
 
@@ -91,7 +104,10 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view('admin.users.edit', compact('user'));
+        return view('admin.users.edit', [
+            'user' => $user,
+            'adminRoles' => $this->assignableAdminRoles($user),
+        ]);
     }
 
     /**
@@ -104,13 +120,20 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', Password::min(6)],
             'role' => ['required', Rule::in(['user', 'admin'])],
+            'admin_role_id' => $this->adminRoleRules($request, $user),
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],
             'is_active' => ['boolean'],
-        ]);
+        ], [], ['admin_role_id' => 'admin role']);
 
         $data = $request->only(['name', 'email', 'role', 'phone', 'address']);
-        
+        $data['admin_role_id'] = $request->role === 'admin' ? $request->admin_role_id : null;
+
+        // Never let an admin lock themselves out by lowering their own access.
+        if ($user->id === auth()->id()) {
+            unset($data['role'], $data['admin_role_id']);
+        }
+
         // Update password if provided
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
@@ -169,6 +192,41 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('success', "User {$status} successfully!");
+    }
+
+    /**
+     * Admin roles the current admin may hand out.
+     *
+     * Only a super admin can grant unrestricted access; the role already on the
+     * user stays selectable so an edit never silently drops it.
+     */
+    protected function assignableAdminRoles(?User $user = null)
+    {
+        $roles = AdminRole::ordered()->get();
+
+        if (auth()->user()->isSuperAdmin()) {
+            return $roles;
+        }
+
+        return $roles->filter(
+            fn (AdminRole $role) => !$role->is_super_admin || $role->id === $user?->admin_role_id
+        )->values();
+    }
+
+    /**
+     * Validation rules for the admin role select.
+     *
+     * @return array<int, mixed>
+     */
+    protected function adminRoleRules(Request $request, ?User $user = null): array
+    {
+        if ($request->input('role') !== 'admin') {
+            return ['nullable'];
+        }
+
+        $allowed = $this->assignableAdminRoles($user)->pluck('id')->all();
+
+        return ['required', Rule::in($allowed)];
     }
 
     /**

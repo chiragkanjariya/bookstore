@@ -64,45 +64,60 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/', [DashboardController::class, 'adminDashboard'])->name('dashboard');
 
     // Category Management Routes
-    Route::resource('categories', CategoryController::class);
-    Route::patch('categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
+    Route::middleware('menu:categories')->group(function () {
+        Route::resource('categories', CategoryController::class);
+        Route::patch('categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
+    });
 
     // Book Management Routes
-    Route::resource('books', BookController::class);
-    Route::patch('books/{book}/status', [BookController::class, 'updateStatus'])->name('books.update-status');
-    Route::patch('books/{book}/stock', [BookController::class, 'updateStock'])->name('books.update-stock');
-    Route::patch('books/bulk-status', [BookController::class, 'bulkUpdateStatus'])->name('books.bulk-status');
+    Route::middleware('menu:books')->group(function () {
+        Route::resource('books', BookController::class);
+        Route::patch('books/{book}/status', [BookController::class, 'updateStatus'])->name('books.update-status');
+        Route::patch('books/{book}/stock', [BookController::class, 'updateStock'])->name('books.update-stock');
+        Route::patch('books/bulk-status', [BookController::class, 'bulkUpdateStatus'])->name('books.bulk-status');
 
-    // Book Image Management Routes
-    Route::post('books/{book}/images', [BookController::class, 'uploadImages'])->name('books.upload-images');
-    Route::delete('books/{book}/images/{image}', [BookController::class, 'deleteImage'])->name('books.delete-image');
-    Route::patch('books/{book}/images/{image}/primary', [BookController::class, 'setPrimaryImage'])->name('books.set-primary-image');
-    Route::patch('books/{book}/images/order', [BookController::class, 'updateImageOrder'])->name('books.update-image-order');
+        // Book Image Management Routes
+        Route::post('books/{book}/images', [BookController::class, 'uploadImages'])->name('books.upload-images');
+        Route::delete('books/{book}/images/{image}', [BookController::class, 'deleteImage'])->name('books.delete-image');
+        Route::patch('books/{book}/images/{image}/primary', [BookController::class, 'setPrimaryImage'])->name('books.set-primary-image');
+        Route::patch('books/{book}/images/order', [BookController::class, 'updateImageOrder'])->name('books.update-image-order');
+    });
 
     // User Management Routes
-    Route::resource('users', UserController::class);
-    Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
-    Route::patch('users/bulk-status', [UserController::class, 'bulkUpdateStatus'])->name('users.bulk-status');
+    Route::middleware('menu:users')->group(function () {
+        Route::resource('users', UserController::class);
+        Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::patch('users/bulk-status', [UserController::class, 'bulkUpdateStatus'])->name('users.bulk-status');
+    });
+
+    // Admin Role & Permission Routes
+    Route::middleware('menu:roles')->group(function () {
+        Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class)->except(['show']);
+    });
 
     // Order Management Routes (Maruti/Automatic orders only)
-    Route::get('orders', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
-    Route::get('orders/{order}', [\App\Http\Controllers\Admin\OrderController::class, 'show'])->name('orders.show');
-    Route::patch('orders/{order}/payment-status', [\App\Http\Controllers\Admin\OrderController::class, 'updatePaymentStatus'])->name('orders.update-payment-status');
-    Route::post('orders/bulk-print-label', [\App\Http\Controllers\Admin\OrderController::class, 'bulkPrintLabel'])->name('orders.bulk-print-label');
-    Route::post('orders/bulk-ship-now', [\App\Http\Controllers\Admin\OrderController::class, 'bulkShipNow'])->name('orders.bulk-ship-now');
-    Route::get('orders/export', [\App\Http\Controllers\Admin\OrderController::class, 'export'])->name('orders.export');
-    Route::post('orders/{order}/create-shiprocket', [\App\Http\Controllers\Admin\OrderController::class, 'createShiprocketOrder'])->name('orders.create-shiprocket');
-    Route::get('orders/track-shipment/{shiprocketOrderId}', [\App\Http\Controllers\Admin\OrderController::class, 'trackShipment'])->name('orders.track-shipment');
-    Route::post('orders/{order}/send-confirmation', [\App\Http\Controllers\Admin\OrderController::class, 'sendOrderConfirmation'])->name('orders.send-confirmation');
-    Route::get('orders/{order}/invoice', [\App\Http\Controllers\Admin\OrderController::class, 'invoice'])->name('orders.invoice');
-    Route::post('orders/{order}/move-to-manual-shipping', [\App\Http\Controllers\Admin\OrderController::class, 'moveToManualShipping'])->name('orders.move-to-manual-shipping');
+    Route::middleware('menu:orders')->group(function () {
+        Route::get('orders', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/{order}', [\App\Http\Controllers\Admin\OrderController::class, 'show'])->name('orders.show');
+        Route::patch('orders/{order}/payment-status', [\App\Http\Controllers\Admin\OrderController::class, 'updatePaymentStatus'])->name('orders.update-payment-status');
+        Route::post('orders/bulk-print-label', [\App\Http\Controllers\Admin\OrderController::class, 'bulkPrintLabel'])->name('orders.bulk-print-label');
+        Route::post('orders/bulk-ship-now', [\App\Http\Controllers\Admin\OrderController::class, 'bulkShipNow'])->name('orders.bulk-ship-now');
+        Route::get('orders/export', [\App\Http\Controllers\Admin\OrderController::class, 'export'])->name('orders.export');
+        Route::post('orders/{order}/create-shiprocket', [\App\Http\Controllers\Admin\OrderController::class, 'createShiprocketOrder'])->name('orders.create-shiprocket');
+        Route::get('orders/track-shipment/{shiprocketOrderId}', [\App\Http\Controllers\Admin\OrderController::class, 'trackShipment'])->name('orders.track-shipment');
+        Route::post('orders/{order}/send-confirmation', [\App\Http\Controllers\Admin\OrderController::class, 'sendOrderConfirmation'])->name('orders.send-confirmation');
+        Route::get('orders/{order}/invoice', [\App\Http\Controllers\Admin\OrderController::class, 'invoice'])->name('orders.invoice');
+        Route::post('orders/{order}/move-to-manual-shipping', [\App\Http\Controllers\Admin\OrderController::class, 'moveToManualShipping'])->name('orders.move-to-manual-shipping');
+    });
 
     // Email Testing Routes (for debugging)
-    Route::get('test-email', [\App\Http\Controllers\Admin\TestEmailController::class, 'testEmail'])->name('test-email');
-    Route::get('test-order-email', [\App\Http\Controllers\Admin\TestEmailController::class, 'testOrderEmail'])->name('test-order-email');
+    Route::middleware('menu:settings')->group(function () {
+        Route::get('test-email', [\App\Http\Controllers\Admin\TestEmailController::class, 'testEmail'])->name('test-email');
+        Route::get('test-order-email', [\App\Http\Controllers\Admin\TestEmailController::class, 'testOrderEmail'])->name('test-order-email');
+    });
 
     // Account Report Routes
-    Route::prefix('reports')->name('reports.')->group(function () {
+    Route::middleware('menu:account-reports')->prefix('reports')->name('reports.')->group(function () {
         Route::get('accounts', [\App\Http\Controllers\Admin\AccountReportController::class, 'index'])->name('accounts.index');
         Route::get('accounts/export-csv', [\App\Http\Controllers\Admin\AccountReportController::class, 'exportCsv'])->name('accounts.export-csv');
         Route::post('accounts/combined-invoice', [\App\Http\Controllers\Admin\AccountReportController::class, 'generateCombinedInvoice'])->name('accounts.combined-invoice');
@@ -110,7 +125,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Manual Shipping Routes (Manual Orders — non-serviceable, non-bulk)
-    Route::prefix('manual-shipping')->name('manual-shipping.')->group(function () {
+    Route::middleware('menu:manual-orders')->prefix('manual-shipping')->name('manual-shipping.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ManualShippingController::class, 'index'])->name('index');
         Route::get('/{order}/print-label', [\App\Http\Controllers\Admin\ManualShippingController::class, 'printLabel'])->name('print-label');
         Route::post('/{order}/mark-shipped', [\App\Http\Controllers\Admin\ManualShippingController::class, 'markAsShipped'])->name('mark-shipped');
@@ -120,7 +135,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Bulk Orders Routes
-    Route::prefix('bulk-orders')->name('bulk-orders.')->group(function () {
+    Route::middleware('menu:bulk-orders')->prefix('bulk-orders')->name('bulk-orders.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\BulkOrderController::class, 'index'])->name('index');
         Route::post('/{order}/mark-shipped', [\App\Http\Controllers\Admin\BulkOrderController::class, 'markAsShipped'])->name('mark-shipped');
         Route::post('/bulk-mark-shipped', [\App\Http\Controllers\Admin\BulkOrderController::class, 'bulkMarkAsShipped'])->name('bulk-mark-shipped');
@@ -130,7 +145,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Application Log Routes
-    Route::prefix('logs')->name('logs.')->group(function () {
+    Route::middleware('menu:logs')->prefix('logs')->name('logs.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\LogViewerController::class, 'index'])->name('index');
         Route::get('/download', [\App\Http\Controllers\Admin\LogViewerController::class, 'download'])->name('download');
         Route::delete('/clear', [\App\Http\Controllers\Admin\LogViewerController::class, 'clear'])->name('clear');
@@ -138,17 +153,21 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Settings Routes
-    Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
-    Route::put('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+    Route::middleware('menu:settings')->group(function () {
+        Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+        Route::put('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+    });
 
     // Maruti Settings / Series Routes
-    Route::get('maruti-series', [MarutiSeriesController::class, 'index'])->name('maruti-series.index');
-    Route::post('maruti-series', [MarutiSeriesController::class, 'store'])->name('maruti-series.store');
-    Route::delete('maruti-series', [MarutiSeriesController::class, 'destroySeries'])->name('maruti-series.destroy');
-    Route::put('maruti-series/settings', [MarutiSeriesController::class, 'updateSettings'])->name('maruti-series.settings');
+    Route::middleware('menu:maruti-series')->group(function () {
+        Route::get('maruti-series', [MarutiSeriesController::class, 'index'])->name('maruti-series.index');
+        Route::post('maruti-series', [MarutiSeriesController::class, 'store'])->name('maruti-series.store');
+        Route::delete('maruti-series', [MarutiSeriesController::class, 'destroySeries'])->name('maruti-series.destroy');
+        Route::put('maruti-series/settings', [MarutiSeriesController::class, 'updateSettings'])->name('maruti-series.settings');
+    });
 
     // Manual Courier CRUD Routes
-    Route::prefix('manual-couriers')->name('manual-couriers.')->group(function () {
+    Route::middleware('menu:manual-couriers')->prefix('manual-couriers')->name('manual-couriers.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ManualCourierController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\Admin\ManualCourierController::class, 'store'])->name('store');
         Route::put('/{manual_courier}', [\App\Http\Controllers\Admin\ManualCourierController::class, 'update'])->name('update');

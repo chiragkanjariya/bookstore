@@ -27,6 +27,7 @@ class User extends Authenticatable
         'district_id',
         'taluka_id',
         'role',
+        'admin_role_id',
     ];
 
     /**
@@ -75,6 +76,65 @@ class User extends Authenticatable
     public function getRoleName(): string
     {
         return ucfirst($this->role);
+    }
+
+    /**
+     * The admin role that grants this user their menu permissions.
+     */
+    public function adminRole()
+    {
+        return $this->belongsTo(AdminRole::class);
+    }
+
+    /**
+     * Check if the user has unrestricted admin access.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->isAdmin() && (bool) $this->adminRole?->is_super_admin;
+    }
+
+    /**
+     * Check if the user may access a given admin menu.
+     */
+    public function canAccessMenu(string $key): bool
+    {
+        if (!$this->isAdmin()) {
+            return false;
+        }
+
+        // Every admin needs a landing page.
+        if ($key === \App\Support\AdminMenu::DASHBOARD) {
+            return true;
+        }
+
+        return (bool) $this->adminRole?->hasPermission($key);
+    }
+
+    /**
+     * All admin menu keys this user may access.
+     *
+     * @return array<int, string>
+     */
+    public function accessibleMenuKeys(): array
+    {
+        if (!$this->isAdmin()) {
+            return [];
+        }
+
+        return $this->adminRole?->permissionKeys() ?? [];
+    }
+
+    /**
+     * Label shown for the user's admin role.
+     */
+    public function getAdminRoleName(): string
+    {
+        if (!$this->isAdmin()) {
+            return '—';
+        }
+
+        return $this->adminRole?->name ?? 'No role assigned';
     }
 
     /**

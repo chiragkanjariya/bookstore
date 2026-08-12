@@ -53,6 +53,20 @@
                 </select>
             </div>
 
+            <!-- Admin Role Filter -->
+            <div>
+                <label for="admin_role" class="block text-sm font-medium text-gray-700 mb-1">Admin Role</label>
+                <select name="admin_role" id="admin_role"
+                        class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0]">
+                    <option value="">All Admin Roles</option>
+                    @foreach($adminRoles as $adminRole)
+                        <option value="{{ $adminRole->id }}" {{ (string) request('admin_role') === (string) $adminRole->id ? 'selected' : '' }}>
+                            {{ $adminRole->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
             <!-- Status Filter -->
             <div>
                 <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -165,6 +179,11 @@
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $user->isAdmin() ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
                                     {{ $user->getRoleName() }}
                                 </span>
+                                @if($user->isAdmin())
+                                    <div class="mt-1 text-xs {{ $user->adminRole ? 'text-gray-500' : 'text-yellow-600' }}">
+                                        {{ $user->getAdminRoleName() }}
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($user->email_verified_at)

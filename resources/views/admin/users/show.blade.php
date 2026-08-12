@@ -102,11 +102,16 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Role</label>
-                            <div class="mt-1">
+                            <label class="block text-sm font-medium text-gray-700">Role{{ $user->isAdmin() ? ' / Admin Role' : '' }}</label>
+                            <div class="mt-1 flex flex-wrap items-center gap-2">
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $user->isAdmin() ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
                                     {{ $user->getRoleName() }}
                                 </span>
+                                @if($user->isAdmin())
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                        {{ $user->getAdminRoleName() }}
+                                    </span>
+                                @endif
                             </div>
                         </div>
 
@@ -178,15 +183,28 @@
                     <h4 class="text-sm font-medium text-gray-900 mb-4">Role Permissions</h4>
                     <div class="bg-gray-50 rounded-lg p-4">
                         @if($user->isAdmin())
-                            <div class="space-y-2">
-                                <p class="font-medium text-red-800">Administrator Access:</p>
-                                <ul class="list-disc list-inside text-sm text-gray-700 space-y-1 ml-2">
-                                    <li>Full system access and control</li>
-                                    <li>Manage books, categories, and inventory</li>
-                                    <li>Manage user accounts and permissions</li>
-                                    <li>View analytics and system reports</li>
-                                    <li>System configuration and settings</li>
-                                </ul>
+                            <div class="space-y-3">
+                                <p class="font-medium text-red-800">
+                                    Administrator Access &mdash; {{ $user->getAdminRoleName() }}
+                                </p>
+                                @if($user->isSuperAdmin())
+                                    <p class="text-sm text-gray-700">Full access to every admin menu.</p>
+                                @elseif(!$user->adminRole)
+                                    <p class="text-sm text-gray-700">
+                                        No admin role assigned, so only the Dashboard is available.
+                                    </p>
+                                @else
+                                    <p class="text-sm text-gray-700">Dashboard plus the menus below:</p>
+                                    <div class="flex flex-wrap gap-1">
+                                        @forelse($user->accessibleMenuKeys() as $key)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white border border-gray-200 text-gray-700">
+                                                {{ \App\Support\AdminMenu::label($key) }}
+                                            </span>
+                                        @empty
+                                            <span class="text-sm text-gray-500">Dashboard only</span>
+                                        @endforelse
+                                    </div>
+                                @endif
                             </div>
                         @else
                             <div class="space-y-2">

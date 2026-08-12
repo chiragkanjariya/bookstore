@@ -4,7 +4,11 @@ namespace App\Providers;
 
 use App\Models\Setting;
 use App\Models\ShreeMarutiSeries;
+use App\Support\AdminMenu;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -31,7 +35,54 @@ class AppServiceProvider extends ServiceProvider
         // Surface the low Maruti series warning in the header of every admin page.
         View::composer('layouts.admin', function ($view) {
             $view->with('marutiSeriesWarning', $this->marutiSeriesWarning());
+            $view->with('adminMenuGroups', $this->adminMenuGroups());
         });
+
+        $this->registerMenuPermissions();
+    }
+
+    /**
+     * Menu level permission checks for policies and Blade templates.
+     */
+    protected function registerMenuPermissions(): void
+    {
+        Gate::define('menu', function ($user, string $key) {
+            return $user->canAccessMenu($key);
+        });
+
+        // @menu('orders') ... @endmenu
+        Blade::if('menu', function (string $key) {
+            return Auth::check() && Auth::user()->canAccessMenu($key);
+        });
+    }
+
+    /**
+     * Sidebar menu groups the signed in admin is allowed to see.
+     *
+     * @return array<int, array{label: string, items: array<int, array<string, mixed>>}>
+     */
+    protected function adminMenuGroups(): array
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return [];
+        }
+
+        $groups = [];
+
+        foreach (AdminMenu::groups() as $group) {
+            $items = array_values(array_filter(
+                $group['items'],
+                fn ($item) => $user->canAccessMenu($item['key'])
+            ));
+
+            if ($items) {
+                $groups[] = ['label' => $group['label'], 'items' => $items];
+            }
+        }
+
+        return $groups;
     }
 
     /**

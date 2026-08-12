@@ -131,6 +131,29 @@
                         @enderror
                     </div>
 
+                    <!-- Admin Role (menu permissions) -->
+                    <div id="admin-role-wrapper" class="{{ old('role') === 'admin' ? '' : 'hidden' }}">
+                        <label for="admin_role_id" class="block text-sm font-medium text-gray-700 mb-1">
+                            Admin Role <span class="text-red-500">*</span>
+                        </label>
+                        <select name="admin_role_id" id="admin_role_id"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('admin_role_id') border-red-300 @enderror">
+                            <option value="">Select an admin role</option>
+                            @foreach($adminRoles as $adminRole)
+                                <option value="{{ $adminRole->id }}" {{ (string) old('admin_role_id') === (string) $adminRole->id ? 'selected' : '' }}>
+                                    {{ $adminRole->name }}{{ $adminRole->is_super_admin ? ' (full access)' : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Decides which admin menus this user can open.
+                            <a href="{{ route('admin.roles.index') }}" class="text-[#00BDE0] hover:underline">Manage roles</a>
+                        </p>
+                        @error('admin_role_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <!-- Status -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Account Status</label>
@@ -162,10 +185,9 @@
                             <div id="admin-permissions" class="space-y-1 hidden">
                                 <p><strong>Admin:</strong></p>
                                 <ul class="list-disc list-inside ml-2 space-y-1">
-                                    <li>Full system access</li>
-                                    <li>Manage books and categories</li>
-                                    <li>Manage users</li>
-                                    <li>View analytics and reports</li>
+                                    <li>Access to the admin dashboard</li>
+                                    <li>Only the menus granted by the selected admin role</li>
+                                    <li>Super Admin grants every menu</li>
                                 </ul>
                             </div>
                         </div>
@@ -189,18 +211,16 @@
 </div>
 
 <script>
-// Show/hide role permissions based on selection
+// Show/hide role permissions and the admin role select based on selection
 document.getElementById('role').addEventListener('change', function() {
     const userPermissions = document.getElementById('user-permissions');
     const adminPermissions = document.getElementById('admin-permissions');
-    
-    if (this.value === 'admin') {
-        userPermissions.classList.add('hidden');
-        adminPermissions.classList.remove('hidden');
-    } else {
-        userPermissions.classList.remove('hidden');
-        adminPermissions.classList.add('hidden');
-    }
+    const adminRoleWrapper = document.getElementById('admin-role-wrapper');
+
+    const isAdmin = this.value === 'admin';
+    userPermissions.classList.toggle('hidden', isAdmin);
+    adminPermissions.classList.toggle('hidden', !isAdmin);
+    adminRoleWrapper.classList.toggle('hidden', !isAdmin);
 });
 </script>
 @endsection
