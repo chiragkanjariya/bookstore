@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\BulkOrdersExport;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\ManualCourier;
@@ -10,6 +11,7 @@ use App\Helpers\AWBNumberGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BulkOrderController extends Controller
 {
@@ -192,7 +194,10 @@ class BulkOrderController extends Controller
         // Printing the label moves the order to Ready to Ship
         $order->markLabelPrinted();
 
-        return view('admin.manual-shipping.print-label', compact('order'));
+        return view('admin.manual-shipping.print-label', [
+            'order' => $order,
+            'backRoute' => route('admin.bulk-orders.index'),
+        ]);
     }
 
     /**
@@ -210,6 +215,10 @@ class BulkOrderController extends Controller
             ->bulkOrders()
             ->get();
 
+        if ($orders->isEmpty()) {
+            return back()->with('error', 'No printable orders selected.');
+        }
+
         $invalidOrders = $orders->filter(fn($order) => !$order->hasShipment());
 
         if ($invalidOrders->count() > 0) {
@@ -221,7 +230,9 @@ class BulkOrderController extends Controller
         $pdf = Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
             ->setPaper('a4', 'portrait');
 
-        Order::markLabelsPrinted($request->order_ids);
+        // Only the ids that survived the bulkOrders() scope — posting an
+        // out-of-scope id must not flip that order's status.
+        Order::markLabelsPrinted($orders->pluck('id')->all());
 
         return $pdf->download('bulk_order_labels_' . now()->ist()->format('Y-m-d_H-i-s') . '.pdf');
     }
@@ -255,63 +266,9 @@ class BulkOrderController extends Controller
             $request->input('date_to')
         );
 
-        $orders = $query->get();
-
-        $filename = 'bulk_orders_' . now()->ist()->format('Y-m-d_H-i-s') . '.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function () use ($orders) {
-            $file = fopen('php://output', 'w');
-
-            fputcsv($file, [
-                'Order Number',
-                'Customer',
-                'Email',
-                'Phone',
-                'Shipping Address',
-                'Postal Code',
-                'City',
-                'State',
-                'Total Amount',
-                'Items Count',
-                'Order Date',
-                'Shipping Status',
-                'Courier',
-                'Tracking ID',
-                'Shipment Created At',
-                'Label Printed At'
-            ]);
-
-            foreach ($orders as $order) {
-                $shippingAddress = $order->shipping_address;
-
-                fputcsv($file, [
-                    $order->order_number,
-                    $order->user->name,
-                    $order->user->email,
-                    $shippingAddress['phone'] ?? '',
-                    $shippingAddress['address_line_1'] ?? '',
-                    $shippingAddress['postal_code'] ?? '',
-                    $shippingAddress['city'] ?? '',
-                    $shippingAddress['state'] ?? '',
-                    '₹' . number_format($order->total_amount, 2),
-                    $order->orderItems->count(),
-                    $order->created_at->ist()->format('Y-m-d H:i:s'),
-                    $order->shipping_partner_status_label,
-                    $order->manual_courier_name ?? '',
-                    $order->manual_tracking_id ?? '',
-                    $order->shipment_created_at ? $order->shipment_created_at->ist()->format('Y-m-d H:i:s') : '',
-                    $order->label_printed_at ? $order->label_printed_at->ist()->format('Y-m-d H:i:s') : ''
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(
+            new BulkOrdersExport($query),
+            'bulk_orders_' . now()->ist()->format('Y-m-d_H-i-s') . '.xlsx'
+        );
     }
 }

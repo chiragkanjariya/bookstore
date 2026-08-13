@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\OrdersExport;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\CourierManager;
 use App\Services\EmailService;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -229,60 +231,10 @@ class OrderController extends Controller
             $query->shippingPartnerStatus($shippingPartnerStatus);
         }
 
-        $orders = $query->get();
-
-        $filename = 'orders_' . now()->ist()->format('Y-m-d_H-i-s') . '.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function () use ($orders) {
-            $file = fopen('php://output', 'w');
-
-            // CSV headers
-            fputcsv($file, [
-                'Order Number',
-                'Customer',
-                'Email',
-                'Shipping Status',
-                'Payment Status',
-                'Subtotal',
-                'Shipping Cost',
-                'Maruti Shipping Rate',
-                'Total Amount',
-                'Tracking Number',
-                'Courier Provider',
-                'Order Date',
-                'Shipment Created At',
-                'Label Printed At',
-                'Items Count'
-            ]);
-
-            foreach ($orders as $order) {
-                fputcsv($file, [
-                    $order->order_number,
-                    $order->user->name,
-                    $order->user->email,
-                    $order->shipping_partner_status_label,
-                    ucfirst($order->payment_status),
-                    '₹' . number_format($order->subtotal, 2),
-                    '₹' . number_format($order->shipping_cost, 2),
-                    '₹' . number_format($order->maruti_shipping_rate ?? 0, 2),
-                    '₹' . number_format($order->total_amount, 2),
-                    $order->tracking_number ?? $order->courier_awb_number ?? 'N/A',
-                    $order->courier_provider ? ucfirst(str_replace('_', ' ', $order->courier_provider)) : 'N/A',
-                    $order->created_at->ist()->format('Y-m-d H:i:s'),
-                    $order->shipment_created_at ? $order->shipment_created_at->ist()->format('Y-m-d H:i:s') : '',
-                    $order->label_printed_at ? $order->label_printed_at->ist()->format('Y-m-d H:i:s') : '',
-                    $order->orderItems->count()
-                ]);
-            }
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(
+            new OrdersExport($query),
+            'orders_' . now()->ist()->format('Y-m-d_H-i-s') . '.xlsx'
+        );
     }
 
     /**

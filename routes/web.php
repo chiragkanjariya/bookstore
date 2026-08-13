@@ -10,6 +10,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\MarutiSeriesController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\WishlistController;
@@ -83,11 +84,18 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::patch('books/{book}/images/order', [BookController::class, 'updateImageOrder'])->name('books.update-image-order');
     });
 
-    // User Management Routes
+    // Customer Management Routes (role = user)
     Route::middleware('menu:users')->group(function () {
         Route::resource('users', UserController::class);
-        Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
-        Route::patch('users/bulk-status', [UserController::class, 'bulkUpdateStatus'])->name('users.bulk-status');
+    });
+
+    // Admin Management Routes (role = admin)
+    // NOTE: the static segments must precede the resource, or `admin-users/{user}`
+    // (PATCH = admin-users.update) shadows them.
+    Route::middleware('menu:admin-users')->group(function () {
+        Route::patch('admin-users/bulk-status', [AdminUserController::class, 'bulkUpdateStatus'])->name('admin-users.bulk-status');
+        Route::patch('admin-users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('admin-users.toggle-status');
+        Route::resource('admin-users', AdminUserController::class)->parameters(['admin-users' => 'user']);
     });
 
     // Admin Role & Permission Routes
@@ -96,13 +104,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Order Management Routes (Maruti/Automatic orders only)
+    // NOTE: static segments must be registered before `orders/{order}`, or the
+    // wildcard swallows them and they resolve to OrderController@show.
     Route::middleware('menu:orders')->group(function () {
         Route::get('orders', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
-        Route::get('orders/{order}', [\App\Http\Controllers\Admin\OrderController::class, 'show'])->name('orders.show');
-        Route::patch('orders/{order}/payment-status', [\App\Http\Controllers\Admin\OrderController::class, 'updatePaymentStatus'])->name('orders.update-payment-status');
+        Route::get('orders/export', [\App\Http\Controllers\Admin\OrderController::class, 'export'])->name('orders.export');
         Route::post('orders/bulk-print-label', [\App\Http\Controllers\Admin\OrderController::class, 'bulkPrintLabel'])->name('orders.bulk-print-label');
         Route::post('orders/bulk-ship-now', [\App\Http\Controllers\Admin\OrderController::class, 'bulkShipNow'])->name('orders.bulk-ship-now');
-        Route::get('orders/export', [\App\Http\Controllers\Admin\OrderController::class, 'export'])->name('orders.export');
+        Route::get('orders/{order}', [\App\Http\Controllers\Admin\OrderController::class, 'show'])->name('orders.show');
+        Route::patch('orders/{order}/payment-status', [\App\Http\Controllers\Admin\OrderController::class, 'updatePaymentStatus'])->name('orders.update-payment-status');
         Route::post('orders/{order}/create-shiprocket', [\App\Http\Controllers\Admin\OrderController::class, 'createShiprocketOrder'])->name('orders.create-shiprocket');
         Route::get('orders/track-shipment/{shiprocketOrderId}', [\App\Http\Controllers\Admin\OrderController::class, 'trackShipment'])->name('orders.track-shipment');
         Route::post('orders/{order}/send-confirmation', [\App\Http\Controllers\Admin\OrderController::class, 'sendOrderConfirmation'])->name('orders.send-confirmation');
@@ -119,7 +129,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Account Report Routes
     Route::middleware('menu:account-reports')->prefix('reports')->name('reports.')->group(function () {
         Route::get('accounts', [\App\Http\Controllers\Admin\AccountReportController::class, 'index'])->name('accounts.index');
-        Route::get('accounts/export-csv', [\App\Http\Controllers\Admin\AccountReportController::class, 'exportCsv'])->name('accounts.export-csv');
+        Route::get('accounts/export', [\App\Http\Controllers\Admin\AccountReportController::class, 'export'])->name('accounts.export');
         Route::post('accounts/combined-invoice', [\App\Http\Controllers\Admin\AccountReportController::class, 'generateCombinedInvoice'])->name('accounts.combined-invoice');
         Route::get('accounts/order-details', [\App\Http\Controllers\Admin\AccountReportController::class, 'getOrderDetails'])->name('accounts.order-details');
     });

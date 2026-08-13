@@ -211,6 +211,12 @@
                                     Add New User
                                 </a>
                             @endmenu
+                            @menu('admin-users')
+                                <a href="{{ route('admin.admin-users.create') }}"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    Add New Admin
+                                </a>
+                            @endmenu
                             @menu('roles')
                                 <a href="{{ route('admin.roles.create') }}"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">

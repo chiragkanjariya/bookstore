@@ -33,8 +33,29 @@ class LoginController extends Controller
         $remember = $request->boolean('remember');
 
         if (Auth::attempt($credentials, $remember)) {
+            // Deactivating an admin has to actually keep them out. Customers are
+            // never gated: RegisterController does not set email_verified_at, so
+            // enforcing this globally would lock out every existing customer.
+            if (Auth::user()->isAdmin() && !Auth::user()->email_verified_at) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                $message = 'This administrator account is inactive. Contact another administrator.';
+
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message,
+                        'errors' => ['email' => [$message]]
+                    ], 422);
+                }
+
+                throw ValidationException::withMessages(['email' => [$message]]);
+            }
+
             $request->session()->regenerate();
-            
+
             // Update last login time
             Auth::user()->update(['last_login_at' => now()]);
 

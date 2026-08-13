@@ -14,7 +14,7 @@
         </a>
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Add New User</h1>
-            <p class="mt-1 text-gray-600">Create a new user account</p>
+            <p class="mt-1 text-gray-600">Create a new customer account</p>
         </div>
     </div>
 
@@ -115,69 +115,6 @@
                                placeholder="Confirm password">
                     </div>
 
-                    <!-- Role -->
-                    <div>
-                        <label for="role" class="block text-sm font-medium text-gray-700 mb-1">
-                            User Role <span class="text-red-500">*</span>
-                        </label>
-                        <select name="role" id="role" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#00BDE0] focus:border-[#00BDE0] @error('role') border-red-300 @enderror">
-                            <option value="">Select a role</option>
-                            <option value="user" {{ old('role', 'user') === 'user' ? 'selected' : '' }}>User</option>
-                            <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
-                        </select>
-                        @error('role')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Admin Roles (menu permissions) -->
-                    <div id="admin-role-wrapper" class="{{ old('role') === 'admin' ? '' : 'hidden' }}">
-                        @include('admin.users._admin-roles', [
-                            'adminRoles' => $adminRoles,
-                            'selectedRoleIds' => collect(old('admin_role_ids', []))->map(fn ($id) => (int) $id),
-                            'disabled' => false,
-                        ])
-                    </div>
-
-                    <!-- Status -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Account Status</label>
-                        <div class="flex items-center">
-                            <input type="hidden" name="is_active" value="0">
-                            <input type="checkbox" name="is_active" id="is_active" value="1" 
-                                   {{ old('is_active', true) ? 'checked' : '' }}
-                                   class="h-4 w-4 text-[#00BDE0] focus:ring-[#00BDE0] border-gray-300 rounded">
-                            <label for="is_active" class="ml-2 block text-sm text-gray-900">
-                                Active (user can login)
-                            </label>
-                        </div>
-                        <p class="mt-1 text-xs text-gray-500">Inactive users cannot login to the system</p>
-                    </div>
-
-                    <!-- Role Information -->
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <h4 class="text-sm font-medium text-gray-900 mb-2">Role Permissions</h4>
-                        <div class="space-y-2 text-sm text-gray-600">
-                            <div id="user-permissions" class="space-y-1">
-                                <p><strong>User:</strong></p>
-                                <ul class="list-disc list-inside ml-2 space-y-1">
-                                    <li>Access user dashboard</li>
-                                    <li>Browse and purchase books</li>
-                                    <li>Manage personal profile</li>
-                                    <li>View order history</li>
-                                </ul>
-                            </div>
-                            <div id="admin-permissions" class="space-y-1 hidden">
-                                <p><strong>Admin:</strong></p>
-                                <ul class="list-disc list-inside ml-2 space-y-1">
-                                    <li>Access to the admin dashboard</li>
-                                    <li>Only the menus granted by the selected admin role</li>
-                                    <li>Super Admin grants every menu</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -196,17 +133,4 @@
     </div>
 </div>
 
-<script>
-// Show/hide role permissions and the admin role select based on selection
-document.getElementById('role').addEventListener('change', function() {
-    const userPermissions = document.getElementById('user-permissions');
-    const adminPermissions = document.getElementById('admin-permissions');
-    const adminRoleWrapper = document.getElementById('admin-role-wrapper');
-
-    const isAdmin = this.value === 'admin';
-    userPermissions.classList.toggle('hidden', isAdmin);
-    adminPermissions.classList.toggle('hidden', !isAdmin);
-    adminRoleWrapper.classList.toggle('hidden', !isAdmin);
-});
-</script>
 @endsection
