@@ -93,7 +93,7 @@ class AdminMenu
                         'route' => 'admin.orders.index',
                         'pattern' => 'admin.orders.*',
                         'icon' => ['M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'],
-                        'badge' => fn () => Order::marutiOrders()->count(),
+                        'badge' => fn () => Order::marutiOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_PENDING)->count(),
                     ],
                     [
                         'key' => 'manual-orders',
@@ -101,7 +101,7 @@ class AdminMenu
                         'route' => 'admin.manual-shipping.index',
                         'pattern' => 'admin.manual-shipping.*',
                         'icon' => ['M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'],
-                        'badge' => fn () => Order::manualOrders()->count(),
+                        'badge' => fn () => Order::manualOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_PENDING)->count(),
                     ],
                     [
                         'key' => 'bulk-orders',
@@ -109,7 +109,7 @@ class AdminMenu
                         'route' => 'admin.bulk-orders.index',
                         'pattern' => 'admin.bulk-orders.*',
                         'icon' => ['M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'],
-                        'badge' => fn () => Order::bulkOrders()->count(),
+                        'badge' => fn () => Order::bulkOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_PENDING)->count(),
                     ],
                 ],
             ],

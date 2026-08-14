@@ -111,8 +111,11 @@
                                 </svg>
                                 {{ $item['label'] }}
                                 @isset($item['badge'])
-                                    <span
-                                        class="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">{{ ($item['badge'])() }}</span>
+                                    @php($badgeCount = ($item['badge'])())
+                                    @if ($badgeCount > 0)
+                                        <span
+                                            class="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">{{ $badgeCount }}</span>
+                                    @endif
                                 @endisset
                             </a>
                         @endforeach
