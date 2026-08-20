@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\ManualOrdersExport;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\ManualCourier;
@@ -10,6 +11,7 @@ use App\Helpers\AWBNumberGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ManualShippingController extends Controller
 {
@@ -205,63 +207,10 @@ class ManualShippingController extends Controller
             $request->input('date_to')
         );
 
-        $orders = $query->get();
-
-        $filename = 'manual_orders_' . now()->ist()->format('Y-m-d_H-i-s') . '.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function () use ($orders) {
-            $file = fopen('php://output', 'w');
-
-            // CSV headers
-            fputcsv($file, [
-                'Order Number',
-                'Customer',
-                'Email',
-                'Phone',
-                'Shipping Address',
-                'Postal Code',
-                'City',
-                'State',
-                'Total Amount',
-                'Order Date',
-                'Shipping Status',
-                'Courier',
-                'Tracking ID',
-                'Shipment Created At',
-                'Label Printed At'
-            ]);
-
-            foreach ($orders as $order) {
-                $shippingAddress = $order->shipping_address;
-
-                fputcsv($file, [
-                    $order->order_number,
-                    $order->user->name,
-                    $order->user->email,
-                    $shippingAddress['phone'] ?? '',
-                    $shippingAddress['address_line_1'] ?? '',
-                    $shippingAddress['postal_code'] ?? '',
-                    $shippingAddress['city'] ?? '',
-                    $shippingAddress['state'] ?? '',
-                    '₹' . number_format($order->total_amount, 2),
-                    $order->created_at->ist()->format('Y-m-d H:i:s'),
-                    $order->shipping_partner_status_label,
-                    $order->manual_courier_name ?? '',
-                    $order->manual_tracking_id ?? '',
-                    $order->shipment_created_at ? $order->shipment_created_at->ist()->format('Y-m-d H:i:s') : '',
-                    $order->label_printed_at ? $order->label_printed_at->ist()->format('Y-m-d H:i:s') : ''
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(
+            new ManualOrdersExport($query),
+            'manual_orders_' . now()->ist()->format('Y-m-d_H-i-s') . '.xlsx'
+        );
     }
 
     /**
@@ -298,6 +247,10 @@ class ManualShippingController extends Controller
             ->manualOrders()
             ->get();
 
+        if ($orders->isEmpty()) {
+            return back()->with('error', 'No printable orders selected.');
+        }
+
         $invalidOrders = $orders->filter(fn($order) => !$order->hasShipment());
 
         if ($invalidOrders->count() > 0) {
@@ -309,7 +262,9 @@ class ManualShippingController extends Controller
         $pdf = Pdf::loadView('admin.manual-shipping.bulk-print-pdf', compact('orders'))
             ->setPaper('a4', 'portrait');
 
-        Order::markLabelsPrinted($request->order_ids);
+        // Only the ids that survived the manualOrders() scope — posting an
+        // out-of-scope id must not flip that order's status.
+        Order::markLabelsPrinted($orders->pluck('id')->all());
 
         return $pdf->download('manual_shipping_labels_' . now()->ist()->format('Y-m-d_H-i-s') . '.pdf');
     }

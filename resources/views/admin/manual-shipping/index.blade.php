@@ -13,7 +13,7 @@
             <div class="flex space-x-3">
                 <a href="{{ route('admin.manual-shipping.export', request()->query()) }}"
                     class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200 flex items-center">
-                    <i class="fas fa-download mr-2"></i>Export CSV
+                    <i class="fas fa-download mr-2"></i>Export Excel
                 </a>
             </div>
         </div>
@@ -119,16 +119,26 @@
 
         <!-- Orders Table -->
         <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-900">Manual Orders</h2>
+            <form id="bulk-print-form" method="POST" action="{{ route('admin.manual-shipping.bulk-print-pdf') }}">
+                @csrf
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-900">Manual Orders</h2>
+                        <button type="submit" id="print-labels-btn"
+                            class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+                            <i class="fas fa-print mr-2"></i>Print Labels
+                        </button>
+                    </div>
                 </div>
-            </div>
 
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th class="px-6 py-3 text-left">
+                                <input type="checkbox" id="select-all" class="rounded">
+                            </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Order</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -150,6 +160,14 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($orders as $order)
                             <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    {{-- Only printable rows are selectable, which is what keeps the
+                                         selection in step with the all-or-nothing backend check. --}}
+                                    @if($order->hasShipment())
+                                        <input type="checkbox" name="order_ids[]" value="{{ $order->id }}"
+                                            class="order-checkbox rounded">
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4">
                                     <div>
                                         <div class="text-sm font-medium text-gray-900">#{{ $order->order_number }}</div>
@@ -239,7 +257,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                                <td colspan="9" class="px-6 py-12 text-center text-gray-500">
                                     <i class="fas fa-box text-4xl mb-4 opacity-50"></i>
                                     <p class="text-lg">No manual orders found</p>
                                     <p class="text-sm">Orders from non-serviceable areas will appear here.</p>
@@ -249,6 +267,7 @@
                     </tbody>
                 </table>
             </div>
+            </form>
 
             @if($orders->hasPages())
                 <div class="px-6 py-4 border-t border-gray-200">
@@ -309,6 +328,31 @@
     </div>
 
     <script>
+        // Bulk label printing — select-all plus enabling the submit button.
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectAll = document.getElementById('select-all');
+            const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+            const printLabelsBtn = document.getElementById('print-labels-btn');
+
+            function updateBulkButtons() {
+                printLabelsBtn.disabled = document.querySelectorAll('.order-checkbox:checked').length === 0;
+            }
+
+            selectAll.addEventListener('change', function () {
+                orderCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateBulkButtons();
+            });
+
+            orderCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateBulkButtons);
+            });
+
+            // Run once so a page with no printable rows keeps the button disabled.
+            updateBulkButtons();
+        });
+
         let currentShipOrderId = null;
 
         function openShipModal(orderId, orderNumber) {

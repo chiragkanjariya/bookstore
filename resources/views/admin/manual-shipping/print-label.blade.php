@@ -104,7 +104,9 @@
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold text-gray-900">Print Shipping Label & Invoice</h1>
             <div class="flex space-x-3">
-                <a href="{{ route('admin.manual-shipping.index') }}"
+                {{-- BulkOrderController@printLabel renders this same view, so the
+                     caller decides where Back goes. --}}
+                <a href="{{ $backRoute ?? route('admin.manual-shipping.index') }}"
                     class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
                     <i class="fas fa-arrow-left mr-2"></i>Back
                 </a>

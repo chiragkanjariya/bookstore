@@ -11,11 +11,11 @@
             <p class="text-gray-600">View and export paid orders data with advanced filtering</p>
         </div>
         <div class="flex space-x-3">
-            <button id="export-csv-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+            <button id="export-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
                 <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                Export CSV
+                Export Excel
             </button>
             <button id="generate-invoice-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" disabled>
                 <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -308,10 +308,10 @@ function updateSelectedCount() {
     }
 }
 
-// Export CSV
-document.getElementById('export-csv-btn').addEventListener('click', function() {
+// Export Excel
+document.getElementById('export-btn').addEventListener('click', function() {
     const form = document.getElementById('filter-form');
-    form.action = '{{ route("admin.reports.accounts.export-csv") }}';
+    form.action = '{{ route("admin.reports.accounts.export") }}';
     form.submit();
 });
 

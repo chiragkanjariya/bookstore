@@ -13,7 +13,7 @@
             <div class="flex space-x-3">
                 <a href="{{ route('admin.orders.export', request()->query()) }}"
                     class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200">
-                    <i class="fas fa-download mr-2"></i>Export CSV
+                    <i class="fas fa-download mr-2"></i>Export Excel
                 </a>
             </div>
         </div>

@@ -7,7 +7,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div class="flex items-center">
-            <a href="{{ route('admin.users.index') }}" 
+            <a href="{{ route('admin.admin-users.index') }}" 
                class="text-gray-600 hover:text-gray-900 mr-4">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -19,12 +19,12 @@
             </div>
         </div>
         <div class="flex items-center space-x-3">
-            <a href="{{ route('admin.users.edit', $user) }}" 
+            <a href="{{ route('admin.admin-users.edit', $user) }}" 
                class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium">
                 Edit User
             </a>
             @if($user->id !== auth()->id())
-                <form method="POST" action="{{ route('admin.users.destroy', $user) }}" 
+                <form method="POST" action="{{ route('admin.admin-users.destroy', $user) }}" 
                       class="inline" onsubmit="return confirm('Are you sure you want to delete this user?')">
                     @csrf
                     @method('DELETE')
@@ -61,6 +61,22 @@
                     </div>
                 </div>
 
+                <!-- Quick Status Update -->
+                @if($user->id !== auth()->id())
+                    <div class="space-y-4 border-t pt-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Quick Status Toggle</label>
+                            <form method="POST" action="{{ route('admin.admin-users.toggle-status', $user) }}">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" 
+                                        class="w-full {{ $user->email_verified_at ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }} px-4 py-2 rounded-md transition-colors font-medium">
+                                    {{ $user->email_verified_at ? 'Deactivate Admin' : 'Activate Admin' }}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -86,25 +102,43 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Role{{ $user->isAdmin() ? ' / Admin Role' : '' }}</label>
+                            <label class="block text-sm font-medium text-gray-700">Role / Admin Role</label>
                             <div class="mt-1 flex flex-wrap items-center gap-2">
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $user->isAdmin() ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
                                     {{ $user->getRoleName() }}
                                 </span>
-                                @if($user->isAdmin())
-                                    @forelse($user->adminRoles as $assignedRole)
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-                                            {{ $assignedRole->name }}
-                                        </span>
-                                    @empty
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                            No role assigned
-                                        </span>
-                                    @endforelse
-                                @endif
+                                @forelse($user->adminRoles as $assignedRole)
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                        {{ $assignedRole->name }}
+                                    </span>
+                                @empty
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        No role assigned
+                                    </span>
+                                @endforelse
                             </div>
                         </div>
 
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Account Status</label>
+                            <div class="mt-1">
+                                @if($user->email_verified_at)
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Active
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Inactive
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Right Column -->
@@ -113,6 +147,16 @@
                             <label class="block text-sm font-medium text-gray-700">Member Since</label>
                             <p class="mt-1 text-gray-900">{{ $user->created_at->ist()->format('F j, Y') }}</p>
                             <p class="text-sm text-gray-500">{{ $user->created_at->diffForHumans() }}</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Last Login</label>
+                            <p class="mt-1 text-gray-900">
+                                {{ $user->last_login_at ? $user->last_login_at->ist()->format('F j, Y \a\t g:i A') : 'Never logged in' }}
+                            </p>
+                            @if($user->last_login_at)
+                                <p class="text-sm text-gray-500">{{ $user->last_login_at->diffForHumans() }}</p>
+                            @endif
                         </div>
 
                         <div>
@@ -195,11 +239,11 @@
             @endif
         </div>
         <div class="flex items-center space-x-3">
-            <a href="{{ route('admin.users.index') }}" 
+            <a href="{{ route('admin.admin-users.index') }}" 
                class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors font-medium">
                 Back to Users
             </a>
-            <a href="{{ route('admin.users.create') }}" 
+            <a href="{{ route('admin.admin-users.create') }}" 
                class="bg-[#00BDE0] text-white px-4 py-2 rounded-lg hover:bg-[#00A5C7] transition-colors font-medium">
                 Add Another User
             </a>

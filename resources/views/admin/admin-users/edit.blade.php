@@ -6,7 +6,7 @@
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center">
-        <a href="{{ route('admin.users.index') }}" 
+        <a href="{{ route('admin.admin-users.index') }}" 
            class="text-gray-600 hover:text-gray-900 mr-4">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -20,7 +20,7 @@
 
     <!-- Form -->
     <div class="bg-white shadow-sm rounded-lg">
-        <form method="POST" action="{{ route('admin.users.update', $user) }}" class="p-6">
+        <form method="POST" action="{{ route('admin.admin-users.update', $user) }}" class="p-6">
             @csrf
             @method('PUT')
 
@@ -136,7 +136,37 @@
                         @error('role')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
-                        <p class="mt-1 text-xs text-gray-500">Switching to Admin moves this account to Admin Users.</p>
+                        <p class="mt-1 text-xs text-gray-500">Switching to User moves this account to Manage Users.</p>
+                    </div>
+
+                    <!-- Admin Roles (menu permissions) -->
+                    <div id="admin-role-wrapper" class="{{ old('role', $user->role) === 'admin' ? '' : 'hidden' }}">
+                        @include('admin.admin-users._admin-roles', [
+                            'adminRoles' => $adminRoles,
+                            'selectedRoleIds' => collect(old('admin_role_ids', $user->adminRoles->pluck('id')->all()))->map(fn ($id) => (int) $id),
+                            'disabled' => $user->id === auth()->id(),
+                        ])
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Account Status</label>
+                        <div class="flex items-center">
+                            <input type="hidden" name="is_active" value="0">
+                            <input type="checkbox" name="is_active" id="is_active" value="1" 
+                                   {{ old('is_active', $user->email_verified_at ? true : false) ? 'checked' : '' }}
+                                   {{ $user->id === auth()->id() ? 'disabled' : '' }}
+                                   class="h-4 w-4 text-[#00BDE0] focus:ring-[#00BDE0] border-gray-300 rounded">
+                            <label for="is_active" class="ml-2 block text-sm text-gray-900">
+                                Active (admin can login)
+                            </label>
+                        </div>
+                        @if($user->id === auth()->id())
+                            <input type="hidden" name="is_active" value="1">
+                            <p class="mt-1 text-xs text-yellow-600">You cannot deactivate your own account</p>
+                        @else
+                            <p class="mt-1 text-xs text-gray-500">Inactive admins are refused at login</p>
+                        @endif
                     </div>
 
                     <!-- User Statistics -->
@@ -147,15 +177,25 @@
                                 <span class="text-gray-500">Current Role:</span>
                                 <span class="font-medium text-gray-900">{{ $user->getRoleName() }}</span>
                             </div>
-                            @if($user->isAdmin())
-                                <div>
-                                    <span class="text-gray-500">Admin Roles:</span>
-                                    <span class="font-medium text-gray-900">{{ $user->getAdminRoleName() }}</span>
-                                </div>
-                            @endif
+                            <div>
+                                <span class="text-gray-500">Admin Roles:</span>
+                                <span class="font-medium text-gray-900">{{ $user->getAdminRoleName() }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Status:</span>
+                                <span class="font-medium {{ $user->email_verified_at ? 'text-green-600' : 'text-red-600' }}">
+                                    {{ $user->email_verified_at ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
                             <div>
                                 <span class="text-gray-500">Joined:</span>
                                 <span class="font-medium text-gray-900">{{ $user->created_at->ist()->format('M d, Y') }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Last Login:</span>
+                                <span class="font-medium text-gray-900">
+                                    {{ $user->last_login_at ? $user->last_login_at->ist()->format('M d, Y') : 'Never' }}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -165,13 +205,13 @@
             <!-- Form Actions -->
             <div class="mt-8 flex items-center justify-between pt-6 border-t border-gray-200">
                 <div>
-                    <a href="{{ route('admin.users.show', $user) }}" 
+                    <a href="{{ route('admin.admin-users.show', $user) }}" 
                        class="text-[#00BDE0] hover:text-[#00A5C7] font-medium">
-                        View User Details
+                        View Admin Details
                     </a>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <a href="{{ route('admin.users.index') }}" 
+                    <a href="{{ route('admin.admin-users.index') }}" 
                        class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors font-medium">
                         Cancel
                     </a>
@@ -185,4 +225,10 @@
     </div>
 </div>
 
+<script>
+// Admin roles only mean anything while the account stays an admin.
+document.getElementById('role').addEventListener('change', function() {
+    document.getElementById('admin-role-wrapper').classList.toggle('hidden', this.value !== 'admin');
+});
+</script>
 @endsection

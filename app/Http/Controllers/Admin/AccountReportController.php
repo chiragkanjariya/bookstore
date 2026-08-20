@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\AccountReportExport;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\User;
@@ -10,6 +11,7 @@ use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AccountReportController extends Controller
 {
@@ -66,114 +68,21 @@ class AccountReportController extends Controller
     }
 
     /**
-     * Export orders to CSV.
+     * Export the filtered account report to XLSX.
      */
-    public function exportCsv(Request $request)
+    public function export(Request $request)
     {
         $query = Order::query()
             ->where('payment_status', 'paid')
             ->with(['user.state', 'user.district', 'user.taluka']);
 
-        // Apply the same filters as index
+        // Same filters as the on-screen report.
         $this->applyFilters($query, $request);
 
-        $orders = $query->latest()->get();
-
-        $orderIds = $orders->pluck('id');
-
-        // One column per book actually purchased across the filtered orders.
-        $bookIds = OrderItem::whereIn('order_id', $orderIds)
-            ->distinct()
-            ->pluck('book_id')
-            ->filter();
-
-        $bookColumns = Book::whereIn('id', $bookIds)
-            ->orderBy('title')
-            ->orderBy('id')
-            ->pluck('title', 'id')
-            ->all();
-
-        // order_items keeps no title snapshot, so books removed from inventory
-        // still need a column rather than having their quantities disappear.
-        foreach ($bookIds->diff(array_keys($bookColumns)) as $missingBookId) {
-            $bookColumns[$missingBookId] = 'Book #' . $missingBookId;
-        }
-
-        // Quantity per (order, book) in a single aggregate query. Summed so an
-        // order listing the same book on two line items reports the combined qty.
-        $quantities = OrderItem::whereIn('order_id', $orderIds)
-            ->selectRaw('order_id, book_id, SUM(quantity) as qty')
-            ->groupBy('order_id', 'book_id')
-            ->get()
-            ->groupBy('order_id')
-            ->map(fn ($rows) => $rows->pluck('qty', 'book_id'));
-
-        $filename = 'orders_report_' . now()->ist()->format('Y-m-d_H-i-s') . '.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function () use ($orders, $bookColumns, $quantities) {
-            $file = fopen('php://output', 'w');
-
-            // CSV Headers
-            fputcsv($file, [
-                'Name',
-                'Email',
-                'Mobile',
-                'Country',
-                'State',
-                'District',
-                'Taluka',
-                'City',
-                ...array_values($bookColumns),
-                'Total Amount (₹)',
-                'Shipping Cost (₹)',
-                'Maruti Shipping Rate (₹)',
-                'Total Amount Excluding Shipping (₹)',
-                'Invoice Number',
-                'Payment Date',
-                'Razorpay Payment ID',
-                'Razorpay Order ID'
-            ]);
-
-            foreach ($orders as $order) {
-                $user = $order->user;
-                $shippingAddress = $order->shipping_address;
-                $totalExcludingShipping = $order->total_amount - $order->shipping_cost - ($order->maruti_shipping_rate ?? 0);
-                $orderQuantities = $quantities->get($order->id, collect());
-
-                fputcsv($file, [
-                    $user->name ?? 'N/A',
-                    $user->email ?? 'N/A',
-                    $user->phone ?? ($shippingAddress['phone'] ?? 'N/A'),
-                    $shippingAddress['country'] ?? 'India',
-                    $user->state->name ?? ($shippingAddress['state'] ?? 'N/A'),
-                    $user->district->name ?? ($shippingAddress['district'] ?? 'N/A'),
-                    $user->taluka->name ?? ($shippingAddress['taluka'] ?? 'N/A'),
-                    $shippingAddress['city'] ?? 'N/A',
-                    // Must stay in the same order as the book headers above.
-                    ...array_map(
-                        fn ($bookId) => (int) ($orderQuantities[$bookId] ?? 0),
-                        array_keys($bookColumns)
-                    ),
-                    number_format($order->total_amount, 2),
-                    number_format($order->shipping_cost, 2),
-                    number_format($order->maruti_shipping_rate ?? 0, 2),
-                    number_format($totalExcludingShipping, 2),
-                    'IPDC-' . str_pad($order->id, 5, '0', STR_PAD_LEFT),
-                    $order->created_at->ist()->format('Y-m-d H:i:s'),
-                    $order->razorpay_payment_id ?? 'N/A',
-                    $order->razorpay_order_id ?? 'N/A'
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(
+            new AccountReportExport($query),
+            'orders_report_' . now()->ist()->format('Y-m-d_H-i-s') . '.xlsx'
+        );
     }
 
     /**
