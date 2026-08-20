@@ -200,7 +200,7 @@ class EmailService
             // Prepare email data
             $customerEmail = $order->user->email;
             $customerName = $order->user->name;
-            $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+            $orderNumber = '#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
 
             // Generate invoice PDF if not provided
             if (!$pdfPath) {
@@ -208,7 +208,7 @@ class EmailService
             }
 
             // Prepare email content
-            $subject = "Order Confirmation - #IPDC" . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+            $subject = "Order Confirmation - #ORD" . str_pad($order->id, 5, '0', STR_PAD_LEFT);
             $message = $this->getOrderConfirmationEmailTemplate($order);
 
             // Prepare recipients
@@ -335,7 +335,7 @@ class EmailService
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Number:</td>
-                            <td style="padding: 8px 0; color: #333;">#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '</td>
+                            <td style="padding: 8px 0; color: #333;">#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
@@ -435,7 +435,7 @@ class EmailService
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Number:</td>
-                            <td style="padding: 8px 0; color: #333;">#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '</td>
+                            <td style="padding: 8px 0; color: #333;">#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
@@ -603,7 +603,7 @@ class EmailService
 
             $customerEmail = $order->user->email;
             $customerName = $order->user->name;
-            $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+            $orderNumber = '#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
 
             $subject = "Your Order is Ready to Ship - {$orderNumber}";
             $message = $this->getOrderReadyToShipEmailTemplate($order);
@@ -653,7 +653,7 @@ class EmailService
 
             $customerEmail = $order->user->email;
             $customerName = $order->user->name;
-            $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+            $orderNumber = '#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
 
             $subject = "Your Order Has Been Shipped - {$orderNumber}";
             $message = $this->getOrderShippedEmailTemplate($order);
@@ -703,7 +703,7 @@ class EmailService
 
             $customerEmail = $order->user->email;
             $customerName = $order->user->name;
-            $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+            $orderNumber = '#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
 
             $subject = "Your Order Has Been Delivered - {$orderNumber}";
             $message = $this->getOrderDeliveredEmailTemplate($order);
@@ -738,7 +738,7 @@ class EmailService
      */
     private function getOrderReadyToShipEmailTemplate($order)
     {
-        $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+        $orderNumber = '#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
 
         return '
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
@@ -796,7 +796,7 @@ class EmailService
      */
     private function getOrderShippedEmailTemplate($order)
     {
-        $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+        $orderNumber = '#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
         $trackingNumber = $order->tracking_number ?? $order->courier_awb_number ?? 'N/A';
 
         return '
@@ -859,7 +859,7 @@ class EmailService
      */
     private function getOrderDeliveredEmailTemplate($order)
     {
-        $orderNumber = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+        $orderNumber = '#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
 
         return '
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
@@ -934,7 +934,7 @@ class EmailService
 
             $customerEmail = $order->user->email;
             $customerName  = $order->user->name;
-            $orderNumber   = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+            $orderNumber   = '#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
 
             $subject = "Your Order Has Been Shipped - {$orderNumber}";
             $message = $this->getManualShippingEmailTemplate($order);
@@ -969,7 +969,7 @@ class EmailService
      */
     private function getManualShippingEmailTemplate($order)
     {
-        $orderNumber  = '#IPDC' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+        $orderNumber  = '#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
         $courierName  = $order->manual_courier_name ?? 'Manual Courier';
         $trackingId   = $order->manual_tracking_id ?? 'N/A';
 

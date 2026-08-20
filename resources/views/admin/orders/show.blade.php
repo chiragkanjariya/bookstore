@@ -7,7 +7,7 @@
         <!-- Header -->
         <div class="flex items-center justify-between mb-8">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">#IPDC{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</h1>
+                <h1 class="text-3xl font-bold text-gray-900">#ORD{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</h1>
                 <nav class="text-sm text-gray-600 mt-2">
                     <a href="{{ route('admin.dashboard') }}" class="hover:text-blue-600">Dashboard</a>
                     <span class="mx-2">/</span>
