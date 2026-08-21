@@ -96,7 +96,7 @@ class OrderController extends Controller
             'totalShipping' => $order->shipping_cost
         ]);
 
-        $filename = 'invoice_IPDC-' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '.pdf';
+        $filename = 'invoice_' . $order->order_number . '.pdf';
         
         return $pdf->download($filename);
     }

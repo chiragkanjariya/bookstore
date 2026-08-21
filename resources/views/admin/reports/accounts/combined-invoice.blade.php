@@ -177,7 +177,7 @@
                                     </tr>
                                     <tr>
                                         <td class="strong small gry-color">Order No : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $order->order_number }}</td>
-                                        <td class="strong small text-end small w-50 gry-color">Invoice No : &nbsp;&nbsp;IPDC-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
+                                        <td class="strong small text-end small w-50 gry-color">Invoice No : &nbsp;&nbsp;{{ $order->order_number }}</td>
                                     </tr>
                                     <tr>
                                         <td class="strong small gry-color">Order Date : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $order->created_at->ist()->format('d-M-Y') }}</td>
