@@ -26,7 +26,7 @@
                         <i class="fas fa-shopping-cart text-xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Maruti Orders</p>
+                        <p class="text-sm font-medium text-gray-600">Integrated Courrier</p>
                         <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['total_orders']) }}</p>
                     </div>
                 </div>

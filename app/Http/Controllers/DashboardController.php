@@ -30,31 +30,28 @@ class DashboardController extends Controller
     /**
      * Show admin dashboard
      */
-    public function adminDashboard()
+    public function adminDashboard(Request $request)
     {
         $user = Auth::user();
         
-        // Dynamic admin stats
-        // "This month" means the current month in the display timezone, so the
-        // window is built in IST and then compared against the UTC column.
-        $monthStart = now()->ist()->startOfMonth()->utc();
-        $monthEnd = now()->ist()->endOfMonth()->utc();
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+
+        $ordersQuery = Order::query();
+        if ($dateFrom || $dateTo) {
+            $ordersQuery->createdBetweenDisplayDates($dateFrom, $dateTo);
+        }
 
         $stats = [
-            'total_users' => User::where('role', 'user')->count(),
-            'total_orders' => Order::count(),
-            'total_books' => Book::count(),
-            'total_revenue' => Order::where('payment_status', 'paid')->sum('total_amount'),
-            'pending_orders' => Order::where('status', 'pending')->count(),
-            'processing_orders' => Order::where('status', 'processing')->count(),
-            'shipped_orders' => Order::where('status', 'shipped')->count(),
-            'delivered_orders' => Order::where('status', 'delivered')->count(),
-            'cancelled_orders' => Order::where('status', 'cancelled')->count(),
-            'monthly_revenue' => Order::where('payment_status', 'paid')
-                                     ->whereBetween('created_at', [$monthStart, $monthEnd])
-                                     ->sum('total_amount'),
-            'monthly_orders' => Order::whereBetween('created_at', [$monthStart, $monthEnd])
-                                    ->count(),
+            'paid_orders' => (clone $ordersQuery)->where('payment_status', 'paid')->count(),
+            'unpaid_orders' => (clone $ordersQuery)->whereIn('payment_status', ['pending', 'failed'])->count(),
+            'integrated_courrier' => (clone $ordersQuery)->marutiOrders()->count(),
+            'pending' => (clone $ordersQuery)->marutiOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_PENDING)->count(),
+            'shipment_created' => (clone $ordersQuery)->marutiOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_SHIPMENT_CREATED)->count(),
+            'ready_to_ship' => (clone $ordersQuery)->marutiOrders()->shippingPartnerStatus(Order::SHIPPING_PARTNER_READY_TO_SHIP)->count(),
+            'total_revenue' => (clone $ordersQuery)->where('payment_status', 'paid')->sum('total_amount'),
+            'manual_orders' => (clone $ordersQuery)->where('requires_manual_shipping', true)->where('is_bulk_purchased', false)->count(),
+            'bulk_orders' => (clone $ordersQuery)->where('is_bulk_purchased', true)->count(),
         ];
         
         $recentUsers = User::where('role', 'user')
@@ -67,7 +64,7 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
         
-        return view('dashboard.admin', compact('user', 'stats', 'recentUsers', 'recentOrders'));
+        return view('dashboard.admin', compact('user', 'stats', 'recentUsers', 'recentOrders', 'request'));
     }
 
     /**

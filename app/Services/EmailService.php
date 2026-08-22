@@ -208,7 +208,7 @@ class EmailService
             }
 
             // Prepare email content
-            $subject = "Order Confirmation - #ORD" . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+            $subject = "Order Confirmation - #" . $order->order_number;
             $message = $this->getOrderConfirmationEmailTemplate($order);
 
             // Prepare recipients
@@ -335,7 +335,7 @@ class EmailService
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Number:</td>
-                            <td style="padding: 8px 0; color: #333;">#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '</td>
+                            <td style="padding: 8px 0; color: #333;">#' . $order->order_number . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
@@ -435,7 +435,7 @@ class EmailService
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Number:</td>
-                            <td style="padding: 8px 0; color: #333;">#ORD' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '</td>
+                            <td style="padding: 8px 0; color: #333;">#' . $order->order_number . '</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #666; font-weight: bold;">Order Date:</td>
