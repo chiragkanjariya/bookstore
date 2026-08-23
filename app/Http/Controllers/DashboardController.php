@@ -75,8 +75,22 @@ class DashboardController extends Controller
             ->latest()
             ->take(10)
             ->get();
+            
+        $ordersForRegions = (clone $ordersQuery)
+            ->select('shipping_address', 'payment_status')
+            ->get();
+            
+        $regionalSales = $ordersForRegions->groupBy(function ($order) {
+            return $order->shipping_address['state'] ?? 'Unknown';
+        })->map(function ($orders, $state) {
+            return [
+                'state' => $state,
+                'paid_count' => $orders->where('payment_status', 'paid')->count(),
+                'unpaid_count' => $orders->whereIn('payment_status', ['pending', 'failed'])->count(),
+            ];
+        })->sortByDesc('paid_count')->values();
         
-        return view('dashboard.admin', compact('user', 'stats', 'recentUsers', 'recentOrders', 'request'));
+        return view('dashboard.admin', compact('user', 'stats', 'recentUsers', 'recentOrders', 'regionalSales', 'request'));
     }
 
     /**

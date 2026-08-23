@@ -252,6 +252,38 @@
                 </div>
             </div>
         </div>
+
+        <!-- Section 4: Regional Sales -->
+        @if(isset($regionalSales) && $regionalSales->isNotEmpty())
+        <div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Regional Sales</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                @foreach($regionalSales as $region)
+                <div class="bg-white rounded-lg shadow p-5 border border-gray-100 hover:border-[#00BDE0] transition-colors relative overflow-hidden">
+                    <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-[#00BDE0]/10 to-transparent rounded-full z-0"></div>
+                    <div class="relative z-10 flex items-center justify-between mb-4">
+                        <h4 class="text-md font-bold text-gray-800 truncate" title="{{ $region['state'] }}">{{ $region['state'] }}</h4>
+                        <div class="p-2 rounded-full bg-blue-50 text-[#00BDE0] shrink-0">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="relative z-10 grid grid-cols-2 gap-3">
+                        <div class="bg-green-50 p-3 rounded-md border border-green-100">
+                            <p class="text-[10px] font-bold text-green-700 uppercase tracking-wider mb-1">Paid Orders</p>
+                            <p class="text-lg font-extrabold text-green-900">{{ number_format($region['paid_count']) }}</p>
+                        </div>
+                        
+                        <div class="bg-red-50 p-3 rounded-md border border-red-100">
+                            <p class="text-[10px] font-bold text-red-700 uppercase tracking-wider mb-1">Unpaid</p>
+                            <p class="text-lg font-extrabold text-red-900">{{ number_format($region['unpaid_count']) }}</p>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
     </div>
 
     <!-- Admin Actions -->
