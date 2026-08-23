@@ -126,7 +126,7 @@
                             <i class="fas fa-check-circle text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Paid Orders</p>
+                            <p class="text-sm font-medium text-gray-600">Paid orders</p>
                             <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['paid_orders']) }}</p>
                         </div>
                     </div>
@@ -139,7 +139,7 @@
                             <i class="fas fa-times-circle text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Unpaid Orders</p>
+                            <p class="text-sm font-medium text-gray-600">Unpaid orders</p>
                             <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['unpaid_orders']) }}</p>
                         </div>
                     </div>
@@ -152,7 +152,7 @@
                             <i class="fas fa-rupee-sign text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+                            <p class="text-sm font-medium text-gray-600">Total revenue</p>
                             <p class="text-2xl font-bold text-gray-900">₹{{ number_format($stats['total_revenue']) }}
                             </p>
                         </div>
@@ -172,7 +172,7 @@
                             <i class="fas fa-shopping-cart text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Integrated Courrier</p>
+                            <p class="text-sm font-medium text-gray-600">Integrated courier orders</p>
                             <p class="text-2xl font-bold text-gray-900">
                                 {{ number_format($stats['integrated_courrier']) }}</p>
                         </div>
@@ -186,7 +186,7 @@
                             <i class="fas fa-hand-paper text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Manual Orders</p>
+                            <p class="text-sm font-medium text-gray-600">Manual courier orders</p>
                             <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['manual_orders']) }}</p>
                         </div>
                     </div>
@@ -199,7 +199,7 @@
                             <i class="fas fa-layer-group text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Bulk Orders</p>
+                            <p class="text-sm font-medium text-gray-600">Bulk quantity orders</p>
                             <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['bulk_orders']) }}</p>
                         </div>
                     </div>
@@ -218,7 +218,7 @@
                             <i class="fas fa-clock text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Pending</p>
+                            <p class="text-sm font-medium text-gray-600">Pending orders</p>
                             <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['pending']) }}</p>
                         </div>
                     </div>
@@ -231,7 +231,7 @@
                             <i class="fas fa-truck text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Shipment Created</p>
+                            <p class="text-sm font-medium text-gray-600">Shipment created</p>
                             <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['shipment_created']) }}
                             </p>
                         </div>
@@ -245,7 +245,7 @@
                             <i class="fas fa-check-double text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Ready to Ship</p>
+                            <p class="text-sm font-medium text-gray-600">Ready to ship</p>
                             <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['ready_to_ship']) }}</p>
                         </div>
                     </div>
