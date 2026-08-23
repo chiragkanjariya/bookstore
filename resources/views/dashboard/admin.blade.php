@@ -36,69 +36,82 @@
 
     <!-- Date Filters -->
     <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <form method="GET" class="flex flex-col lg:flex-row lg:items-end gap-6">
+        <form method="GET"
+            class="flex flex-col xl:flex-row xl:items-end gap-6 bg-gray-50 p-5 rounded-lg border border-gray-100">
             <!-- Year & Month Selector -->
-            <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Year & Month</label>
-                <div class="flex gap-2 items-start">
-                    <select name="year" class="w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-[42px]">
+            <div class="flex-1 xl:max-w-[45%]">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Filter by Year & Month</label>
+                <div class="flex gap-3">
+                    <select name="year"
+                        class="w-1/3 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0] h-[42px] bg-white text-sm shadow-sm cursor-pointer">
                         <option value="">Select Year</option>
                         @php
                             $currentYear = date('Y');
-                            $startYear = 2020;
+                            $startYear = 2025;
                         @endphp
                         @for ($y = $currentYear; $y >= $startYear; $y--)
                             <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>{{ $y }}</option>
                         @endfor
                     </select>
-                    
-                    <div class="w-2/3">
-                        <select name="months[]" multiple class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-[84px]">
+
+                    <div class="w-2/3 relative">
+                        <select id="month-select" name="months[]" multiple class="hidden">
                             @php
                                 $monthsList = [
-                                    1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
-                                    5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
-                                    9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+                                    1 => 'January',
+                                    2 => 'February',
+                                    3 => 'March',
+                                    4 => 'April',
+                                    5 => 'May',
+                                    6 => 'June',
+                                    7 => 'July',
+                                    8 => 'August',
+                                    9 => 'September',
+                                    10 => 'October',
+                                    11 => 'November',
+                                    12 => 'December'
                                 ];
                                 $selectedMonths = request('months', []);
                             @endphp
                             @foreach ($monthsList as $num => $name)
-                                <option value="{{ $num }}" {{ in_array($num, $selectedMonths) ? 'selected' : '' }}>{{ $name }}</option>
+                                <option value="{{ $num }}" {{ in_array($num, $selectedMonths) ? 'selected' : '' }}>
+                                    {{ $name }}</option>
                             @endforeach
                         </select>
-                        <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple months</p>
                     </div>
                 </div>
             </div>
 
-            <div class="flex items-center justify-center h-[84px] pb-6 hidden lg:flex">
-                <span class="text-gray-500 font-bold">OR</span>
+            <div class="flex items-center justify-center h-[42px] hidden xl:flex">
+                <span class="text-gray-400 font-bold text-xs uppercase bg-gray-200 px-2 py-1 rounded">OR</span>
             </div>
-            
-            <div class="flex items-center justify-center lg:hidden relative py-4">
-                <span class="text-gray-500 font-bold text-sm bg-white px-2 relative z-10">OR</span>
+
+            <div class="flex items-center justify-center xl:hidden relative py-2">
+                <span class="text-gray-400 font-bold text-xs uppercase bg-gray-50 px-3 relative z-10">OR</span>
                 <div class="absolute w-full border-t border-gray-200 left-0"></div>
             </div>
 
             <!-- Custom Date Range -->
-            <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Custom Date Range</label>
-                <div class="flex gap-2">
+            <div class="flex-1 xl:max-w-[35%]">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Custom Date Range</label>
+                <div class="flex items-center gap-2">
                     <input type="date" name="date_from" value="{{ request('date_from') }}"
-                        class="w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-[42px]">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0] h-[42px] text-sm text-gray-700 shadow-sm cursor-pointer">
+                    <span class="text-gray-400 font-medium text-sm">to</span>
                     <input type="date" name="date_to" value="{{ request('date_to') }}"
-                        class="w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-[42px]">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0] h-[42px] text-sm text-gray-700 shadow-sm cursor-pointer">
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex gap-2 h-[42px]">
+            <div class="flex gap-3 h-[42px] mt-4 xl:mt-0 xl:flex-1">
                 <button type="submit"
-                    class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition duration-200 font-medium">
-                    Filter
+                    class="flex-1 bg-[#00BDE0] text-white px-6 rounded-md hover:bg-[#00A5C7] transition duration-200 font-medium shadow-sm flex items-center justify-center">
+                    Apply Filter
                 </button>
                 <a href="{{ route('admin.dashboard') }}"
-                    class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition duration-200 font-medium inline-flex items-center justify-center">
+                    class="bg-white text-gray-700 border border-gray-300 px-4 rounded-md hover:bg-gray-50 transition duration-200 font-medium flex items-center justify-center shadow-sm"
+                    title="Clear Filters">
                     Clear
                 </a>
             </div>
@@ -145,7 +158,8 @@
                         </div>
                         <div class="ml-4">
                             <p class="text-sm font-medium text-gray-600">Total Revenue</p>
-                            <p class="text-2xl font-bold text-gray-900">₹{{ number_format($stats['total_revenue']) }}</p>
+                            <p class="text-2xl font-bold text-gray-900">₹{{ number_format($stats['total_revenue']) }}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -164,7 +178,8 @@
                         </div>
                         <div class="ml-4">
                             <p class="text-sm font-medium text-gray-600">Integrated Courrier</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['integrated_courrier']) }}</p>
+                            <p class="text-2xl font-bold text-gray-900">
+                                {{ number_format($stats['integrated_courrier']) }}</p>
                         </div>
                     </div>
                 </div>
@@ -222,7 +237,8 @@
                         </div>
                         <div class="ml-4">
                             <p class="text-sm font-medium text-gray-600">Shipment Created</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['shipment_created']) }}</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['shipment_created']) }}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -348,4 +364,73 @@
 
 
 </div>
+
+@push('scripts')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const monthSelect = document.getElementById('month-select');
+            if (monthSelect) {
+                new Choices(monthSelect, {
+                    removeItemButton: true,
+                    placeholder: true,
+                    placeholderValue: 'Select months',
+                    searchEnabled: false,
+                    itemSelectText: '',
+                    shouldSort: false, // Keep chronological order
+                });
+            }
+        });
+    </script>
+    <style>
+        /* Custom styling for Choices.js to match Tailwind and site theme */
+        .choices {
+            margin-bottom: 0;
+        }
+
+        .choices[data-type*="select-multiple"] .choices__inner {
+            padding: 4px 6px;
+            min-height: 42px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background-color: white;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .choices.is-focused .choices__inner {
+            border-color: #00BDE0;
+            box-shadow: 0 0 0 1px #00BDE0;
+        }
+
+        .choices[data-type*="select-multiple"] .choices__button {
+            border-left: 1px solid rgba(255, 255, 255, 0.5);
+            margin: 0 -4px 0 8px;
+        }
+
+        .choices__list--multiple .choices__item {
+            background-color: #00BDE0;
+            border: 1px solid #00A5C7;
+            border-radius: 4px;
+            font-size: 13px;
+            margin: 0;
+            padding: 2px 8px;
+        }
+
+        .choices[data-type*="select-multiple"] .choices__input {
+            margin-bottom: 0;
+            min-width: 100px;
+            padding: 2px;
+        }
+
+        .choices__list--dropdown .choices__item--selectable.is-highlighted {
+            background-color: #f3f4f6;
+            color: #111827;
+        }
+    </style>
+@endpush
 @endsection
