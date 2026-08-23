@@ -62,8 +62,8 @@ class DashboardController extends Controller
             'shipment_created' => (clone $ordersQuery)->where('payment_status', 'paid')->shippingPartnerStatus(Order::SHIPPING_PARTNER_SHIPMENT_CREATED)->count(),
             'ready_to_ship' => (clone $ordersQuery)->where('payment_status', 'paid')->shippingPartnerStatus(Order::SHIPPING_PARTNER_READY_TO_SHIP)->count(),
             'total_revenue' => (clone $ordersQuery)->where('payment_status', 'paid')->sum('total_amount'),
-            'manual_orders' => (clone $ordersQuery)->where('requires_manual_shipping', true)->where('is_bulk_purchased', false)->count(),
-            'bulk_orders' => (clone $ordersQuery)->where('is_bulk_purchased', true)->count(),
+            'manual_orders' => (clone $ordersQuery)->manualOrders()->count(),
+            'bulk_orders' => (clone $ordersQuery)->bulkOrders()->count(),
         ];
         
         $recentUsers = User::where('role', 'user')
