@@ -35,26 +35,26 @@
     </div>
 
     <!-- Date Filters -->
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <form method="GET"
-            class="flex flex-col xl:flex-row xl:items-end gap-6 bg-gray-50 p-5 rounded-lg border border-gray-100">
+    <!-- Date Filters -->
+    <div class="bg-white rounded-lg shadow p-4 lg:p-6 mb-8 overflow-x-auto">
+        <form method="GET" class="flex items-end gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100 min-w-max">
             <!-- Year & Month Selector -->
-            <div class="flex-1 xl:max-w-[45%]">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Filter by Year & Month</label>
-                <div class="flex gap-3">
+            <div class="flex flex-col gap-1.5 shrink-0">
+                <label class="text-sm font-semibold text-gray-700">Filter by Year & Month</label>
+                <div class="flex gap-2 items-center">
                     <select name="year"
-                        class="w-1/3 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0] h-[42px] bg-white text-sm shadow-sm cursor-pointer">
-                        <option value="">Select Year</option>
+                        class="w-[100px] px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0] h-[42px] bg-white text-sm shadow-sm cursor-pointer">
+                        <option value="">Year</option>
                         @php
                             $currentYear = date('Y');
-                            $startYear = 2025;
+                            $startYear = 2020;
                         @endphp
                         @for ($y = $currentYear; $y >= $startYear; $y--)
                             <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>{{ $y }}</option>
                         @endfor
                     </select>
 
-                    <div class="w-2/3 relative">
+                    <div class="w-[320px] relative">
                         <select id="month-select" name="months[]" multiple class="hidden">
                             @php
                                 $monthsList = [
@@ -82,31 +82,26 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-center h-[42px] hidden xl:flex">
+            <div class="flex items-center justify-center h-[42px] shrink-0 px-2">
                 <span class="text-gray-400 font-bold text-xs uppercase bg-gray-200 px-2 py-1 rounded">OR</span>
             </div>
 
-            <div class="flex items-center justify-center xl:hidden relative py-2">
-                <span class="text-gray-400 font-bold text-xs uppercase bg-gray-50 px-3 relative z-10">OR</span>
-                <div class="absolute w-full border-t border-gray-200 left-0"></div>
-            </div>
-
             <!-- Custom Date Range -->
-            <div class="flex-1 xl:max-w-[35%]">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Custom Date Range</label>
+            <div class="flex flex-col gap-1.5 shrink-0">
+                <label class="text-sm font-semibold text-gray-700">Custom Date Range</label>
                 <div class="flex items-center gap-2">
                     <input type="date" name="date_from" value="{{ request('date_from') }}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0] h-[42px] text-sm text-gray-700 shadow-sm cursor-pointer">
+                        class="w-[140px] px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0] h-[42px] text-sm text-gray-700 shadow-sm cursor-pointer">
                     <span class="text-gray-400 font-medium text-sm">to</span>
                     <input type="date" name="date_to" value="{{ request('date_to') }}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0] h-[42px] text-sm text-gray-700 shadow-sm cursor-pointer">
+                        class="w-[140px] px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00BDE0] h-[42px] text-sm text-gray-700 shadow-sm cursor-pointer">
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex gap-3 h-[42px] mt-4 xl:mt-0 xl:flex-1">
+            <div class="flex gap-3 h-[42px] shrink-0 ml-auto">
                 <button type="submit"
-                    class="flex-1 bg-[#00BDE0] text-white px-6 rounded-md hover:bg-[#00A5C7] transition duration-200 font-medium shadow-sm flex items-center justify-center">
+                    class="bg-[#00BDE0] text-white px-6 rounded-md hover:bg-[#00A5C7] transition duration-200 font-medium shadow-sm flex items-center justify-center">
                     Apply Filter
                 </button>
                 <a href="{{ route('admin.dashboard') }}"
