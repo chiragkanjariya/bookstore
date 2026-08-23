@@ -89,7 +89,7 @@ class AdminMenu
                 'items' => [
                     [
                         'key' => 'orders',
-                        'label' => 'Orders',
+                        'label' => 'Integrated courier orders',
                         'route' => 'admin.orders.index',
                         'pattern' => 'admin.orders.*',
                         'icon' => ['M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'],
@@ -97,7 +97,7 @@ class AdminMenu
                     ],
                     [
                         'key' => 'manual-orders',
-                        'label' => 'Manual Orders',
+                        'label' => 'Manual courier orders',
                         'route' => 'admin.manual-shipping.index',
                         'pattern' => 'admin.manual-shipping.*',
                         'icon' => ['M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'],
@@ -105,7 +105,7 @@ class AdminMenu
                     ],
                     [
                         'key' => 'bulk-orders',
-                        'label' => 'Bulk Orders',
+                        'label' => 'Bulk quantity orders',
                         'route' => 'admin.bulk-orders.index',
                         'pattern' => 'admin.bulk-orders.*',
                         'icon' => ['M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'],
