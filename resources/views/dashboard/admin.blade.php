@@ -36,7 +36,7 @@
 
     <!-- Date Filters -->
     <!-- Date Filters -->
-    <div class="bg-white rounded-lg shadow p-4 lg:p-6 mb-8 overflow-x-auto">
+    <div class="bg-white rounded-lg shadow p-4 lg:p-6 mb-8 relative z-50">
         <form method="GET" class="flex items-end gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100 min-w-max">
             <!-- Year & Month Selector -->
             <div class="flex flex-col gap-1.5 shrink-0">
