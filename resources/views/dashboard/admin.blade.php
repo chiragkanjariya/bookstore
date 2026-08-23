@@ -36,145 +36,208 @@
 
     <!-- Date Filters -->
     <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <form method="GET" class="flex flex-wrap items-end space-x-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Date From</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <form method="GET" class="flex flex-col lg:flex-row lg:items-end gap-6">
+            <!-- Year & Month Selector -->
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Year & Month</label>
+                <div class="flex gap-2 items-start">
+                    <select name="year" class="w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-[42px]">
+                        <option value="">Select Year</option>
+                        @php
+                            $currentYear = date('Y');
+                            $startYear = 2020;
+                        @endphp
+                        @for ($y = $currentYear; $y >= $startYear; $y--)
+                            <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>{{ $y }}</option>
+                        @endfor
+                    </select>
+                    
+                    <div class="w-2/3">
+                        <select name="months[]" multiple class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-[84px]">
+                            @php
+                                $monthsList = [
+                                    1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+                                    5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+                                    9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+                                ];
+                                $selectedMonths = request('months', []);
+                            @endphp
+                            @foreach ($monthsList as $num => $name)
+                                <option value="{{ $num }}" {{ in_array($num, $selectedMonths) ? 'selected' : '' }}>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple months</p>
+                    </div>
+                </div>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Date To</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+            <div class="flex items-center justify-center h-[84px] pb-6 hidden lg:flex">
+                <span class="text-gray-500 font-bold">OR</span>
             </div>
-            <div>
+            
+            <div class="flex items-center justify-center lg:hidden relative py-4">
+                <span class="text-gray-500 font-bold text-sm bg-white px-2 relative z-10">OR</span>
+                <div class="absolute w-full border-t border-gray-200 left-0"></div>
+            </div>
+
+            <!-- Custom Date Range -->
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Custom Date Range</label>
+                <div class="flex gap-2">
+                    <input type="date" name="date_from" value="{{ request('date_from') }}"
+                        class="w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-[42px]">
+                    <input type="date" name="date_to" value="{{ request('date_to') }}"
+                        class="w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-[42px]">
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2 h-[42px]">
                 <button type="submit"
                     class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition duration-200 font-medium">
                     Filter
                 </button>
                 <a href="{{ route('admin.dashboard') }}"
-                    class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition duration-200 font-medium inline-block ml-2">
+                    class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition duration-200 font-medium inline-flex items-center justify-center">
                     Clear
                 </a>
             </div>
         </form>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Paid Orders -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-green-100 text-green-600">
-                    <i class="fas fa-check-circle text-xl"></i>
+    <!-- Stats Sections -->
+    <div class="space-y-8 mb-8">
+        <!-- Section 1: Revenue & Orders -->
+        <div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Revenue & Orders</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Paid Orders -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100 text-green-600">
+                            <i class="fas fa-check-circle text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Paid Orders</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['paid_orders']) }}</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Paid Orders</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['paid_orders']) }}</p>
+
+                <!-- Unpaid Orders -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-red-100 text-red-600">
+                            <i class="fas fa-times-circle text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Unpaid Orders</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['unpaid_orders']) }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Revenue -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                            <i class="fas fa-rupee-sign text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+                            <p class="text-2xl font-bold text-gray-900">₹{{ number_format($stats['total_revenue']) }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Unpaid Orders -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-red-100 text-red-600">
-                    <i class="fas fa-times-circle text-xl"></i>
+        <!-- Section 2: Order Types -->
+        <div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Order Types</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Integrated Courrier -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                            <i class="fas fa-shopping-cart text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Integrated Courrier</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['integrated_courrier']) }}</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Unpaid Orders</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['unpaid_orders']) }}</p>
+
+                <!-- Manual Orders -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-orange-100 text-orange-600">
+                            <i class="fas fa-hand-paper text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Manual Orders</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['manual_orders']) }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bulk Orders -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                            <i class="fas fa-layer-group text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Bulk Orders</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['bulk_orders']) }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Integrated Courrier -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-                    <i class="fas fa-shopping-cart text-xl"></i>
+        <!-- Section 3: Fulfillment Status -->
+        <div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Fulfillment Status</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Pending -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                            <i class="fas fa-clock text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Pending</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['pending']) }}</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Integrated Courrier</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['integrated_courrier']) }}</p>
-                </div>
-            </div>
-        </div>
 
-        <!-- Pending -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                    <i class="fas fa-clock text-xl"></i>
+                <!-- Shipment Created -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                            <i class="fas fa-truck text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Shipment Created</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['shipment_created']) }}</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Pending</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['pending']) }}</p>
-                </div>
-            </div>
-        </div>
 
-        <!-- Shipment Created -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-                    <i class="fas fa-truck text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Shipment Created</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['shipment_created']) }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Ready to Ship -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-green-100 text-green-600">
-                    <i class="fas fa-check-double text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Ready to Ship</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['ready_to_ship']) }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Manual Orders -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-orange-100 text-orange-600">
-                    <i class="fas fa-hand-paper text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Manual Orders</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['manual_orders']) }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Bulk Orders -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
-                    <i class="fas fa-layer-group text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Bulk Orders</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['bulk_orders']) }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Revenue -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                    <i class="fas fa-rupee-sign text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Total Revenue</p>
-                    <p class="text-2xl font-bold text-gray-900">₹{{ number_format($stats['total_revenue']) }}</p>
+                <!-- Ready to Ship -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100 text-green-600">
+                            <i class="fas fa-check-double text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Ready to Ship</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['ready_to_ship']) }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -36,9 +36,21 @@ class DashboardController extends Controller
         
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        $year = $request->input('year');
+        $months = $request->input('months', []);
 
         $ordersQuery = Order::query();
-        if ($dateFrom || $dateTo) {
+        
+        if ($year) {
+            $ordersQuery->whereYear('created_at', $year);
+            if (!empty($months)) {
+                $ordersQuery->where(function ($q) use ($months) {
+                    foreach ($months as $month) {
+                        $q->orWhereMonth('created_at', $month);
+                    }
+                });
+            }
+        } elseif ($dateFrom || $dateTo) {
             $ordersQuery->createdBetweenDisplayDates($dateFrom, $dateTo);
         }
 
