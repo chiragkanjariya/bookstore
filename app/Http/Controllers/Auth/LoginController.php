@@ -38,8 +38,6 @@ class LoginController extends Controller
             // enforcing this globally would lock out every existing customer.
             if (Auth::user()->isAdmin() && !Auth::user()->email_verified_at) {
                 Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
 
                 $message = 'This administrator account is inactive. Contact another administrator.';
 
@@ -56,8 +54,6 @@ class LoginController extends Controller
 
             if (!Auth::user()->is_active) {
                 Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
 
                 $message = 'This account is inactive. Please contact support.';
 
