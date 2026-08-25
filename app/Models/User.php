@@ -27,6 +27,7 @@ class User extends Authenticatable
         'district_id',
         'taluka_id',
         'role',
+        'is_active',
     ];
 
     /**
@@ -50,6 +51,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_login_at' => 'datetime',
+            'is_active' => 'boolean',
         ];
     }
 

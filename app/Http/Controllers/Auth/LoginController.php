@@ -54,6 +54,24 @@ class LoginController extends Controller
                 throw ValidationException::withMessages(['email' => [$message]]);
             }
 
+            if (!Auth::user()->is_active) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                $message = 'This account is inactive. Please contact support.';
+
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message,
+                        'errors' => ['email' => [$message]]
+                    ], 422);
+                }
+
+                throw ValidationException::withMessages(['email' => [$message]]);
+            }
+
             $request->session()->regenerate();
 
             // Update last login time

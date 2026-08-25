@@ -86,6 +86,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Customer Management Routes (role = user)
     Route::middleware('menu:users')->group(function () {
+        Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::resource('users', UserController::class);
     });
 

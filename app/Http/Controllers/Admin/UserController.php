@@ -155,4 +155,29 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully!');
     }
+
+    /**
+     * Toggle the active status of the specified user.
+     */
+    public function toggleStatus(User $user)
+    {
+        $this->guardScope($user);
+
+        $user->update([
+            'is_active' => !$user->is_active,
+        ]);
+
+        $status = $user->is_active ? 'activated' : 'deactivated';
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "User {$status} successfully!",
+                'is_active' => $user->is_active
+            ]);
+        }
+
+        return redirect()->route('admin.users.index')
+            ->with('success', "User {$status} successfully!");
+    }
 }
