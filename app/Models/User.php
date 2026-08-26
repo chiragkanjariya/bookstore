@@ -28,6 +28,7 @@ class User extends Authenticatable
         'taluka_id',
         'role',
         'is_active',
+        'email_verified_at',
     ];
 
     /**
